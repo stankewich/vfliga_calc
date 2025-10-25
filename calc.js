@@ -468,6 +468,6 @@ async function init() {
         comparisonTable.parentNode.insertBefore(ui, comparisonTable.nextSibling);
     }
 }
-    // Запуск
+
     init();
 })();
