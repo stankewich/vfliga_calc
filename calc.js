@@ -452,7 +452,7 @@ async function init() {
         loadTeamRoster(awayTeamId, tournamentType)
     ]);
 
-    // Удаляем старый интерфейс если есть
+    // Удаляем старый интерфейс если есть!
     const oldUI = document.getElementById('vsol-calculator-ui');
     if (oldUI) oldUI.remove();
 
