@@ -11,7 +11,91 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
+// Бонусы по стилевым спецвозможностям, ключи — идентификаторы стиля из STYLE_VALUES: sp, brazil, tiki, bb, kat, brit, norm
+// Структура: abilityCode -> styleId -> [lvl1, lvl2, lvl3, lvl4]; "other" для остальных стилей
+const STYLE_ABILITIES_BONUS_MAP = {
+  'Ск': { // Скорость
+    bb:    [0.10, 0.20, 0.30, 0.40],
+    brit:  [0.06, 0.12, 0.18, 0.24],
+    norm:  [0.05, 0.10, 0.15, 0.20],
+    kat:   [0.04, 0.08, 0.12, 0.16],
+    other: [0.02, 0.04, 0.06, 0.08]
+  },
+  'Г': { // Голкиперские
+    brit:  [0.10, 0.20, 0.30, 0.40],
+    kat:   [0.06, 0.12, 0.18, 0.24],
+    norm:  [0.05, 0.10, 0.15, 0.20],
+    bb:    [0.04, 0.08, 0.12, 0.16],
+    other: [0.02, 0.04, 0.06, 0.08]
+  },
+  'Пд': { // Подбор
+    kat:   [0.10, 0.20, 0.30, 0.40],
+    bb:    [0.06, 0.12, 0.18, 0.24],
+    norm:  [0.05, 0.10, 0.15, 0.20],
+    brit:  [0.04, 0.08, 0.12, 0.16],
+    other: [0.02, 0.04, 0.06, 0.08]
+  },
+  'Пк': { // Пас короткий
+    sp:    [0.10, 0.20, 0.30, 0.40],
+    tiki:  [0.06, 0.12, 0.18, 0.24],
+    norm:  [0.05, 0.10, 0.15, 0.20],
+    brazil:[0.04, 0.08, 0.12, 0.16],
+    other: [0.02, 0.04, 0.06, 0.08]
+  },
+  'Д': { // Дриблинг
+    brazil:[0.10, 0.20, 0.30, 0.40],
+    sp:    [0.06, 0.12, 0.18, 0.24],
+    norm:  [0.05, 0.10, 0.15, 0.20],
+    tiki:  [0.04, 0.08, 0.12, 0.16],
+    other: [0.02, 0.04, 0.06, 0.08]
+  },
+  'Км': { // Командная игра
+    tiki:  [0.10, 0.20, 0.30, 0.40],
+    brazil:[0.06, 0.12, 0.18, 0.24],
+    norm:  [0.05, 0.10, 0.15, 0.20],
+    sp:    [0.04, 0.08, 0.12, 0.16],
+    other: [0.02, 0.04, 0.06, 0.08]
+  }
+};
 
+// Парсит строку способностей "Ск4 Км4 Д4 Пк4" -> [{type:'Ск', level:4}, ...]
+function parseAbilities(abilitiesStr) {
+  if (!abilitiesStr) return [];
+  const regex = /([А-ЯA-Za-zЁё]{1,2})(\d)/g;
+  const res = [];
+  let m;
+  while ((m = regex.exec(abilitiesStr)) !== null) {
+    const type = m[1];
+    const level = Number(m[2]);
+    if (level >= 1 && level <= 4) res.push({ type, level });
+  }
+  return res;
+}
+
+// Возвращает суммарный бонус (в долях, например 0.24 = +24%) по всем способностям для указанного styleId
+function getAbilitiesBonusForStyleId(abilitiesStr, styleId) {
+  const arr = parseAbilities(abilitiesStr);
+  if (!arr.length) return 0;
+  let sum = 0;
+  for (const ab of arr) {
+    const map = STYLE_ABILITIES_BONUS_MAP[ab.type];
+    if (!map) continue;
+    const table = map[styleId] || map.other;
+    if (!table) continue;
+    const idx = Math.min(Math.max(ab.level - 1, 0), 3);
+    const bonus = table[idx] || 0;
+    sum += bonus;
+  }
+  return sum;
+}
+
+function parseNumericWeatherStr(value) {
+  if (value == null) return null;
+  const s = String(value).replace(',', '.').replace(/[^\d.-]/g, '').trim();
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
 (function() {
     'use strict';
 function VSStorage() {
@@ -1015,168 +1099,257 @@ function extractPlayersFromPlrdat(plrdat) {
 }
 
     // --- UI ---
-    function createUI(homeTeam, awayTeam, homePlayers, awayPlayers) {
-        const calc = new PositionStrengthCalculator();
-        const formationManager = new FormationManager(FORMATIONS);
+function createUI(homeTeam, awayTeam, homePlayers, awayPlayers) {
+  const calc = new PositionStrengthCalculator();
+  const formationManager = new FormationManager(FORMATIONS);
 
-        // --- Ваш UI погоды ---
-        const parsedWeather = parseWeatherFromPreview();
-        const weatherUI = createWeatherUI(
-            parsedWeather?.weather,
-            parsedWeather?.temperature,
-            parsedWeather?.icon
-        );
+  const parsedWeather = parseWeatherFromPreview();
+  const weatherUI = createWeatherUI(
+    parsedWeather?.weather,
+    parsedWeather?.temperature,
+    parsedWeather?.icon
+  );
 
-        // --- Настройки и составы для обеих команд ---
-        // Хозяева
-        const homeStyle = createStyleSelector();
-        const homeFormationSelect = createFormationSelector(formationManager);
-        const homeFormationHelpBtn = createFormationHelpButton();
-        const homeSettingsBlock = createTeamSettingsBlock(homeStyle, homeFormationSelect, homeFormationHelpBtn);
-        const homeLineupBlock = createTeamLineupBlock(homePlayers);
+  const homeStyle = createStyleSelector();
+  const homeFormationSelect = createFormationSelector(formationManager);
+  const homeFormationHelpBtn = createFormationHelpButton();
+  const homeSettingsBlock = createTeamSettingsBlock(homeStyle, homeFormationSelect, homeFormationHelpBtn);
+  const homeLineupBlock = createTeamLineupBlock(homePlayers);
 
-        // Гости
-        const awayStyle = createStyleSelector();
-        const awayFormationSelect = createFormationSelector(formationManager);
-        const awayFormationHelpBtn = createFormationHelpButton();
-        const awaySettingsBlock = createTeamSettingsBlock(awayStyle, awayFormationSelect, awayFormationHelpBtn);
-        const awayLineupBlock = createTeamLineupBlock(awayPlayers);
+  const awayStyle = createStyleSelector();
+  const awayFormationSelect = createFormationSelector(formationManager);
+  const awayFormationHelpBtn = createFormationHelpButton();
+  const awaySettingsBlock = createTeamSettingsBlock(awayStyle, awayFormationSelect, awayFormationHelpBtn);
+  const awayLineupBlock = createTeamLineupBlock(awayPlayers);
 
-        // --- Верхняя таблица: настройки и поле ---
-        const mainTable = document.createElement('table');
-        mainTable.style.width = '750px';
-        mainTable.style.margin = '0 auto 10px auto';
-        mainTable.style.borderCollapse = 'separate';
-        mainTable.style.tableLayout = 'fixed';
+  const mainTable = document.createElement('table');
+  mainTable.style.width = '750px';
+  mainTable.style.margin = '0 auto 10px auto';
+  mainTable.style.borderCollapse = 'separate';
+  mainTable.style.tableLayout = 'fixed';
 
-        const tr1 = document.createElement('tr');
-        const homeCol1 = document.createElement('td');
-        homeCol1.style.verticalAlign = 'top';
-        homeCol1.style.width = '175px';
-        homeCol1.appendChild(homeSettingsBlock);
+  const tr1 = document.createElement('tr');
+  const homeCol1 = document.createElement('td');
+  homeCol1.style.verticalAlign = 'top';
+  homeCol1.style.width = '175px';
+  homeCol1.appendChild(homeSettingsBlock);
 
-        const fieldCol = document.createElement('td');
-        fieldCol.style.width = '400px';
-        fieldCol.style.height = '566px';
-        fieldCol.style.background = "url('https://github.com/stankewich/vfliga_calc/blob/main/img/field_01.webp?raw=true') no-repeat center center";
-        fieldCol.style.backgroundSize = 'contain';
-        fieldCol.style.verticalAlign = 'top';
+  const fieldCol = document.createElement('td');
+  fieldCol.style.width = '400px';
+  fieldCol.style.height = '566px';
+  fieldCol.style.background = "url('https://github.com/stankewich/vfliga_calc/blob/main/img/field_01.webp?raw=true') no-repeat center center";
+  fieldCol.style.backgroundSize = 'contain';
+  fieldCol.style.verticalAlign = 'top';
 
-        const awayCol1 = document.createElement('td');
-        awayCol1.style.verticalAlign = 'top';
-        awayCol1.style.width = '175px';
-        awayCol1.appendChild(awaySettingsBlock);
+  const awayCol1 = document.createElement('td');
+  awayCol1.style.verticalAlign = 'top';
+  awayCol1.style.width = '175px';
+  awayCol1.appendChild(awaySettingsBlock);
 
-        tr1.appendChild(homeCol1);
-        tr1.appendChild(fieldCol);
-        tr1.appendChild(awayCol1);
-        mainTable.appendChild(tr1);
+  tr1.appendChild(homeCol1);
+  tr1.appendChild(fieldCol);
+  tr1.appendChild(awayCol1);
+  mainTable.appendChild(tr1);
 
-        // --- Нижняя таблица: составы ---
-        const lineupsTable = document.createElement('table');
-        lineupsTable.style.width = '750px';
-        lineupsTable.style.margin = '0 auto 10px auto';
-        lineupsTable.style.borderCollapse = 'separate';
-        lineupsTable.style.tableLayout = 'fixed';
+  const lineupsTable = document.createElement('table');
+  lineupsTable.style.width = '750px';
+  lineupsTable.style.margin = '0 auto 10px auto';
+  lineupsTable.style.borderCollapse = 'separate';
+  lineupsTable.style.tableLayout = 'fixed';
 
-        const tr2 = document.createElement('tr');
-        const homeCol2 = document.createElement('td');
-        homeCol2.style.verticalAlign = 'top';
-        homeCol2.style.width = '393px';
-        homeCol2.appendChild(homeLineupBlock.block);
+  const tr2 = document.createElement('tr');
+  const homeCol2 = document.createElement('td');
+  homeCol2.style.verticalAlign = 'top';
+  homeCol2.style.width = '393px';
+  homeCol2.appendChild(homeLineupBlock.block);
 
-        const awayCol2 = document.createElement('td');
-        awayCol2.style.verticalAlign = 'top';
-        awayCol2.style.width = '393px';
-        awayCol2.appendChild(awayLineupBlock.block);
+  const awayCol2 = document.createElement('td');
+  awayCol2.style.verticalAlign = 'top';
+  awayCol2.style.width = '393px';
+  awayCol2.appendChild(awayLineupBlock.block);
 
-        tr2.appendChild(homeCol2);
-        tr2.appendChild(awayCol2);
-        lineupsTable.appendChild(tr2);
+  tr2.appendChild(homeCol2);
+  tr2.appendChild(awayCol2);
+  lineupsTable.appendChild(tr2);
 
-        // --- Главный контейнер ---
-        const container = document.createElement('div');
-        container.id = 'vsol-calculator-ui';
-        container.style = 'margin: 20px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ccc; border-radius: 6px;';
+  const container = document.createElement('div');
+  container.id = 'vsol-calculator-ui';
+  container.style = 'margin: 20px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ccc; border-radius: 6px;';
 
-        // --- ВСТАВЛЯЕМ UI погоды ПЕРВЫМ ---
-        container.appendChild(weatherUI.container);
+  container.appendChild(weatherUI.container);
 
-        // --- Заголовок ---
-        const title = document.createElement('h3');
-        title.textContent = 'Калькулятор силы';
-        container.appendChild(title);
+  const title = document.createElement('h3');
+  title.textContent = 'Калькулятор силы';
+  container.appendChild(title);
 
-        container.appendChild(mainTable);
-        container.appendChild(lineupsTable);
+  container.appendChild(mainTable);
+  container.appendChild(lineupsTable);
 
-        // --- Автоматическая установка позиций по выбранной схеме ---
-        function applyFormation(lineup, formationName) {
-            const positions = formationManager.getPositions(formationName);
-            lineup.forEach((slot, idx) => {
-                slot.posSelect.value = positions[idx] || '';
-            });
-        }
-        homeFormationSelect.addEventListener('change', () => {
-            applyFormation(homeLineupBlock.lineup, homeFormationSelect.value);
-            homeLineupBlock.updatePlayerSelectOptions();
-        });
-        awayFormationSelect.addEventListener('change', () => {
-            applyFormation(awayLineupBlock.lineup, awayFormationSelect.value);
-            awayLineupBlock.updatePlayerSelectOptions();
-        });
-        applyFormation(homeLineupBlock.lineup, homeFormationSelect.value);
-        applyFormation(awayLineupBlock.lineup, awayFormationSelect.value);
+  function applyFormation(lineup, formationName) {
+    const positions = formationManager.getPositions(formationName);
+    lineup.forEach((slot, idx) => {
+      slot.posSelect.value = positions[idx] || '';
+    });
+  }
+  homeFormationSelect.addEventListener('change', () => {
+    applyFormation(homeLineupBlock.lineup, homeFormationSelect.value);
+    homeLineupBlock.updatePlayerSelectOptions();
+  });
+  awayFormationSelect.addEventListener('change', () => {
+    applyFormation(awayLineupBlock.lineup, awayFormationSelect.value);
+    awayLineupBlock.updatePlayerSelectOptions();
+  });
+  applyFormation(homeLineupBlock.lineup, homeFormationSelect.value);
+  applyFormation(awayLineupBlock.lineup, awayFormationSelect.value);
 
-        // --- Кнопка расчёта ---
-        const btn = document.createElement('button');
-        btn.textContent = 'Рассчитать силу';
-        btn.style.marginTop = '15px';
-        btn.style.padding = '8px 16px';
-        btn.onclick = () => {
-            let homeStrength = 0, awayStrength = 0;
+  const btn = document.createElement('button');
+  btn.textContent = 'Рассчитать силу';
+  btn.style.marginTop = '15px';
+  btn.style.padding = '8px 16px';
 
-            homeLineupBlock.lineup.forEach(slot => {
-                const playerId = slot.playerSelect.value;
-                if (!playerId) return;
-                const player = homePlayers.find(p => String(p.id) === playerId);
-                if (!player) return;
-                const matchPos = slot.posSelect.value;
-                const mult = calc.getStrengthMultiplier(player.mainPos, player.secondPos, matchPos);
-                const rs = player.realStr * (mult / 100);
-                homeStrength += rs;
-            });
-
-            awayLineupBlock.lineup.forEach(slot => {
-                const playerId = slot.playerSelect.value;
-                if (!playerId) return;
-                const player = awayPlayers.find(p => String(p.id) === playerId);
-                if (!player) return;
-                const matchPos = slot.posSelect.value;
-                const mult = calc.getStrengthMultiplier(player.mainPos, player.secondPos, matchPos);
-                const rs = player.realStr * (mult / 100);
-                awayStrength += rs;
-            });
-
-            const oldResult = container.querySelector('.vsol-result');
-            if (oldResult) oldResult.remove();
-
-            const resultDiv = document.createElement('div');
-            resultDiv.className = 'vsol-result';
-            resultDiv.style.marginTop = '15px';
-            resultDiv.style.fontWeight = 'bold';
-            resultDiv.innerHTML = `
-                <div>Сила хозяев: <b>${Math.round(homeStrength)}</b></div>
-                <div>Сила гостей: <b>${Math.round(awayStrength)}</b></div>
-                <div>Стиль хозяев: <b>${GAME_STYLES.find(s => s.value === homeStyle.value).label}</b></div>
-                <div>Стиль гостей: <b>${GAME_STYLES.find(s => s.value === awayStyle.value).label}</b></div>
-            `;
-            container.appendChild(resultDiv);
-        };
-        container.appendChild(btn);
-
-        return container;
+  btn.onclick = async () => {
+    const wt = getCurrentWeatherFromUI();
+    if (!wt) {
+      alert('Не найдены элементы UI погоды');
+      return;
     }
+
+    // Определяем styleId команды для бонусов по спецвозможностям
+    const homeTeamStyleId = mapCustomStyleToStyleId(homeStyle.value);
+    const awayTeamStyleId = mapCustomStyleToStyleId(awayStyle.value);
+
+    async function computeTeamStrength(lineup, players, teamStyleId, sideLabel) {
+      const tasks = lineup.map(slot => new Promise(resolve => {
+        const playerId = slot.playerSelect.value;
+        if (!playerId) return resolve(null);
+
+        const player = players.find(p => String(p.id) === playerId);
+        if (!player) return resolve(null);
+
+        // Стиль самого игрока для погодной таблицы
+        const playerCustomStyle = slot.styleSelect?.getValue ? slot.styleSelect.getValue() : 'norm';
+        const playerStyleId = mapCustomStyleToStyleId(playerCustomStyle);
+        const styleNumeric = STYLE_VALUES[playerStyleId] ?? 0;
+
+        const requestedStrength = Number(player.baseStrength) || 0;
+
+        getWeatherStrengthValueCached(
+          styleNumeric,
+          wt.temperature,
+          wt.weather,
+          requestedStrength,
+          (res) => {
+            if (!res || !res.found) {
+              console.warn('[Calc] WeatherStrength not found', {
+                side: sideLabel,
+                player: player?.name,
+                playerStyleId,
+                teamStyleId,
+                weather: wt.weather,
+                temperature: wt.temperature,
+                strengthRow: requestedStrength,
+                error: res?.error
+              });
+              return resolve({ player, weatherStr: null, wasNormalized: false, playerStyleId, teamStyleId });
+            }
+            const ws = parseNumericWeatherStr(res.weatherStr);
+            resolve({
+              player,
+              weatherStr: (ws == null || ws === 0) ? null : ws,
+              wasNormalized: !!res.details.wasNormalized,
+              playerStyleId,
+              teamStyleId
+            });
+          }
+        );
+      }));
+
+      const results = await Promise.all(tasks);
+
+      let total = 0;
+      results.forEach(entry => {
+        if (!entry || !entry.player) return;
+
+        const realStr = Number(entry.player.realStr) || 0;
+        const baseStr = Number(entry.player.baseStrength) || 0;
+        const ws = Number(entry.weatherStr);
+
+        // Бонус по спецвозможностям игрока на основе styleId команды (teamStyleId)
+        const abilitiesBonus = getAbilitiesBonusForStyleId(entry.player.abilities, teamStyleId); // доли
+
+        if (!ws || ws === 0) {
+          console.warn('[Calc] Skip player due to invalid WeatherStrength', {
+            side: sideLabel,
+            name: entry.player.name,
+            realStr, baseStr, ws,
+            abilitiesBonus
+          });
+          return;
+        }
+
+        // Базовый вклад по формуле: realStr / (ws / baseStr)
+        const denom = ws / (baseStr || 1);
+        if (!Number.isFinite(denom) || denom === 0) {
+          console.warn('[Calc] Skip player due to invalid denominator', {
+            side: sideLabel,
+            name: entry.player.name,
+            realStr, baseStr, ws, denom,
+            abilitiesBonus
+          });
+          return;
+        }
+
+        const contribBase = realStr * denom;
+        const contrib = contribBase * (1 + abilitiesBonus);
+
+        total += contrib;
+
+        // Подробное логирование по каждому игроку
+        console.log('[Calc] Player contribution', {
+          side: sideLabel,
+          name: entry.player.name,
+          playerStyleId: entry.playerStyleId,
+          teamStyleId: entry.teamStyleId,
+          realStr,
+          baseStr,
+          weatherStr: ws,
+          normalized: entry.wasNormalized,
+          denom,
+          contribBase,
+          abilities: entry.player.abilities,
+          abilitiesBonus,           // как доля, например 0.24
+          abilitiesBonusPct: +(abilitiesBonus * 100).toFixed(2) + '%',
+          contribution: contrib
+        });
+      });
+
+      console.log('[Calc] Team total', { side: sideLabel, total });
+      return total;
+    }
+
+    const [homeStrength, awayStrength] = await Promise.all([
+      computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId, 'home'),
+      computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId, 'away')
+    ]);
+
+    const oldResult = container.querySelector('.vsol-result');
+    if (oldResult) oldResult.remove();
+
+    const resultDiv = document.createElement('div');
+    resultDiv.className = 'vsol-result';
+    resultDiv.style.marginTop = '15px';
+    resultDiv.style.fontWeight = 'bold';
+    resultDiv.innerHTML = `
+      <div>Сила хозяев: <b>${Math.round(homeStrength)}</b></div>
+      <div>Сила гостей: <b>${Math.round(awayStrength)}</b></div>
+    `;
+    container.appendChild(resultDiv);
+  };
+
+  container.appendChild(btn);
+
+  return container;
+}
 
     // --- Инициализация ---
     async function init() {
