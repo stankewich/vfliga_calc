@@ -930,6 +930,39 @@ function buildCaptainContext(lineup, players, captainSelectEl) {
 
   (function addCSS() {
     const css = `
+    /* --- VS Synergy UI (раздельный) --- */
+#vsol-calculator-ui #vsol-synergy-ui {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+#vsol-calculator-ui .vs-synergy-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#vsol-calculator-ui .vs-synergy-block label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#vsol-calculator-ui .vs-synergy-input {
+  width: 80px;
+  height: 20px;
+  line-height: 18px;
+  font-size: 11px;
+  padding: 1px 4px;
+  box-sizing: border-box;
+}
+
+#vsol-calculator-ui .vs-synergy-hint {
+  color: #666;
+  font-size: 11px;
+}
 #vsol-calculator-ui .vs-captain-row { margin: 0 0 8px 0; display: flex; align-items: center; }
 #vsol-calculator-ui .vs-captain-table { border-collapse: separate; }
 #vsol-calculator-ui .vs-captain-cell-icon { height: 20px; background-color: #FFFFBB; text-align: center; font-family: "Courier New", monospace; font-size: 11px; vertical-align: middle; padding: 0 6px; }
@@ -1591,13 +1624,28 @@ function buildCaptainContext(lineup, players, captainSelectEl) {
         window.__vs_homeCaptainSelect = homeLineupBlock.captainSelect;
         window.__vs_awayCaptainSelect = awayLineupBlock.captainSelect;
 
-        function saveAllStates() {
-            const homeState = getCurrentTeamState(homeStyle, homeFormationSelect, homeLineupBlock.captainSelect, homeLineupBlock);
-            const awayState = getCurrentTeamState(awayStyle, awayFormationSelect, awayLineupBlock.captainSelect, awayLineupBlock);
-            const synergyState = { synergy: getSynergyValue() };
-            saveTeamState(STORAGE_KEYS.home, { ...homeState, ...synergyState });
-            saveTeamState(STORAGE_KEYS.away, { ...awayState, ...synergyState });
-        }
+function saveAllStates() {
+  const homeState = getCurrentTeamState(
+    homeStyle,
+    homeFormationSelect,
+    homeLineupBlock.captainSelect,
+    homeLineupBlock
+  );
+  const awayState = getCurrentTeamState(
+    awayStyle,
+    awayFormationSelect,
+    awayLineupBlock.captainSelect,
+    awayLineupBlock
+  );
+
+  // новые значения раздельной сыгранности в процентах (0..100)
+  const synergyHomePercent = getSynergyPercentHome();
+  const synergyAwayPercent = getSynergyPercentAway();
+
+  // сохраняем отдельно в home/away
+  saveTeamState(STORAGE_KEYS.home, { ...homeState, synergyHomePercent });
+  saveTeamState(STORAGE_KEYS.away, { ...awayState, synergyAwayPercent });
+}
 
         window.__vs_onLineupChanged = () => {
             refreshCaptainOptions(homeLineupBlock, homePlayers);
@@ -1665,57 +1713,93 @@ function buildCaptainContext(lineup, players, captainSelectEl) {
         container.appendChild(lineupsTable);
 
         // --- Synergy (сыгранность) ---
-        const synergyUI = document.createElement('div');
-        synergyUI.id = 'vsol-synergy-ui';
-        synergyUI.className = 'lh16';
+// --- Synergy (сыгранность) ДЛЯ ХОЗЯЕВ И ГОСТЕЙ ---
+const synergyWrap = document.createElement('div');
+synergyWrap.id = 'vsol-synergy-ui'; // уникальный контейнер synergy
 
-        const synergyLabel = document.createElement('label');
-        synergyLabel.textContent = 'Сыгранность (доля):';
+function createSynergyBlock(labelText, inputId, blockId) {
+  const block = document.createElement('div');
+  block.className = 'vs-synergy-block';
+  block.id = blockId; // уникальный id блока
 
-        const synergyInput = document.createElement('input');
-        synergyInput.type = 'number';
-        synergyInput.id = 'vs_synergy';
-        synergyInput.min = '0';
-        synergyInput.max = '1';
-        synergyInput.step = '0.01';
-        synergyInput.value = '0.00';
+  const label = document.createElement('label');
+  label.setAttribute('for', inputId);
+  label.textContent = labelText + ' ';
 
-        const synergyHint = document.createElement('span');
-        synergyHint.className = 'hint';
-        synergyHint.textContent = 'Введите 0…1 (например, 0.05 = +5% от contribBase)';
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.id = inputId; // уникальный id инпута
+  input.className = 'vs-synergy-input';
+  input.min = '0';
+  input.max = '100';
+  input.step = '0.01';
+  input.value = '0.00';
 
-        synergyLabel.appendChild(synergyInput);
-        synergyUI.appendChild(synergyLabel);
-        synergyUI.appendChild(synergyHint);
+  label.appendChild(input);
 
-        // Размещаем ниже таблиц составов
-        container.appendChild(synergyUI);
+  const hint = document.createElement('span');
+  hint.className = 'vs-synergy-hint';
 
-        // --- Сохранение/загрузка synergy ---
-        function getSynergyValue() {
-            const el = document.getElementById('vs_synergy');
-            const v = el ? Number(el.value) : 0;
-            return Number.isFinite(v) ? v : 0;
-        }
-        function setSynergyValue(v) {
-            const el = document.getElementById('vs_synergy');
-            if (el) el.value = String(v != null ? v : 0);
-        }
+  block.appendChild(label);
+  block.appendChild(hint);
 
-        synergyInput.addEventListener('input', () => saveAllStates());
-        synergyInput.addEventListener('change', () => saveAllStates());
+  return { block, input };
+}
+
+const synergyHomeUI = createSynergyBlock('Сыгранность хозяев:', 'vs_synergy_home', 'vs-synergy-home');
+const synergyAwayUI = createSynergyBlock('Сыгранность гостей:', 'vs_synergy_away', 'vs-synergy-away');
+
+synergyWrap.appendChild(synergyHomeUI.block);
+synergyWrap.appendChild(synergyAwayUI.block);
+
+// Размещаем ниже таблиц составов
+container.appendChild(synergyWrap);
+
+// Геттеры/сеттеры
+function getSynergyPercentHome() {
+  const el = document.getElementById('vs_synergy_home');
+  const v = el ? Number(el.value) : 0;
+  return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 0;
+}
+function getSynergyPercentAway() {
+  const el = document.getElementById('vs_synergy_away');
+  const v = el ? Number(el.value) : 0;
+  return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 0;
+}
+function setSynergyPercentHome(v) {
+  const el = document.getElementById('vs_synergy_home');
+  if (el) el.value = String(v != null ? Math.min(100, Math.max(0, v)) : 0);
+}
+function setSynergyPercentAway(v) {
+  const el = document.getElementById('vs_synergy_away');
+  if (el) el.value = String(v != null ? Math.min(100, Math.max(0, v)) : 0);
+}
+
+// Слушатели ввода (с валидацией диапазона)
+function clampSynergyInput(inputEl) {
+  if (!inputEl) return;
+  const n = Number(inputEl.value);
+  if (!Number.isFinite(n)) { inputEl.value = '0.00'; return; }
+  const clamped = Math.min(100, Math.max(0, n));
+  if (clamped !== n) inputEl.value = String(clamped);
+}
+
+synergyHomeUI.input.addEventListener('input', () => { clampSynergyInput(synergyHomeUI.input); saveAllStates(); });
+synergyHomeUI.input.addEventListener('change', () => { clampSynergyInput(synergyHomeUI.input); saveAllStates(); });
+synergyAwayUI.input.addEventListener('input', () => { clampSynergyInput(synergyAwayUI.input); saveAllStates(); });
+synergyAwayUI.input.addEventListener('change', () => { clampSynergyInput(synergyAwayUI.input); saveAllStates(); });
 
         // --- Загрузка состояния при инициализации ---
         const homeSaved = loadTeamState(STORAGE_KEYS.home);
         const awaySaved = loadTeamState(STORAGE_KEYS.away);
         if (homeSaved) setTeamState(homeSaved, homeStyle, homeFormationSelect, homeLineupBlock.captainSelect, homeLineupBlock, homePlayers);
         if (awaySaved) setTeamState(awaySaved, awayStyle, awayFormationSelect, awayLineupBlock.captainSelect, awayLineupBlock, awayPlayers);
-
-        if (homeSaved && typeof homeSaved.synergy !== 'undefined') {
-            setSynergyValue(homeSaved.synergy);
-        } else if (awaySaved && typeof awaySaved.synergy !== 'undefined') {
-            setSynergyValue(awaySaved.synergy);
-        }
+if (homeSaved && typeof homeSaved.synergyHomePercent !== 'undefined') {
+    setSynergyPercentHome(homeSaved.synergyHomePercent);
+}
+if (awaySaved && typeof awaySaved.synergyAwayPercent !== 'undefined') {
+    setSynergyPercentAway(awaySaved.synergyAwayPercent);
+}
 
         // --- Инициализация (или восстановление) ---
         applyFormation(homeLineupBlock.lineup, homeFormationSelect.value, homeLineupBlock);
@@ -1744,6 +1828,7 @@ function buildCaptainContext(lineup, players, captainSelectEl) {
         awayStyle.addEventListener('change', repaintStyleCollision);
         repaintStyleCollision();
 
+        // ОЧИСТКА СОСТАВА
         const clearBtn = document.createElement('button');
         clearBtn.textContent = 'Очистить состав';
         clearBtn.style.marginTop = '15px';
@@ -1765,7 +1850,8 @@ function buildCaptainContext(lineup, players, captainSelectEl) {
             refreshCaptainOptions(homeLineupBlock, homePlayers);
             refreshCaptainOptions(awayLineupBlock, awayPlayers);
             repaintStyleCollision();
-            setSynergyValue(0);
+            setSynergyPercentHome(0);
+            setSynergyPercentAway(0);
             saveAllStates();
         };
         container.appendChild(clearBtn);
@@ -1805,7 +1891,8 @@ function buildCaptainContext(lineup, players, captainSelectEl) {
             const homeAttendance = homeAttendanceInput ? parseInt(homeAttendanceInput.value, 10) : stadiumCapacityLocal;
             const homeAttendancePercent = stadiumCapacityLocal ? Math.round((homeAttendance / stadiumCapacityLocal) * 100) : -1;
 
-            const userSynergy = getSynergyValue(); // доля 0..1
+const userSynergyHome = getSynergyPercentHome() / 100; // 0..1
+const userSynergyAway = getSynergyPercentAway() / 100; // 0..1
 
             const homeTeamStyleId = mapCustomStyleToStyleId(homeStyle.value);
             const awayTeamStyleId = mapCustomStyleToStyleId(awayStyle.value);
@@ -2022,10 +2109,14 @@ function buildCaptainContext(lineup, players, captainSelectEl) {
                 return total;
             }
 
-            const [homeStrength, awayStrength] = await Promise.all([
-                computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId, 'home', awayTeamStyleId, homeAttendancePercent, userSynergy),
-                computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId, 'away', homeTeamStyleId, -1, userSynergy)
-            ]);
+const [homeStrength, awayStrength] = await Promise.all([
+    computeTeamStrength(
+        homeLineupBlock.lineup, homePlayers, homeTeamStyleId, 'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome
+    ),
+    computeTeamStrength(
+        awayLineupBlock.lineup, awayPlayers, awayTeamStyleId, 'away', homeTeamStyleId, -1, userSynergyAway
+    )
+]);
 
             const oldResult = container.querySelector('.vsol-result');
             if (oldResult) oldResult.remove();
@@ -2170,40 +2261,43 @@ function buildCaptainContext(lineup, players, captainSelectEl) {
   }
 
 async function init() {
-        removeInfoBlocks();
-        replaceTeamIcons();
+  removeInfoBlocks();
+  replaceTeamIcons();
 
-        const teamLinks = document.querySelectorAll('table.tobl a[href^="roster.php?num="]');
-        if (teamLinks.length < 2) return;
-        const homeTeam = teamLinks[0].textContent.trim();
-        const awayTeam = teamLinks[1].textContent.trim();
-        const homeTeamId = new URL(teamLinks[0].href).searchParams.get('num');
-        const awayTeamId = new URL(teamLinks[1].href).searchParams.get('num');
-        if (!homeTeamId || !awayTeamId) return;
+  const teamLinks = document.querySelectorAll('table.tobl a[href^="roster.php?num="]');
+  if (teamLinks.length < 2) return;
 
-        let tournamentType;
-        try {
-            const info = parseMatchInfo(document.body.innerHTML);
-            tournamentType = info.tournamentType;
-        } catch (e) {
-            alert(e.message); return;
-        }
+  const homeTeam = teamLinks[0].textContent.trim();
+  const awayTeam = teamLinks[1].textContent.trim();
 
-        const [homePlayers, awayPlayers] = await Promise.all([
-            loadTeamRoster(homeTeamId, tournamentType),
-            loadTeamRoster(awayTeamId, tournamentType)
-        ]);
+  const homeTeamId = new URL(teamLinks[0].href).searchParams.get('num');
+  const awayTeamId = new URL(teamLinks[1].href).searchParams.get('num');
+  if (!homeTeamId || !awayTeamId) return;
 
-        const oldUI = document.getElementById('vsol-calculator-ui');
-        if (oldUI) oldUI.remove();
+  let tournamentType;
+  try {
+    const info = parseMatchInfo(document.body.innerHTML);
+    tournamentType = info.tournamentType;
+  } catch (e) {
+    alert(e.message);
+    return;
+  }
 
-        const ui = createUI(homeTeam, awayTeam, homePlayers, awayPlayers);
+  const [homePlayers, awayPlayers] = await Promise.all([
+    loadTeamRoster(homeTeamId, tournamentType),
+    loadTeamRoster(awayTeamId, tournamentType)
+  ]);
 
-        const comparisonTable = document.querySelector('table.tobl');
-        if (comparisonTable && comparisonTable.parentNode) {
-            comparisonTable.parentNode.insertBefore(ui, comparisonTable.nextSibling);
-        }
-    }
+  const oldUI = document.getElementById('vsol-calculator-ui');
+  if (oldUI) oldUI.remove();
 
-    init();
-})();
+  const ui = createUI(homeTeam, awayTeam, homePlayers, awayPlayers);
+
+  const comparisonTable = document.querySelector('table.tobl');
+  if (comparisonTable && comparisonTable.parentNode) {
+    comparisonTable.parentNode.insertBefore(ui, comparisonTable.nextSibling);
+  }
+}
+
+init();
+    })();
