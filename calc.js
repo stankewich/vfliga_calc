@@ -2,8 +2,8 @@
 // @name         Virtual Soccer Strength Calculator
 // @namespace    http://tampermonkey.net/
 // @version      2.10
-// @description  Калькулятор силы команд для Virtual Soccer: погода, стилевые бонусы, “И”, коллизии, капитан, химия, домашний стадион и расширенный UI с логированием
-// @author       Arne + GPT
+// @description  Калькулятор силы команд для Virtual Soccer
+// @author       Arne
 // @match        https://www.virtualsoccer.ru/previewmatch.php*
 // @connect      virtualsoccer.ru
 // @grant        GM_xmlhttpRequest
