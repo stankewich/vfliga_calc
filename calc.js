@@ -557,7 +557,91 @@ function buildCaptainContext(lineup, players, captainSelectEl) {
 }
 window.homeTeam = window.homeTeam || { defenceType: 'zonal', rough: 'clean', morale: 'normal' };
 window.awayTeam = window.awayTeam || { defenceType: 'zonal', rough: 'clean', morale: 'normal' };
+//вынесено наружу (TODO)
+    function getSynergyPercentHome() {
+      const el = document.getElementById('vs_synergy_home');
+      const v = el ? Number(el.value) : 0;
+      return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 0;
+    }
+    function getSynergyPercentAway() {
+      const el = document.getElementById('vs_synergy_away');
+      const v = el ? Number(el.value) : 0;
+      return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 0;
+    }
+    function setSynergyPercentHome(v) {
+      const el = document.getElementById('vs_synergy_home');
+      if (el) el.value = String(v != null ? Math.min(100, Math.max(0, v)) : 0);
+    }
+    function setSynergyPercentAway(v) {
+      const el = document.getElementById('vs_synergy_away');
+      if (el) el.value = String(v != null ? Math.min(100, Math.max(0, v)) : 0);
+    }
+    function clampSynergyInput(inputEl) {
+      if (!inputEl) return;
+      const n = Number(inputEl.value);
+      if (!Number.isFinite(n)) { inputEl.value = '0.00'; return; }
+      const clamped = Math.min(100, Math.max(0, n));
+      if (clamped !== n) inputEl.value = String(clamped);
+    }
+function saveAllStates() {
+  // Проверяем, что ссылки уже проинициализированы
+  if (!window.homeTeam || !window.awayTeam || !window.homeLineupBlock || !window.awayLineupBlock) return;
+  if (!window.homeTeam._styleSelector || !window.awayTeam._styleSelector || !window.homeTeam._formationSelector || !window.awayTeam._formationSelector) return;
 
+  const homeState = getCurrentTeamState(
+    window.homeTeam._styleSelector,
+    window.homeTeam._formationSelector,
+    window.homeLineupBlock.captainSelect,
+    window.homeLineupBlock
+  );
+  const awayState = getCurrentTeamState(
+    window.awayTeam._styleSelector,
+    window.awayTeam._formationSelector,
+    window.awayLineupBlock.captainSelect,
+    window.awayLineupBlock
+  );
+
+  const synergyHomePercent = getSynergyPercentHome();
+  const synergyAwayPercent = getSynergyPercentAway();
+
+  saveTeamState(STORAGE_KEYS.home, {
+    ...homeState,
+    synergyHomePercent,
+    defenceType: window.homeTeam.defenceType,
+    rough: window.homeTeam.rough,
+    morale: window.homeTeam.morale
+  });
+  saveTeamState(STORAGE_KEYS.away, {
+    ...awayState,
+    synergyAwayPercent,
+    defenceType: window.awayTeam.defenceType,
+    rough: window.awayTeam.rough,
+    morale: window.awayTeam.morale
+  });
+}
+  function getCurrentTeamState(styleSel, formationSel, captainSel, lineupBlock) {
+    return {
+      style: styleSel.value,
+      formation: formationSel.value,
+      captain: captainSel.value,
+      lineup: lineupBlock.lineup.map(slot => slot.getValue()),
+      mini: lineupBlock.lineup.map(slot => slot.miniPositionSelect ? slot.miniPositionSelect.getValue() : null)
+    };
+  }
+  function saveTeamState(key, state) {
+    try { localStorage.setItem(key, JSON.stringify(state)); } catch(e){}
+  }
+  function loadTeamState(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch(e){ return null; }
+  }
+  function clearTeamState(key) {
+    try { localStorage.removeItem(key); } catch(e){}
+  }
+  const STORAGE_KEYS = { home: 'vs_calc_home', away: 'vs_calc_away' };
 // --- Вспомогательные селекторы ---
 function createRoughSelector(team, onChange) {
   const select = document.createElement('select');
@@ -1642,20 +1726,7 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
       comparisonTable.parentNode.insertBefore(ui, comparisonTable.nextSibling);
     }
   }
-  const STORAGE_KEYS = { home: 'vs_calc_home', away: 'vs_calc_away' };
-  function saveTeamState(key, state) {
-    try { localStorage.setItem(key, JSON.stringify(state)); } catch(e){}
-  }
-  function loadTeamState(key) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch(e){ return null; }
-  }
-  function clearTeamState(key) {
-    try { localStorage.removeItem(key); } catch(e){}
-  }
+
 
 
 
@@ -1822,15 +1893,7 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
     if (!selectEl) return;
     selectEl.style.background = status === COLLISION_WIN ? WIN_BG : (status === COLLISION_LOSE ? LOSE_BG : NEUTRAL);
   }
-  function getCurrentTeamState(styleSel, formationSel, captainSel, lineupBlock) {
-    return {
-      style: styleSel.value,
-      formation: formationSel.value,
-      captain: captainSel.value,
-      lineup: lineupBlock.lineup.map(slot => slot.getValue()),
-      mini: lineupBlock.lineup.map(slot => slot.miniPositionSelect ? slot.miniPositionSelect.getValue() : null)
-    };
-  }
+
   function setTeamState(state, styleSel, formationSel, captainSel, lineupBlock, players) {
     if (!state) return;
     if (state.style) styleSel.value = state.style;
@@ -1893,8 +1956,12 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
     const awayLineupBlock = createTeamLineupBlock(awayPlayers);
     const homeCaptainRow = makeCaptainRow(homeLineupBlock);
     const awayCaptainRow = makeCaptainRow(awayLineupBlock);
-    window.homeLineupBlock = homeLineupBlock;
-    window.awayLineupBlock = awayLineupBlock;
+window.homeStyle = homeStyle;
+window.awayStyle = awayStyle;
+window.homeFormationSelect = homeFormationSelect;
+window.awayFormationSelect = awayFormationSelect;
+window.homeLineupBlock = homeLineupBlock;
+window.awayLineupBlock = awayLineupBlock;
     const homeSaved = loadTeamState(STORAGE_KEYS.home);
     const awaySaved = loadTeamState(STORAGE_KEYS.away);
     if (homeSaved) setTeamState(homeSaved, homeStyle, homeFormationSelect, homeLineupBlock.captainSelect, homeLineupBlock, homePlayers);
@@ -1908,14 +1975,7 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
       window.awayTeam.morale = awaySaved.morale;
       window.awayMoraleSelect.value = awaySaved.morale;
     }
-    function saveAllStates() {
-      const homeState = getCurrentTeamState(homeStyle, homeFormationSelect, homeLineupBlock.captainSelect, homeLineupBlock);
-      const awayState = getCurrentTeamState(awayStyle, awayFormationSelect, awayLineupBlock.captainSelect, awayLineupBlock);
-      const synergyHomePercent = getSynergyPercentHome();
-      const synergyAwayPercent = getSynergyPercentAway();
-      saveTeamState(STORAGE_KEYS.home, { ...homeState, synergyHomePercent, defenceType: window.homeTeam.defenceType, rough: window.homeTeam.rough, morale: window.homeTeam.morale });
-      saveTeamState(STORAGE_KEYS.away, { ...awayState, synergyAwayPercent, defenceType: window.awayTeam.defenceType, rough: window.awayTeam.rough, morale: window.awayTeam.morale });
-    }
+
     window.__vs_onLineupChanged = () => {
       refreshCaptainOptions(homeLineupBlock, homePlayers);
       refreshCaptainOptions(awayLineupBlock, awayPlayers);
@@ -1998,31 +2058,7 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
     synergyWrap.appendChild(synergyHomeUI.block);
     synergyWrap.appendChild(synergyAwayUI.block);
     container.appendChild(synergyWrap);
-    function getSynergyPercentHome() {
-      const el = document.getElementById('vs_synergy_home');
-      const v = el ? Number(el.value) : 0;
-      return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 0;
-    }
-    function getSynergyPercentAway() {
-      const el = document.getElementById('vs_synergy_away');
-      const v = el ? Number(el.value) : 0;
-      return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 0;
-    }
-    function setSynergyPercentHome(v) {
-      const el = document.getElementById('vs_synergy_home');
-      if (el) el.value = String(v != null ? Math.min(100, Math.max(0, v)) : 0);
-    }
-    function setSynergyPercentAway(v) {
-      const el = document.getElementById('vs_synergy_away');
-      if (el) el.value = String(v != null ? Math.min(100, Math.max(0, v)) : 0);
-    }
-    function clampSynergyInput(inputEl) {
-      if (!inputEl) return;
-      const n = Number(inputEl.value);
-      if (!Number.isFinite(n)) { inputEl.value = '0.00'; return; }
-      const clamped = Math.min(100, Math.max(0, n));
-      if (clamped !== n) inputEl.value = String(clamped);
-    }
+
     if (homeSaved && typeof homeSaved.synergyHomePercent !== 'undefined') {
       setSynergyPercentHome(homeSaved.synergyHomePercent);
     }
@@ -2360,11 +2396,8 @@ awayFormationSelect.addEventListener('change', () => {
       }
     };
     container.appendChild(btn);
+      window.saveAllStates = saveAllStates;
     return container;
   }
-
-
-
-
   init();
 })();
