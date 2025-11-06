@@ -62,6 +62,16 @@ const CONFIG = {
             90: 0.10,
             80: 0.05,
             DEFAULT: 0.025
+        },
+        POSITION_BONUS_TABLE: {
+            // стиль команды: {позиция: коэффициент}
+            bb:    { ST: 0.11, CF: 0.06, LF: 0.00, RF: 0.00, AM: -0.05, CM: -0.05, DM: 0.00, LW: -0.05, LM: -0.05, LB: 0.11, LD: 0.00, RW: -0.05, RM: -0.05, RB: 0.11, RD: 0.00, CD: 0.06, SW: 0.00, FR: 0.00, GK: 0.00 },
+            tiki:  { ST: -0.05, CF: 0.00, LF: 0.00, RF: 0.00, AM: 0.04, CM: 0.08, DM: 0.00, LW: 0.04, LM: 0.04, LB: 0.00, LD: -0.05, RW: 0.04, RM: 0.04, RB: 0.00, RD: -0.00, CD: 0.00, SW: 0.05, FR: 0.00, GK: 0.00 },
+            brit:  { ST: 0.00, CF: -0.05, LF: 0.05, RF: 0.05, AM: -0.09, CM: -0.05, DM: -0.09, LW: 0.09, LM: 0.05, LB: 0.05, LD: 0.05, RW: 0.09, RM: 0.05, RB: 0.05, RD: 0.05, CD: 0.00, SW: -0.05, FR: 0.00, GK: 0.00 },
+            sp:    { ST: 0.00, CF: 0.07, LF: -0.06, RF: -0.06, AM: 0.09, CM: 0.00, DM: 0.09, LW: -0.11, LM: -0.05, LB: -0.11, LD: 0.00, RW: -0.11, RM: -0.05, RB: -0.11, RD: 0.00, CD: 0.00, SW: 0.05, FR: 0.00, GK: 0.00 },
+            kat:   { ST: -0.04, CF: -0.04, LF: -0.04, RF: -0.04, AM: -0.04, CM: 0.00, DM: 0.07, LW: -0.04, LM: 0.00, LB: 0.07, LD: 0.07, RW: -0.04, RM: 0.00, RB: 0.07, RD: 0.07, CD: 0.00, SW: 0.13, FR: 0.00, GK: 0.00 },
+            brazil:{ ST: 0.08, CF: 0.04, LF: 0.04, RF: 0.04, AM: 0.04, CM: 0.00, DM: -0.05, LW: 0.04, LM: 0.00, LB: 0.00, LD: -0.05, RW: 0.04, RM: 0.00, RB: 0.00, RD: -0.05, CD: -0.05, SW: -0.09, FR: 0.00, GK: 0.00 },
+            norm:  {}
         }
     },
     STORAGE_KEYS: {
@@ -701,6 +711,15 @@ function getFavoriteStyleBonus(teamStyleId, playerStyleId) {
     if (teamBeatsPlayer || playerBeatsTeam) return -0.01;
     return 0;
 }
+
+function getPositionBonus(teamStyleId, playerPosition) {
+    if (!teamStyleId || !playerPosition) return 0;
+    
+    const styleTable = CONFIG.BONUSES.POSITION_BONUS_TABLE[teamStyleId];
+    if (!styleTable) return 0;
+    
+    return styleTable[playerPosition] || 0;
+}
 const TEAM_I_LEVEL_COEFF = [0, 0.005, 0.01, 0.02, 0.03];
 
 function getTeamIBonusForLineup(inLineupPlayers) {
@@ -1013,6 +1032,25 @@ class StateManager {
 // Legacy function for backward compatibility
 function saveAllStates() {
     StateManager.saveAllStates();
+}
+
+// Missing functions that are called in the code
+function loadTeamState(storageKey) {
+    try {
+        const saved = localStorage.getItem(storageKey);
+        return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+        console.warn('Failed to load team state:', e);
+        return null;
+    }
+}
+
+function clearTeamState(storageKey) {
+    try {
+        localStorage.removeItem(storageKey);
+    } catch (e) {
+        console.warn('Failed to clear team state:', e);
+    }
 }
 
 // Removed - functionality moved to StateManager class
@@ -2664,8 +2702,8 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
         window.awayFormationSelect = awayFormationSelect;
         window.homeLineupBlock = homeLineupBlock;
         window.awayLineupBlock = awayLineupBlock;
-        const homeSaved = loadTeamState(STORAGE_KEYS.home);
-        const awaySaved = loadTeamState(STORAGE_KEYS.away);
+        const homeSaved = loadTeamState(CONFIG.STORAGE_KEYS.HOME);
+        const awaySaved = loadTeamState(CONFIG.STORAGE_KEYS.AWAY);
         if (homeSaved) setTeamState(homeSaved, homeStyle, homeFormationSelect, homeLineupBlock.captainSelect,
             homeLineupBlock, homePlayers);
         if (awaySaved) setTeamState(awaySaved, awayStyle, awayFormationSelect, awayLineupBlock.captainSelect,
@@ -2841,8 +2879,8 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
         clearBtn.className = 'butn-red';
         clearBtn.style.padding = '8px 16px';
         clearBtn.onclick = () => {
-            clearTeamState(STORAGE_KEYS.home);
-            clearTeamState(STORAGE_KEYS.away);
+            clearTeamState(CONFIG.STORAGE_KEYS.HOME);
+            clearTeamState(CONFIG.STORAGE_KEYS.AWAY);
             homeStyle.value = 'norm';
             awayStyle.value = 'norm';
             homeFormationSelect.value = Object.keys(FORMATIONS)[0];
@@ -2978,6 +3016,7 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
                 let totalDefenceTypeBonus = 0;
                 let totalMoraleBonus = 0;
                 let totalSynergyBonus = 0;
+                let totalPositionBonus = 0;
                 const slotEntries = lineup.map((slot, idx) => {
                     const playerId = slot.getValue && slot.getValue();
                     const player = playerId ? players.find(p => String(p.id) === String(
@@ -3124,6 +3163,13 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
                         .player.id)) || 0;
                     const roughBonusForPlayer = idx >= 0 ? (team.roughContribution?.[idx] ||
                         0) : 0;
+                    
+                    // Позиционный бонус
+                    const playerPosition = idx >= 0 ? slotEntries[idx]?.matchPos : null;
+                    const positionBonus = getPositionBonus(myStyleId, playerPosition);
+                    const positionBonusForPlayer = contribBase * positionBonus;
+                    totalPositionBonus += positionBonusForPlayer;
+                    
                     let moraleBonusForPlayer = getMoraleBonusForPlayer({
                         moraleMode,
                         baseContrib: contribBase,
@@ -3138,6 +3184,7 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
                         synergyBonusForPlayer +
                         roughBonusForPlayer +
                         defenceTypeBonusForPlayer +
+                        positionBonusForPlayer +
                         moraleBonusForPlayer;
                     total += contribution;
                     const iRecord = teamIBonusByPlayer.find(x => String(x.playerId) === String(
@@ -3172,6 +3219,9 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
                         synergyBonusForPlayer,
                         roughBonusForPlayer,
                         leadershipBonusForPlayer,
+                        playerPosition,
+                        positionBonus,
+                        positionBonusForPlayer,
                         moraleBonusForPlayer,
                         contribution
                     });
@@ -3197,6 +3247,7 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
                     totalDefenceTypeBonus,
                     totalLeadershipBonus,
                     totalRoughBonus,
+                    totalPositionBonus,
                     totalMoraleBonus,
                     total
                 });
