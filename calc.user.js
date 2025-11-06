@@ -11,19 +11,70 @@
 // @grant        GM_setValue
 // ==/UserScript==
 
-/* ----------------------------- УТИЛИТЫ И БОНУСЫ ----------------------------- */
-const COLLISION_NONE = 'none';
-const COLLISION_WIN = 'win';
-const COLLISION_LOSE = 'lose';
-const STYLE_VALUES = {
-    'sp': 1,
-    'brazil': 3,
-    'tiki': 4,
-    'bb': 2,
-    'kat': 5,
-    'brit': 6,
-    'norm': 0
+/* ----------------------------- CONFIGURATION & CONSTANTS ----------------------------- */
+// Centralized configuration object
+const CONFIG = {
+    COLLISION: {
+        NONE: 'none',
+        WIN: 'win',
+        LOSE: 'lose'
+    },
+    STYLES: {
+        VALUES: {
+            'sp': 1,
+            'brazil': 3,
+            'tiki': 4,
+            'bb': 2,
+            'kat': 5,
+            'brit': 6,
+            'norm': 0
+        },
+        LABELS: {
+            norm: 'нормальный',
+            sp: 'спартаковский',
+            tiki: 'тики-така',
+            brazil: 'бразильский',
+            brit: 'британский',
+            bb: 'бей-беги',
+            kat: 'катеначчо'
+        },
+        ORDER: ['norm', 'sp', 'tiki', 'brazil', 'brit', 'bb', 'kat']
+    },
+    WEATHER: {
+        OPTIONS: ["очень жарко", "жарко", "солнечно", "облачно", "пасмурно", "дождь", "снег"],
+        TEMP_MAP: {
+            "очень жарко": [30, 26],
+            "жарко": [29, 15],
+            "солнечно": [29, 10],
+            "облачно": [25, 5],
+            "пасмурно": [20, 1],
+            "дождь": [15, 1],
+            "снег": [4, 0]
+        }
+    },
+    BONUSES: {
+        MORALE: {
+            SUPER_DEFAULT: 0.27,
+            REST_DEFAULT: -0.1
+        },
+        HOME: {
+            100: 0.15,
+            90: 0.10,
+            80: 0.05,
+            DEFAULT: 0.025
+        }
+    },
+    STORAGE_KEYS: {
+        HOME: 'vs_calc_home',
+        AWAY: 'vs_calc_away'
+    }
 };
+
+// Legacy constants for backward compatibility
+const COLLISION_NONE = CONFIG.COLLISION.NONE;
+const COLLISION_WIN = CONFIG.COLLISION.WIN;
+const COLLISION_LOSE = CONFIG.COLLISION.LOSE;
+const STYLE_VALUES = CONFIG.STYLES.VALUES;
 
 function VSStorage() {
     const hasGMGet = typeof GM_getValue === 'function';
@@ -703,14 +754,56 @@ function parseNumericWeatherStr(value) {
     return Number.isFinite(n) ? n : null;
 }
 
+/* ----------------------------- BONUS CALCULATION UTILITIES ----------------------------- */
+class BonusCalculator {
+    static getHomeBonus(percent) {
+        if (percent === 100) return CONFIG.BONUSES.HOME[100];
+        if (percent >= 90 && percent <= 99) return CONFIG.BONUSES.HOME[90];
+        if (percent >= 80 && percent <= 89) return CONFIG.BONUSES.HOME[80];
+        if (percent >= 0 && percent < 80) return CONFIG.BONUSES.HOME.DEFAULT;
+        if (percent === -1) return 0;
+        console.log('Incorrect percentage of spectators');
+        return 0;
+    }
+
+    static getMoraleBonusBounds({ homeRating, awayRating, sideLabel }) {
+        const h = Math.round(homeRating);
+        const a = Math.round(awayRating);
+        if (!h || !a) return {
+            superBonus: CONFIG.BONUSES.MORALE.SUPER_DEFAULT,
+            restBonus: CONFIG.BONUSES.MORALE.REST_DEFAULT
+        };
+
+        let ratio = h > a ? h / a : a / h;
+        ratio = Math.max(1, ratio);
+        let superBonus = CONFIG.BONUSES.MORALE.SUPER_DEFAULT;
+        let restBonus = CONFIG.BONUSES.MORALE.REST_DEFAULT;
+
+        if (sideLabel === 'home') {
+            if (h < a) {
+                superBonus = Math.min(0.54, (ratio - 1) / 2 + CONFIG.BONUSES.MORALE.SUPER_DEFAULT);
+                restBonus = CONFIG.BONUSES.MORALE.REST_DEFAULT;
+            } else {
+                superBonus = CONFIG.BONUSES.MORALE.SUPER_DEFAULT;
+                restBonus = Math.max(-0.25, Math.min(CONFIG.BONUSES.MORALE.REST_DEFAULT, -((ratio - 1) / 4) + CONFIG.BONUSES.MORALE.REST_DEFAULT));
+            }
+        } else {
+            if (a < h) {
+                superBonus = Math.min(0.54, (ratio - 1) / 2 + CONFIG.BONUSES.MORALE.SUPER_DEFAULT);
+                restBonus = CONFIG.BONUSES.MORALE.REST_DEFAULT;
+            } else {
+                superBonus = CONFIG.BONUSES.MORALE.SUPER_DEFAULT;
+                restBonus = Math.max(-0.25, Math.min(CONFIG.BONUSES.MORALE.REST_DEFAULT, -((ratio - 1) / 4) + CONFIG.BONUSES.MORALE.REST_DEFAULT));
+            }
+        }
+
+        return { superBonus, restBonus };
+    }
+}
+
+// Legacy function for backward compatibility
 function getHomeBonus(percent) {
-    if (percent === 100) return 0.15;
-    if (percent >= 90 && percent <= 99) return 0.10;
-    if (percent >= 80 && percent <= 89) return 0.05;
-    if (percent >= 0 && percent < 80) return 0.025;
-    if (percent === -1) return 0;
-    console.log('Incorrect percentage of spectators');
-    return 0;
+    return BonusCalculator.getHomeBonus(percent);
 }
 
 function parseStadiumCapacity() {
@@ -752,16 +845,88 @@ function buildCaptainContext(lineup, players, captainSelectEl) {
         dummyEntries
     };
 }
-window.homeTeam = window.homeTeam || {
-    defenceType: 'zonal',
-    rough: 'clean',
-    morale: 'normal'
-};
-window.awayTeam = window.awayTeam || {
-    defenceType: 'zonal',
-    rough: 'clean',
-    morale: 'normal'
-};
+/* ----------------------------- GLOBAL STATE MANAGER ----------------------------- */
+class GameState {
+    constructor() {
+        this.teams = {
+            home: this.createTeamState(),
+            away: this.createTeamState()
+        };
+        this.ui = {};
+        this.players = {
+            home: [],
+            away: []
+        };
+        this.weather = null;
+        this.stadium = null;
+    }
+
+    createTeamState() {
+        return {
+            defenceType: 'zonal',
+            rough: 'clean',
+            morale: 'normal',
+            style: 'norm',
+            formation: '4-4-2',
+            captain: null,
+            lineup: new Array(11).fill(null),
+            miniPositions: new Array(11).fill(null),
+            synergy: 0
+        };
+    }
+
+    getTeam(side) {
+        return this.teams[side];
+    }
+
+    updateTeam(side, updates) {
+        Object.assign(this.teams[side], updates);
+        this.saveState();
+    }
+
+    saveState() {
+        try {
+            localStorage.setItem(CONFIG.STORAGE_KEYS.HOME, JSON.stringify(this.teams.home));
+            localStorage.setItem(CONFIG.STORAGE_KEYS.AWAY, JSON.stringify(this.teams.away));
+        } catch (e) {
+            console.warn('Failed to save state:', e);
+        }
+    }
+
+    loadState() {
+        try {
+            const homeState = localStorage.getItem(CONFIG.STORAGE_KEYS.HOME);
+            const awayState = localStorage.getItem(CONFIG.STORAGE_KEYS.AWAY);
+            
+            if (homeState) {
+                Object.assign(this.teams.home, JSON.parse(homeState));
+            }
+            if (awayState) {
+                Object.assign(this.teams.away, JSON.parse(awayState));
+            }
+        } catch (e) {
+            console.warn('Failed to load state:', e);
+        }
+    }
+
+    clearState() {
+        this.teams.home = this.createTeamState();
+        this.teams.away = this.createTeamState();
+        try {
+            localStorage.removeItem(CONFIG.STORAGE_KEYS.HOME);
+            localStorage.removeItem(CONFIG.STORAGE_KEYS.AWAY);
+        } catch (e) {
+            console.warn('Failed to clear state:', e);
+        }
+    }
+}
+
+// Global state instance
+const gameState = new GameState();
+
+// Backward compatibility
+window.homeTeam = gameState.teams.home;
+window.awayTeam = gameState.teams.away;
 //вынесено наружу (TODO)
 function getSynergyPercentHome() {
     const el = document.getElementById('vs_synergy_home');
@@ -796,79 +961,62 @@ function clampSynergyInput(inputEl) {
     if (clamped !== n) inputEl.value = String(clamped);
 }
 
-function saveAllStates() {
-    // Проверяем, что ссылки уже проинициализированы
-    if (!window.homeTeam || !window.awayTeam || !window.homeLineupBlock || !window.awayLineupBlock) return;
-    if (!window.homeTeam._styleSelector || !window.awayTeam._styleSelector || !window.homeTeam._formationSelector || !
-        window.awayTeam._formationSelector) return;
+/* ----------------------------- IMPROVED STATE MANAGEMENT ----------------------------- */
+class StateManager {
+    static saveAllStates() {
+        // Use the centralized game state
+        gameState.saveState();
+        
+        // Also update UI-specific values
+        if (gameState.ui.homeLineupBlock && gameState.ui.awayLineupBlock) {
+            StateManager.syncUIToState();
+        }
+    }
 
-    const homeState = getCurrentTeamState(
-        window.homeTeam._styleSelector,
-        window.homeTeam._formationSelector,
-        window.homeLineupBlock.captainSelect,
-        window.homeLineupBlock
-    );
-    const awayState = getCurrentTeamState(
-        window.awayTeam._styleSelector,
-        window.awayTeam._formationSelector,
-        window.awayLineupBlock.captainSelect,
-        window.awayLineupBlock
-    );
+    static syncUIToState() {
+        const homeTeam = gameState.getTeam('home');
+        const awayTeam = gameState.getTeam('away');
+        
+        // Sync synergy values
+        homeTeam.synergy = getSynergyPercentHome();
+        awayTeam.synergy = getSynergyPercentAway();
+        
+        // Sync lineup data
+        if (gameState.ui.homeLineupBlock) {
+            homeTeam.lineup = gameState.ui.homeLineupBlock.lineup.map(slot => slot.getValue());
+            homeTeam.miniPositions = gameState.ui.homeLineupBlock.lineup.map(slot => 
+                slot.miniPositionSelect ? slot.miniPositionSelect.getValue() : null
+            );
+        }
+        
+        if (gameState.ui.awayLineupBlock) {
+            awayTeam.lineup = gameState.ui.awayLineupBlock.lineup.map(slot => slot.getValue());
+            awayTeam.miniPositions = gameState.ui.awayLineupBlock.lineup.map(slot => 
+                slot.miniPositionSelect ? slot.miniPositionSelect.getValue() : null
+            );
+        }
+    }
 
-    const synergyHomePercent = getSynergyPercentHome();
-    const synergyAwayPercent = getSynergyPercentAway();
-
-    saveTeamState(STORAGE_KEYS.home, {
-        ...homeState,
-        synergyHomePercent,
-        defenceType: window.homeTeam.defenceType,
-        rough: window.homeTeam.rough,
-        morale: window.homeTeam.morale
-    });
-    saveTeamState(STORAGE_KEYS.away, {
-        ...awayState,
-        synergyAwayPercent,
-        defenceType: window.awayTeam.defenceType,
-        rough: window.awayTeam.rough,
-        morale: window.awayTeam.morale
-    });
-}
-
-function getCurrentTeamState(styleSel, formationSel, captainSel, lineupBlock) {
-    return {
-        style: styleSel.value,
-        formation: formationSel.value,
-        captain: captainSel.value,
-        lineup: lineupBlock.lineup.map(slot => slot.getValue()),
-        mini: lineupBlock.lineup.map(slot => slot.miniPositionSelect ? slot.miniPositionSelect.getValue() : null)
-    };
-}
-
-function saveTeamState(key, state) {
-    try {
-        localStorage.setItem(key, JSON.stringify(state));
-    } catch (e) {}
-}
-
-function loadTeamState(key) {
-    try {
-        const raw = localStorage.getItem(key);
-        if (!raw) return null;
-        return JSON.parse(raw);
-    } catch (e) {
-        return null;
+    static getCurrentTeamState(styleSel, formationSel, captainSel, lineupBlock) {
+        return {
+            style: styleSel.value,
+            formation: formationSel.value,
+            captain: captainSel.value,
+            lineup: lineupBlock.lineup.map(slot => slot.getValue()),
+            miniPositions: lineupBlock.lineup.map(slot => 
+                slot.miniPositionSelect ? slot.miniPositionSelect.getValue() : null
+            )
+        };
     }
 }
 
-function clearTeamState(key) {
-    try {
-        localStorage.removeItem(key);
-    } catch (e) {}
+// Legacy function for backward compatibility
+function saveAllStates() {
+    StateManager.saveAllStates();
 }
-const STORAGE_KEYS = {
-    home: 'vs_calc_home',
-    away: 'vs_calc_away'
-};
+
+// Removed - functionality moved to StateManager class
+// Removed - now part of CONFIG object
 // --- Вспомогательные селекторы ---
 function createRoughSelector(team, onChange) {
     const select = document.createElement('select');
@@ -912,25 +1060,60 @@ function createMoraleSelector(team, onChange) {
 }
 
 // --- UI UTILS ---
+/* ----------------------------- REUSABLE UI FACTORY ----------------------------- */
+class UIFactory {
+    static createSelect(options, selectedValue = null) {
+        const select = document.createElement('select');
+        options.forEach(option => {
+            const opt = document.createElement('option');
+            opt.value = option.value;
+            opt.textContent = option.label;
+            select.appendChild(opt);
+        });
+        if (selectedValue) {
+            select.value = selectedValue;
+        }
+        return select;
+    }
+
+    static createStyleSelector(selectedValue = 'norm') {
+        const options = CONFIG.STYLES.ORDER.map(id => ({
+            value: id,
+            label: CONFIG.STYLES.LABELS[id]
+        }));
+        return this.createSelect(options, selectedValue);
+    }
+
+    static createWeatherSelector(selectedValue = null) {
+        const options = CONFIG.WEATHER.OPTIONS.map(weather => ({
+            value: weather,
+            label: weather
+        }));
+        return this.createSelect(options, selectedValue);
+    }
+
+    static createTemperatureSelector(weather, selectedValue = null) {
+        const select = document.createElement('select');
+        const [max, min] = CONFIG.WEATHER.TEMP_MAP[weather] || [25, 5];
+        
+        for (let t = max; t >= min; t--) {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t + '°';
+            select.appendChild(opt);
+        }
+        
+        if (selectedValue && selectedValue >= min && selectedValue <= max) {
+            select.value = selectedValue;
+        }
+        
+        return select;
+    }
+}
+
+// Legacy function for backward compatibility
 function createStyleSelector() {
-    const select = document.createElement('select');
-    const order = ['norm', 'sp', 'tiki', 'brazil', 'brit', 'bb', 'kat'];
-    const labels = {
-        norm: 'нормальный',
-        sp: 'спартаковский',
-        tiki: 'тики-така',
-        brazil: 'бразильский',
-        brit: 'британский',
-        bb: 'бей-беги',
-        kat: 'катеначчо'
-    };
-    order.forEach(id => {
-        const opt = document.createElement('option');
-        opt.value = id;
-        opt.textContent = labels[id];
-        select.appendChild(opt);
-    });
-    return select;
+    return UIFactory.createStyleSelector();
 }
 
 function createFormationSelector(formationManager) {
