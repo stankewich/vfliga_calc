@@ -1274,7 +1274,6 @@ class BonusCalculator {
         if (percent >= 80 && percent <= 89) return CONFIG.BONUSES.HOME[80];
         if (percent >= 0 && percent < 80) return CONFIG.BONUSES.HOME.DEFAULT;
         if (percent === -1) return 0;
-        console.log('Incorrect percentage of spectators');
         return 0;
     }
 
@@ -1608,10 +1607,6 @@ function createMoraleSelector(team, onChange) {
     select.addEventListener('change', () => {
         const val = select.value;
         setTeamMorale(val);
-        console.log('[UI] Morale changed', {
-            side: team === window.homeTeam ? 'home' : 'away',
-            value: val
-        });
         try {
             if (typeof saveAllStates === 'function') saveAllStates();
         } catch (e) {}
@@ -1835,7 +1830,7 @@ function createDummySelect() {
     #vsol-calculator-ui .dropdown-wrapper { display: none; }
     #vsol-calculator-ui .orders-dropdown {
       position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #aaa;
-      z-index: 9999;
+      z-index: 10000;
     }
     #vsol-calculator-ui .orders-option { padding: 2px 4px; height: 20px; line-height: 16px; font-size: 11px; text-align: left; cursor: pointer; color: #444; }
     #vsol-calculator-ui .orders-option:hover { background: #f0f0f0; }
@@ -1848,9 +1843,21 @@ function createDummySelect() {
     /* Селектор стиля игрока */
     #vsol-calculator-ui .custom-style-select { position: relative; width: 100%; user-select: none; display: block; }
     #vsol-calculator-ui .custom-style-select .selected {
-      border: 1px solid #aaa; padding: 2px 4px; background: #fff;
-      display: flex; align-items: center; justify-content: center; gap: 2px;
+      border: 1px solid #aaa; padding: 2px 4px 2px 4px; background: #fff;
+      display: flex; align-items: center; justify-content: center; gap: 2px; position: relative;
       height: 20px; min-height: 20px; line-height: 16px; font-size: 11px; box-sizing: border-box; cursor: pointer;
+    }
+    #vsol-calculator-ui .custom-style-select .selected::after {
+      content: '';
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid #555;
     }
     #vsol-calculator-ui .custom-style-select .icon { width: 14px; height: 14px; }
     #vsol-calculator-ui .custom-style-select .options {
@@ -1866,9 +1873,21 @@ function createDummySelect() {
     /* Селектор физической формы */
     #vsol-calculator-ui .physical-form-select { position: relative; width: 100%; user-select: none; display: block; }
     #vsol-calculator-ui .physical-form-select .selected {
-      border: 1px solid #aaa; padding: 2px 4px; background: #fff;
-      display: flex; align-items: center; justify-content: center; gap: 2px;
+      border: 1px solid #aaa; padding: 2px 20px 2px 4px; background: #fff;
+      display: flex; align-items: center; justify-content: center; gap: 2px; position: relative;
       height: 20px; min-height: 20px; line-height: 16px; font-size: 11px; box-sizing: border-box; cursor: pointer;
+    }
+    #vsol-calculator-ui .physical-form-select .selected::after {
+      content: '';
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid #555;
     }
     #vsol-calculator-ui .physical-form-select .options {
       display: none; position: absolute; left: 0; width: 100%; background: #fff; border: 1px solid #aaa; border-top: none;
@@ -2251,7 +2270,7 @@ function createMiniPositionSelect({
 function createOrdersSelect({
     placeholder,
     options,
-    widthPx = 271,
+    widthPx = 215,
     onChange
 }) {
     const wrap = document.createElement('span');
@@ -2671,26 +2690,12 @@ function logPlayerWeatherCoef({
 }) {
     const wt = getCurrentWeatherFromUI();
     if (!wt) {
-        console.log('[WeatherCoef] UI погоды не найден. Пропускаю логирование.');
         return;
     }
     const styleId = mapCustomStyleToStyleId(customStyleValue);
     const styleNumeric = STYLE_VALUES[styleId] ?? 0;
     getWeatherStrengthValueCached(styleNumeric, wt.temperature, wt.weather, strength, (res) => {
-        if (!res || !res.found) {
-            console.log('[WeatherCoef] not found', {
-                player: player?.name,
-                playerId: player?.id,
-                style: styleId,
-                styleNumeric,
-                weather: wt.weather,
-                temperature: wt.temperature,
-                strength,
-                error: res?.error,
-                normalizedTried: res?.normalizedTried,
-                availableTempsInRange: res?.availableTempsInRange
-            });
-        }
+        // WeatherCoef calculation completed
     });
 }
 
@@ -3691,8 +3696,6 @@ function getTournamentType() {
                         // Ищем все строки матчей (только viewmatch.php - это сыгранные матчи)
                         const matchLinks = Array.from(doc.querySelectorAll('a[href*="viewmatch.php"]'));
                         
-                        console.log('[Shirts] Found match links:', matchLinks.length);
-                        
                         // Ищем последний сыгранный матч (идем с конца списка)
                         for (let i = matchLinks.length - 1; i >= 0; i--) {
                             const link = matchLinks[i];
@@ -3706,13 +3709,11 @@ function getTournamentType() {
                             const href = link.getAttribute('href');
                             const match = href.match(/day=(\d+)&match_id=(\d+)/);
                             if (match) {
-                                console.log('[Shirts] Found last played match:', { day: match[1], matchId: match[2], score: scoreText });
                                 resolve({ day: match[1], matchId: match[2] });
                                 return;
                             }
                         }
                         
-                        console.log('[Shirts] No played matches found');
                         resolve(null);
                     } catch (error) {
                         reject(error);
@@ -3728,7 +3729,6 @@ function getTournamentType() {
     function getMatchLineup(day, matchId, teamId) {
         return new Promise((resolve, reject) => {
             const url = `https://www.virtualsoccer.ru/viewmatch.php?day=${day}&match_id=${matchId}`;
-            console.log('[Shirts] Loading match page:', url);
             
             GM_xmlhttpRequest({
                 method: "GET",
@@ -3738,8 +3738,6 @@ function getTournamentType() {
                         reject(new Error('Failed to load viewmatch'));
                         return;
                     }
-                    
-                    console.log('[Shirts] Match page loaded, response length:', response.responseText.length);
                     
                     try {
                         const parser = new DOMParser();
@@ -3758,41 +3756,36 @@ function getTournamentType() {
                         const prefix = isHome ? 'gif_0_' : 'gif_1_';
                         const shirts = {};
                         
-                        console.log('[Shirts] Looking for shirts with prefix', prefix, 'isHome:', isHome);
-                        
                         // Пробуем разные селекторы
                         let shirtDivs = doc.querySelectorAll(`div.shirt.qf[id^="${prefix}"]`);
-                        console.log('[Shirts] Found shirt divs with selector 1:', shirtDivs.length);
                         
                         if (shirtDivs.length === 0) {
                             // Пробуем без класса qf
                             shirtDivs = doc.querySelectorAll(`div.shirt[id^="${prefix}"]`);
-                            console.log('[Shirts] Found shirt divs with selector 2:', shirtDivs.length);
                         }
                         
                         if (shirtDivs.length === 0) {
                             // Пробуем просто по id
                             shirtDivs = doc.querySelectorAll(`div[id^="${prefix}"]`);
-                            console.log('[Shirts] Found shirt divs with selector 3:', shirtDivs.length);
                         }
                         
                         if (shirtDivs.length === 0) {
                             // Пробуем найти все div с классом shirt
                             const allShirts = doc.querySelectorAll('div.shirt');
-                            console.log('[Shirts] Total shirt divs found:', allShirts.length);
+                            
                             
                             if (allShirts.length === 0) {
                                 // Проверяем что вообще есть на странице
                                 const allDivs = doc.querySelectorAll('div');
-                                console.log('[Shirts] Total divs on page:', allDivs.length);
+                                
                                 
                                 // Проверяем есть ли таблица с составом
                                 const tables = doc.querySelectorAll('table.tobl');
-                                console.log('[Shirts] Tables found:', tables.length);
+                                
                                 
                                 // Ищем любые div с id содержащим gif
                                 const gifDivs = Array.from(allDivs).filter(d => d.id && d.id.includes('gif'));
-                                console.log('[Shirts] Divs with "gif" in id:', gifDivs.length);
+                                
                                 if (gifDivs.length > 0) {
                                     console.log('[Shirts] Sample gif div:', {
                                         id: gifDivs[0].id,
@@ -3830,23 +3823,23 @@ function getTournamentType() {
                                     const shirtUrl = bgMatch[1];
                                     if (!shirts.gk && position === 'GK') {
                                         shirts.gk = shirtUrl;
-                                        console.log('[Shirts] ✓ Found GK shirt:', shirtUrl);
+                                        
                                     } else if (!shirts.field && position !== 'GK') {
                                         shirts.field = shirtUrl;
-                                        console.log('[Shirts] ✓ Found field shirt:', shirtUrl);
+                                        
                                     }
                                 }
                             });
                         } else {
                             // Если не нашли через querySelector, парсим сырой HTML
-                            console.log('[Shirts] Trying to extract shirts from raw HTML...');
+                            
                             const htmlText = response.responseText;
                             
                             // Ищем паттерн: id="gif_X_Y" ... background-image:url('pics/shirts/sh_XXX_sm.png')>POSITION<
                             const shirtPattern = new RegExp(`id="${prefix}\\d+"[^>]*?background-image:url\\(['"]*([^'"()]+)['"]*\\)[^>]*?>(\\w+)<`, 'g');
                             const matches = [...htmlText.matchAll(shirtPattern)];
                             
-                            console.log('[Shirts] Found shirt patterns in HTML:', matches.length);
+                            
                             
                             if (matches.length > 0) {
                                 matches.forEach((match, idx) => {
@@ -3863,17 +3856,17 @@ function getTournamentType() {
                                     if (position) {
                                         if (!shirts.gk && position === 'GK') {
                                             shirts.gk = shirtUrl;
-                                            console.log('[Shirts] ✓ Found GK shirt from HTML:', shirtUrl);
+                                            
                                         } else if (!shirts.field && position !== 'GK') {
                                             shirts.field = shirtUrl;
-                                            console.log('[Shirts] ✓ Found field shirt from HTML:', shirtUrl);
+                                            
                                         }
                                     }
                                 });
                             }
                         }
                         
-                        console.log('[Shirts] Final shirts object:', shirts);
+                        
                         resolve(shirts);
                     } catch (error) {
                         reject(error);
@@ -3887,12 +3880,12 @@ function getTournamentType() {
     }
 
     async function getTeamShirts(teamId) {
-        console.log('[Shirts] Getting shirts for team', teamId);
+        
         
         // Проверяем кэш
         const cached = getCachedShirts(teamId);
         if (cached) {
-            console.log('[Shirts] Using cached shirts for team', teamId, cached);
+            
             return cached;
         }
         
@@ -3901,16 +3894,16 @@ function getTournamentType() {
             const lastMatch = await getLastMatchForTeam(teamId);
             
             if (!lastMatch) {
-                console.log('[Shirts] No matches found for team', teamId);
+                
                 return { gk: DEFAULT_GK_SHIRT, field: DEFAULT_SHIRT };
             }
             
-            console.log('[Shirts] Found last match for team', teamId, lastMatch);
+            
             
             // Получаем расстановку
             const shirts = await getMatchLineup(lastMatch.day, lastMatch.matchId, teamId);
             
-            console.log('[Shirts] Extracted shirts for team', teamId, shirts);
+            
             
             // Если не нашли футболки, используем дефолтные
             if (!shirts.gk) {
@@ -4047,7 +4040,7 @@ function getTournamentType() {
     }
 
     async function initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock = null, awayLineupBlock = null) {
-        console.log('[Shirts] Initializing shirts system');
+        
         
         // Добавляем индикатор загрузки
         const loadingIndicator = document.createElement('div');
@@ -4075,7 +4068,7 @@ function getTournamentType() {
                 getTeamShirts(awayTeamId)
             ]);
             
-            console.log('[Shirts] Got shirts', { homeShirts, awayShirts });
+            
             
             // Убираем индикатор загрузки
             loadingIndicator.remove();
@@ -4940,7 +4933,7 @@ function getTournamentType() {
             try {
                 localStorage.removeItem(getShirtsCacheKey(homeTeamId));
                 localStorage.removeItem(getShirtsCacheKey(awayTeamId));
-                console.log('[Shirts] Cache cleared');
+                
                 
                 // Перезагружаем футболки
                 await initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock, awayLineupBlock);
@@ -4956,7 +4949,6 @@ function getTournamentType() {
         // Инициализируем систему футболок
         if (homeTeamId && awayTeamId && fieldCol) {
             initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock, awayLineupBlock)
-                .then(() => console.log('[Shirts] System initialized successfully'))
                 .catch(err => console.error('[Shirts] Failed to initialize:', err));
         }
         
