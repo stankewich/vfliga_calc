@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         Virtual Soccer Strength Analyzer
 // @namespace    http://tampermonkey.net/
-// @version      2.11
-// @description  Калькулятор силы команд для Virtual Soccer
-// @author       Arne + GPT
+// @version      0.909
+// @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
+// @author       Arne
 // @match        https://www.virtualsoccer.ru/previewmatch.php*
 // @connect      virtualsoccer.ru
 // @grant        GM_xmlhttpRequest
@@ -189,6 +189,7 @@ const CONFIG = {
             'B_112_up': { percent: 112, trend: 'up', title: '112%, растёт', bgPosition: '0px -152px', modifier: 1.12, type: 'B' },
             'B_121_down': { percent: 121, trend: 'down', title: '121%, падает', bgPosition: '-18px -190px', modifier: 1.21, type: 'B' },
             'B_121_up': { percent: 121, trend: 'up', title: '121%, растёт', bgPosition: '0px -190px', modifier: 1.21, type: 'B' },
+            'B_125_down': { percent: 125, trend: 'down', title: '125%, падает', bgPosition: '-18px -228px', modifier: 1.25, type: 'B' },
             
             // Товарищеские матчи
             'FRIENDLY_100': { percent: 100, trend: 'stable', title: '100% (товарищеский)', bgPosition: '0px -114px', modifier: 1.0, type: 'FRIENDLY' },
@@ -199,20 +200,216 @@ const CONFIG = {
         // Типы турниров и доступные физ формы
         TOURNAMENT_TYPES: {
             'typeC': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'UNKNOWN'],
-            'typeB': ['B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'UNKNOWN'],
-            'typeB_amateur': ['B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'UNKNOWN'],
+            'typeB': ['B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'B_125_down', 'UNKNOWN'],
+            'typeB_amateur': ['B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up',  'B_125_down', 'UNKNOWN'],
             'friendly': ['FRIENDLY_100', 'UNKNOWN'],
-            'all': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'FRIENDLY_100', 'UNKNOWN']
-        },
-        // Устаревший маппинг для обратной совместимости
-        DAY_TYPES: {
-            'typeC': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'UNKNOWN'],
-            'typeB': ['B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'UNKNOWN'],
-            'typeB_amateur': ['B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'UNKNOWN'],
-            'friendly': ['FRIENDLY_100', 'UNKNOWN'],
-            'all': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'FRIENDLY_100', 'UNKNOWN']
+            'all': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'B_125_down', 'FRIENDLY_100', 'UNKNOWN']
         }
     }
+};
+
+/* ----------------------------- SHIRTS SYSTEM CONSTANTS ----------------------------- */
+//TO DO разобраться с вертикальным размещением фланговых игроков
+//TO DO фланговые игроки не должны перемешиваться с центральными при переходе в другую линию
+function generateFieldPositions(formation, side) {
+    // Размеры контейнера с учётом отступов 34px со всех сторон
+    const fieldWidth = 332;  // 400 - 68
+    const fieldHeight = 498; // 566 - 68
+    const isHome = side === 'home';
+    
+    // Определяем зоны по высоте для каждой команды (относительно контейнера)
+    const zones = isHome ? {
+        gk: 497,      // Вратарь (близко к нижнему краю)
+        def: 450,  
+        semidef: 400,
+        mid: 355,  
+        semiatt: 310,
+        att: 265   
+    } : {
+        gk: 1,       // Вратарь (близко к верхнему краю)
+        def: 50,  
+        semidef: 100,
+        mid: 145,  
+        semiatt: 190,
+        att: 235   
+    };
+    
+    const positions = [];
+    
+    // Группируем позиции по линиям
+    const lines = {
+        gk: [],
+        def: [],
+        semidef: [],
+        mid: [],
+        semiatt: [],
+        att: []
+    };
+    
+    formation.forEach((pos, idx) => {
+        if (pos === 'GK') {
+            lines.gk.push({ pos, idx });
+        } else if (['LD', 'CD', 'RD', 'SW'].includes(pos)) {
+            lines.def.push({ pos, idx });
+        } else if (['DM', 'LB', 'RB'].includes(pos)) {
+            lines.semidef.push({ pos, idx });
+        } else if (['LM', 'CM', 'RM'].includes(pos)) {
+            lines.mid.push({ pos, idx });
+        } else if (['AM', 'FR', 'RW', 'LW'].includes(pos)) {
+            lines.semiatt.push({ pos, idx });
+        } else if (['LF', 'CF', 'RF', 'ST'].includes(pos)) {
+            lines.att.push({ pos, idx });
+        }
+    });
+    
+    // Функция для распределения игроков по ширине поля
+    function distributeHorizontally(count) {
+        const margin = 10; // Отступ от краёв 
+        const usableWidth = fieldWidth - 2 * margin;
+        
+        if (count === 1) {
+            return [fieldWidth / 2];
+        } else if (count === 2) {
+            return [margin + usableWidth * 0.25, margin + usableWidth * 0.75];
+        } else if (count === 3) {
+            return [margin, fieldWidth / 2, fieldWidth - margin];
+        } else if (count === 4) {
+            return [margin, margin + usableWidth / 3, margin + 2 * usableWidth / 3, fieldWidth - margin];
+        } else if (count === 5) {
+            return [margin, margin + usableWidth / 4, fieldWidth / 2, margin + 3 * usableWidth / 4, fieldWidth - margin];
+        } else if (count === 6) {
+            return [margin, margin + usableWidth / 5, margin + 2 * usableWidth / 5, margin + 3 * usableWidth / 5, margin + 4 * usableWidth / 5, fieldWidth - margin];
+        }
+        
+        // Для большего количества игроков
+        const positions = [];
+        for (let i = 0; i < count; i++) {
+            positions.push(margin + (usableWidth / (count - 1)) * i);
+        }
+        return positions;
+    }
+    
+    // Размещаем вратаря
+    if (lines.gk.length > 0) {
+        lines.gk.forEach(({ pos, idx }) => {
+            positions[idx] = { position: pos, top: zones.gk, left: fieldWidth / 2 };
+        });
+    }
+    
+    // Размещаем защитников
+    if (lines.def.length > 0) {
+        const xPositions = distributeHorizontally(lines.def.length);
+        lines.def.forEach(({ pos, idx }, i) => {
+            const xIdx = isHome ? i : (lines.def.length - 1 - i);
+            positions[idx] = { position: pos, top: zones.def, left: xPositions[xIdx] };
+        });
+    }
+    
+    // Размещаем линию между защитой и полузащитой - DM, LB, RB
+    if (lines.semidef.length > 0) {
+        const xPositions = distributeHorizontally(lines.semidef.length);
+        lines.semidef.forEach(({ pos, idx }, i) => {
+            const xIdx = isHome ? i : (lines.semidef.length - 1 - i);
+            positions[idx] = { position: pos, top: zones.semidef, left: xPositions[xIdx] };
+        });
+    }
+    
+    // Размещаем центральных полузащитников - LM, CM, RM
+    if (lines.mid.length > 0) {
+        const xPositions = distributeHorizontally(lines.mid.length);
+        lines.mid.forEach(({ pos, idx }, i) => {
+            const xIdx = isHome ? i : (lines.mid.length - 1 - i);
+            positions[idx] = { position: pos, top: zones.mid, left: xPositions[xIdx] };
+        });
+    }
+    
+    // Размещаем атакующих полузащитников (между полузащитой и атакой) - AM, FR, RW, LW
+    if (lines.semiatt.length > 0) {
+        const xPositions = distributeHorizontally(lines.semiatt.length);
+        lines.semiatt.forEach(({ pos, idx }, i) => {
+            const xIdx = isHome ? i : (lines.semiatt.length - 1 - i);
+            positions[idx] = { position: pos, top: zones.semiatt, left: xPositions[xIdx] };
+        });
+    }
+    
+    // Размещаем нападающих
+    if (lines.att.length > 0) {
+        const xPositions = distributeHorizontally(lines.att.length);
+        lines.att.forEach(({ pos, idx }, i) => {
+            const xIdx = isHome ? i : (lines.att.length - 1 - i);
+            positions[idx] = { position: pos, top: zones.att, left: xPositions[xIdx] };
+        });
+    }
+    
+    return positions;
+}
+
+const DEFAULT_SHIRT = 'pics/shirts/sh_4_sm.png';
+const DEFAULT_GK_SHIRT = 'pics/shirts/sh_4_sm.png';
+
+/**
+ * Отладочная функция для визуализации сетки координат на поле
+ * Вызов из консоли: window.debugFieldGrid()
+ */
+window.debugFieldGrid = function() {
+    const fieldCol = document.querySelector('td[style*="field_01.webp"]');
+    if (!fieldCol) {
+        console.error('Field not found');
+        return;
+    }
+    
+    // Удаляем старую сетку
+    const oldGrid = fieldCol.querySelector('.debug-grid');
+    if (oldGrid) {
+        oldGrid.remove();
+        console.log('Debug grid removed.');
+        return;
+    }
+    
+    const grid = document.createElement('div');
+    grid.className = 'debug-grid';
+    grid.style.cssText = `
+        position: absolute;
+        top: 34px;
+        left: 34px;
+        right: 34px;
+        bottom: 34px;
+        pointer-events: none;
+        z-index: 5;
+        border: 2px solid rgba(255, 0, 0, 0.5);
+    `;
+    
+    // Горизонтальные линии зон (относительно контейнера с отступами)
+    [1, 50, 100, 145, 190, 235, 265, 310, 355, 400, 450, 497].forEach(y => {
+        const line = document.createElement('div');
+        line.style.cssText = `
+            position: absolute;
+            top: ${y}px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: rgba(255, 0, 0, 0.3);
+        `;
+        grid.appendChild(line);
+    });
+    
+    // Вертикальные линии (центр и края с отступами)
+    const centerX = 332 / 2; // 166px
+    [10, centerX, 322].forEach(x => {
+        const line = document.createElement('div');
+        line.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: ${x}px;
+            width: 1px;
+            height: 100%;
+            background: rgba(0, 0, 255, 0.3);
+        `;
+        grid.appendChild(line);
+    });
+    
+    fieldCol.appendChild(grid);
+    console.log('Debug grid added. Red lines = zones, Blue lines = horizontal distribution. Call window.debugFieldGrid() again to remove.');
 };
 
 // Legacy constants for backward compatibility
@@ -1350,8 +1547,38 @@ function clearTeamState(storageKey) {
     }
 }
 
-// Removed - functionality moved to StateManager class
-// Removed - now part of CONFIG object
+/* ----------------------------- SHIRTS CACHE FUNCTIONS ----------------------------- */
+function getShirtsCacheKey(teamId) {
+    return `vs_shirts_${teamId}`;
+}
+
+function getCachedShirts(teamId) {
+    try {
+        const cached = localStorage.getItem(getShirtsCacheKey(teamId));
+        if (cached) {
+            const data = JSON.parse(cached);
+            // Кэш действителен 7 дней
+            if (Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) {
+                return data.shirts;
+            }
+        }
+    } catch (e) {
+        console.error('[Shirts] Cache read error', e);
+    }
+    return null;
+}
+
+function setCachedShirts(teamId, shirts) {
+    try {
+        localStorage.setItem(getShirtsCacheKey(teamId), JSON.stringify({
+            shirts,
+            timestamp: Date.now()
+        }));
+    } catch (e) {
+        console.error('[Shirts] Cache write error', e);
+    }
+}
+
 // --- Вспомогательные селекторы ---
 function createRoughSelector(team, onChange) {
     const select = document.createElement('select');
@@ -1395,10 +1622,77 @@ function createMoraleSelector(team, onChange) {
 }
 
 // --- UI UTILS ---
+
+// Кэш стилей игроков
+const PLAYER_STYLE_CACHE_KEY = 'vs_player_styles_cache';
+
+function getPlayerStyleCache() {
+    try {
+        const cached = vsStorage.get(PLAYER_STYLE_CACHE_KEY);
+        return cached ? JSON.parse(cached) : {};
+    } catch (e) {
+        console.warn('[Cache] Failed to load player styles cache', e);
+        return {};
+    }
+}
+
+function savePlayerStyleCache(cache) {
+    try {
+        vsStorage.set(PLAYER_STYLE_CACHE_KEY, JSON.stringify(cache));
+    } catch (e) {
+        console.warn('[Cache] Failed to save player styles cache', e);
+    }
+}
+
+function getPlayerStyleFromCache(playerId) {
+    const cache = getPlayerStyleCache();
+    return cache[playerId] || 'norm';
+}
+
+function setPlayerStyleToCache(playerId, styleValue) {
+    const cache = getPlayerStyleCache();
+    cache[playerId] = styleValue;
+    savePlayerStyleCache(cache);
+}
+
+// Глобальная функция для расчета силы игрока с учетом всех модификаторов
+function calculatePlayerStrengthGlobal(player, matchPosition, physicalFormId) {
+    const baseStr = Number(player.baseStrength) || 0;
+    
+    // Определяем форму игрока
+    let actualFormId = physicalFormId;
+    if (!actualFormId || actualFormId === 'FRIENDLY_100') {
+        const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
+        actualFormId = getPhysicalFormIdFromData(player.form, player.form_mod, tournamentType);
+    }
+    
+    // Применяем все модификаторы
+    const physicalFormModifier = getPhysicalFormModifier(actualFormId);
+    const realityModifier = getRealityBonus(player.real_status, player.real_sign);
+    const positionModifier = getPositionModifier(player.mainPos, player.secondPos, matchPosition);
+    
+    // Для товарищеских матчей усталость всегда 25%
+    let fatigueModifier;
+    const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
+    if (tournamentType === 'friendly') {
+        fatigueModifier = 1 - (25 / 100); // 0.75
+    } else {
+        fatigueModifier = getFatigueBonus(player.fatigue);
+    }
+    
+    const calculatedStr = baseStr * physicalFormModifier * fatigueModifier * realityModifier * positionModifier;
+    
+    return Math.round(calculatedStr);
+}
+
 /* ----------------------------- REUSABLE UI FACTORY ----------------------------- */
 class UIFactory {
     static createSelect(options, selectedValue = null) {
         const select = document.createElement('select');
+        select.style.borderRadius = '0';
+        select.style.color = '#444';
+        select.style.padding = '2px 4px';
+        select.style.lineHeight = '16px';
         options.forEach(option => {
             const opt = document.createElement('option');
             opt.value = option.value;
@@ -1429,6 +1723,10 @@ class UIFactory {
 
     static createTemperatureSelector(weather, selectedValue = null) {
         const select = document.createElement('select');
+        select.style.borderRadius = '0';
+        select.style.color = '#444';
+        select.style.padding = '2px 4px';
+        select.style.lineHeight = '16px';
         const [max, min] = CONFIG.WEATHER.TEMP_MAP[weather] || [25, 5];
         
         for (let t = max; t >= min; t--) {
@@ -1453,6 +1751,10 @@ function createStyleSelector() {
 
 function createFormationSelector(formationManager) {
     const select = document.createElement('select');
+    select.style.borderRadius = '0';
+    select.style.color = '#444';
+    select.style.padding = '2px 4px';
+    select.style.lineHeight = '16px';
     formationManager.getAllFormations().forEach(name => {
         const opt = document.createElement('option');
         opt.value = name;
@@ -1465,6 +1767,10 @@ function createFormationSelector(formationManager) {
 function createDummySelect() {
     const select = document.createElement('select');
     select.innerHTML = '<option value="">—</option>';
+    select.style.borderRadius = '0';
+    select.style.color = '#444';
+    select.style.padding = '2px 4px';
+    select.style.lineHeight = '16px';
     return select;
 }
 
@@ -1473,32 +1779,43 @@ function createDummySelect() {
     const css = `
     .morale-select, .rough-select, .defence-type-select {
       min-width: 110px; height: 20px; font-size: 11px; border: 1px solid #aaa;
-      border-radius: 4px; padding: 1px 4px; margin-left: 4px; transition: background 0.2s;
+      border-radius: 0; padding: 2px 4px; margin-left: 4px; transition: background 0.2s;
+      color: #444; line-height: 16px;
     }
-    #vsol-calculator-ui { margin: 20px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ccc; border-radius: 6px; }
+    #vsol-calculator-ui { width: 800px; margin: 20px auto; padding: 0; background: #f9f9f9; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; overflow: visible; }
+    #vsol-calculator-ui > *:not(table) { padding-left: 15px; padding-right: 15px; }
+    #vsol-calculator-ui > h3 { padding-top: 15px; padding-bottom: 10px; margin: 0; }
+    #vsol-calculator-ui > div:first-child { padding-top: 15px; }
     #vsol-calculator-ui #vsol-synergy-ui {
-      display: flex; gap: 24px; align-items: center; margin-top: 8px;
+      display: flex; gap: 24px; align-items: center; margin-top: 8px; padding-bottom: 15px;
     }
     #vsol-calculator-ui .vs-synergy-block { display: inline-flex; align-items: center; gap: 6px; }
     #vsol-calculator-ui .vs-synergy-input {
       width: 80px; height: 20px; line-height: 18px; font-size: 11px; padding: 1px 4px; box-sizing: border-box;
     }
+    
+    /* Настройки команд */
+    #vs-home-settings-table, #vs-away-settings-table { width: 175px; }
+    #vs-home-settings-table { margin-left: 0; }
+    #vs-away-settings-table { margin-right: 0; }
 
     /* Таблица составов — фикс строк и выравнивание */
-    #vsol-calculator-ui .orders-table { width: 415px; border-collapse: separate; table-layout: fixed; }
+    #vsol-calculator-ui .orders-table { width: 350px; border-collapse: separate; table-layout: fixed; margin: 0 auto; }
+    #vsol-calculator-ui #orders-table-home { margin-left: 25px; }
+    #vsol-calculator-ui #orders-table-away { margin-right: 25px; }
     #vsol-calculator-ui .orders-table tr { height: 22px; }
     #vsol-calculator-ui .orders-table td { vertical-align: middle; padding: 0; }
 
-    #vsol-calculator-ui .order { width: 40px; text-align: center; font-weight: bold; }
+    #vsol-calculator-ui .order { width: 35px; text-align: center; font-weight: bold; }
     #vsol-calculator-ui .txt { text-align: center; }
-    #vsol-calculator-ui .mini-pos-cell { width: 40px; }
-    #vsol-calculator-ui td.player-cell { width: 271px; }
+    #vsol-calculator-ui .mini-pos-cell { width: 35px; }
+    #vsol-calculator-ui td.player-cell { width: 215px; }
     #vsol-calculator-ui td.style-cell { width: 40px; }
     #vsol-calculator-ui td.form-cell { width: 60px; }
 
     /* Псевдо-select2 для игрока */
     #vsol-calculator-ui .select2 { display: inline-block; position: relative; vertical-align: top; }
-    #vsol-calculator-ui .select2-container--orders { width: 271px; }
+    #vsol-calculator-ui .select2-container--orders { width: 215px; }
 
     #vsol-calculator-ui .select2-selection {
       display: flex; align-items: center; justify-content: space-between;
@@ -1518,9 +1835,9 @@ function createDummySelect() {
     #vsol-calculator-ui .dropdown-wrapper { display: none; }
     #vsol-calculator-ui .orders-dropdown {
       position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #aaa;
-      z-index: 9999; max-height: 240px; overflow-y: auto;
+      z-index: 9999;
     }
-    #vsol-calculator-ui .orders-option { padding: 0 4px; height: 20px; line-height: 20px; font-size: 11px; text-align: left; cursor: pointer; }
+    #vsol-calculator-ui .orders-option { padding: 2px 4px; height: 20px; line-height: 16px; font-size: 11px; text-align: left; cursor: pointer; color: #444; }
     #vsol-calculator-ui .orders-option:hover { background: #f0f0f0; }
     #vsol-calculator-ui .orders-option.disabled { color: #bbb; cursor: default; }
     #vsol-calculator-ui .orders-placeholder { color: rgb(163,163,163); }
@@ -1531,50 +1848,67 @@ function createDummySelect() {
     /* Селектор стиля игрока */
     #vsol-calculator-ui .custom-style-select { position: relative; width: 100%; user-select: none; display: block; }
     #vsol-calculator-ui .custom-style-select .selected {
-      border: 1px solid #aaa; padding: 1px 4px; background: #fff;
-      display: flex; align-items: center; gap: 6px;
-      height: 20px; min-height: 20px; line-height: 18px; font-size: 11px; box-sizing: border-box; cursor: pointer;
+      border: 1px solid #aaa; padding: 2px 4px; background: #fff;
+      display: flex; align-items: center; justify-content: center; gap: 2px;
+      height: 20px; min-height: 20px; line-height: 16px; font-size: 11px; box-sizing: border-box; cursor: pointer;
     }
     #vsol-calculator-ui .custom-style-select .icon { width: 14px; height: 14px; }
     #vsol-calculator-ui .custom-style-select .options {
-      display: none; position: absolute; left: 0; right: 0; background: #fff; border: 1px solid #aaa; border-top: none;
-      z-index: 9999; max-height: 180px; overflow-y: auto; margin: 0; padding: 0; list-style: none;
+      display: none; position: absolute; left: 0; width: 100%; background: #fff; border: 1px solid #aaa; border-top: none;
+      z-index: 9999; margin: 0; padding: 0; list-style: none;
     }
     #vsol-calculator-ui .custom-style-select.open .options { display: block; }
     #vsol-calculator-ui .custom-style-select .options li {
-      height: 20px; line-height: 20px; font-size: 11px; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 0 4px;
+      height: 20px; line-height: 16px; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 2px; cursor: pointer; padding: 2px 4px;
     }
     #vsol-calculator-ui .custom-style-select .options li:hover { background: #f0f0f0; }
     
     /* Селектор физической формы */
     #vsol-calculator-ui .physical-form-select { position: relative; width: 100%; user-select: none; display: block; }
     #vsol-calculator-ui .physical-form-select .selected {
-      border: 1px solid #aaa; padding: 1px 4px; background: #fff;
-      display: flex; align-items: center; gap: 2px;
-      height: 20px; min-height: 20px; line-height: 18px; font-size: 11px; box-sizing: border-box; cursor: pointer;
+      border: 1px solid #aaa; padding: 2px 4px; background: #fff;
+      display: flex; align-items: center; justify-content: center; gap: 2px;
+      height: 20px; min-height: 20px; line-height: 16px; font-size: 11px; box-sizing: border-box; cursor: pointer;
     }
     #vsol-calculator-ui .physical-form-select .options {
-      display: none; position: absolute; left: 0; background: #fff; border: 1px solid #aaa; border-top: none;
-      z-index: 9999; max-height: 180px; overflow-y: auto; margin: 0; padding: 0; list-style: none; min-width: 150px;
+      display: none; position: absolute; left: 0; width: 100%; background: #fff; border: 1px solid #aaa; border-top: none;
+      z-index: 9999; margin: 0; padding: 0; list-style: none;
     }
     #vsol-calculator-ui .physical-form-select.open .options { display: block; }
     #vsol-calculator-ui .physical-form-select .options li {
-      height: 20px; line-height: 20px; font-size: 11px; display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 0 4px;
+      height: 20px; line-height: 16px; font-size: 11px; display: flex; align-items: center; gap: 2px; cursor: pointer; padding: 2px 4px;
     }
     #vsol-calculator-ui .physical-form-select .options li:hover { background: #f0f0f0; }
     
     /* Селектор капитана */
     #vsol-calculator-ui .vs-captain-row { margin-top: 4px; }
-    #vsol-calculator-ui .vs-captain-table { width: 415px; border-collapse: separate; table-layout: fixed; }
-    #vsol-calculator-ui .vs-captain-cell-icon { width: 40px; text-align: center; vertical-align: middle; padding: 0; }
+    #vsol-calculator-ui .vs-captain-table { width: 350px; border-collapse: separate; table-layout: fixed; margin: 0 auto; }
+    #orders-table-home + .vs-captain-row .vs-captain-table { margin-left: 25px; }
+    #orders-table-away + .vs-captain-row .vs-captain-table { margin-right: 25px; }
+    #vsol-calculator-ui .vs-captain-cell-icon { width: 35px; text-align: center; vertical-align: middle; padding: 0; }
     #vsol-calculator-ui .vs-captain-cell-select { vertical-align: middle; padding: 0; }
     #vsol-calculator-ui .vs-captain-select {
-      width: 100%; height: 20px; min-height: 20px; line-height: 18px; font-size: 11px; 
-      border: 1px solid #aaa; padding: 1px 4px; box-sizing: border-box; 
+      width: 100%; height: 20px; min-height: 20px; line-height: 16px; font-size: 11px; 
+      border: 1px solid #aaa; padding: 2px 4px; box-sizing: border-box; 
       background: #fff; cursor: pointer; border-radius: 0; text-align: left;
+      color: #444;
     }
     #vsol-calculator-ui .vs-captain-select option.captain-placeholder {
       color: rgb(163,163,163);
+    }
+    
+    /* Стили для контейнера футболок */
+    .shirts-container {
+      pointer-events: none;
+    }
+    
+    /* Индикатор загрузки футболок */
+    .shirts-loading {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
   `;
     const st = document.createElement('style');
@@ -1585,38 +1919,31 @@ function createDummySelect() {
 // --- PLAYER SELECTORS ---
 const PLAYER_STYLES = [{
         value: 'sp',
-        label: '',
         icon: 'styles/o1.gif'
     },
     {
         value: 'brazil',
-        label: '',
         icon: 'styles/o3.gif'
     },
     {
         value: 'tiki',
-        label: '',
         icon: 'styles/o4.gif'
     },
     {
         value: 'bb',
-        label: '',
         icon: 'styles/o2.gif'
     },
     {
         value: 'kat',
-        label: '',
         icon: 'styles/o5.gif'
     },
     {
         value: 'brit',
-        label: '',
         icon: 'styles/o6.gif'
     },
     {
         value: 'norm',
-        label: '—',
-        icon: ''
+        icon: 'styles/o8.gif'
     }
 ];
 
@@ -1628,13 +1955,11 @@ function createCustomStyleSelect(onChange) {
     const selectedIcon = document.createElement('img');
     selectedIcon.className = 'icon';
     selectedIcon.style.display = 'none';
-    const selectedLabel = document.createElement('span');
-    selectedLabel.textContent = '—';
     selectedDiv.appendChild(selectedIcon);
-    selectedDiv.appendChild(selectedLabel);
     wrapper.appendChild(selectedDiv);
     const optionsUl = document.createElement('ul');
-    optionsUl.className = 'options';
+    optionsUl.className = 'options custom-style-options';
+    optionsUl.id = `custom-style-options-${Math.random().toString(36).substr(2, 9)}`;
     let currentValue = 'norm';
     PLAYER_STYLES.forEach(style => {
         const li = document.createElement('li');
@@ -1644,12 +1969,16 @@ function createCustomStyleSelect(onChange) {
             img.src = style.icon;
             img.className = 'icon';
             li.appendChild(img);
+        } else {
+            // Для norm без иконки - просто пустое место
+            const placeholder = document.createElement('div');
+            placeholder.style.width = '14px';
+            placeholder.style.height = '14px';
+            li.appendChild(placeholder);
         }
-        li.appendChild(document.createTextNode(style.label));
         li.addEventListener('click', () => {
             currentValue = li.dataset.value;
             const styleObj = PLAYER_STYLES.find(s => s.value === currentValue) || PLAYER_STYLES[0];
-            selectedLabel.textContent = styleObj.label || '—';
             if (styleObj.icon) {
                 selectedIcon.src = styleObj.icon;
                 selectedIcon.style.display = '';
@@ -1664,7 +1993,6 @@ function createCustomStyleSelect(onChange) {
     });
     wrapper.appendChild(optionsUl);
     const styleObj = PLAYER_STYLES.find(s => s.value === currentValue) || PLAYER_STYLES[0];
-    selectedLabel.textContent = styleObj.label || '—';
     if (styleObj.icon) {
         selectedIcon.src = styleObj.icon;
         selectedIcon.style.display = '';
@@ -1684,7 +2012,6 @@ function createCustomStyleSelect(onChange) {
     wrapper.setValue = (val) => {
         currentValue = val;
         const styleObj = PLAYER_STYLES.find(s => s.value === currentValue) || PLAYER_STYLES[0];
-        selectedLabel.textContent = styleObj.label || '—';
         if (styleObj.icon) {
             selectedIcon.src = styleObj.icon;
             selectedIcon.style.display = '';
@@ -1716,7 +2043,8 @@ function createPhysicalFormSelect(onChange, dayType = 'all') {
     wrapper.appendChild(selectedDiv);
     
     const optionsUl = document.createElement('ul');
-    optionsUl.className = 'options';
+    optionsUl.className = 'options physical-form-options';
+    optionsUl.id = `physical-form-options-${Math.random().toString(36).substr(2, 9)}`;
     
     let currentValue = 'FRIENDLY_100'; // По умолчанию 100%
     let availableForms = getPhysicalFormsByDayType(dayType);
@@ -1726,15 +2054,14 @@ function createPhysicalFormSelect(onChange, dayType = 'all') {
         availableForms.forEach(form => {
             const li = document.createElement('li');
             li.dataset.value = form.id;
+            li.title = form.title; // Подсказка при наведении
             
             const icon = document.createElement('div');
             icon.className = 'form-icon';
             icon.style.cssText = `width: 18px; height: 19px; background: url(form/sprite-1.4.gif) no-repeat ${form.bgPosition}; display: inline-block; vertical-align: middle;`;
-            icon.title = form.title;
             
             const label = document.createElement('span');
-            label.textContent = form.title;
-            label.style.marginLeft = '4px';
+            label.textContent = form.percent + '%';
             
             li.appendChild(icon);
             li.appendChild(label);
@@ -2378,11 +2705,14 @@ function getCurrentWeatherFromUI() {
     };
 }
 // --- MAIN LINEUP BLOCK ---
-function createTeamLineupBlock(players, initialFormationName = "4-4-2") {
+function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId = null) {
     const lineup = [];
     const selectedPlayerIds = new Set();
     const table = document.createElement('table');
     table.className = 'orders-table';
+    if (teamId) {
+        table.id = `orders-table-${teamId}`;
+    }
     const rowsCount = 11;
     let formationName = initialFormationName;
     let positions = FORMATIONS[formationName];
@@ -2523,8 +2853,23 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2") {
         captainSelectRef.innerHTML = '<option value="" class="captain-placeholder">— не выбран —</option>';
         available.forEach(p => {
             const percent = estimateCaptainPercent(p, dummyEntries);
-            const captainRealStr = Number(p.realStr) || 0;
-            const captainBonus = captainRealStr * percent;
+            
+            // Находим слот капитана для получения его позиции и формы
+            const captainSlot = lineup.find(slot => {
+                const pid = slot.getValue && slot.getValue();
+                return pid && String(pid) === String(p.id);
+            });
+            
+            let captainCalculatedStr;
+            if (captainSlot && captainSlot.posValue && captainSlot.physicalFormValue) {
+                // Используем calculatePlayerStr для точного расчета
+                captainCalculatedStr = calculatePlayerStr(p, captainSlot.posValue, captainSlot.physicalFormValue);
+            } else {
+                // Fallback на realStr если нет данных о позиции/форме
+                captainCalculatedStr = Number(p.realStr) || 0;
+            }
+            
+            const captainBonus = captainCalculatedStr * percent;
             
             const opt = document.createElement('option');
             opt.value = p.id;
@@ -2614,6 +2959,12 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2") {
         const styleSelect = createCustomStyleSelect((styleValue) => {
             slotApi.customStyleValue = styleValue;
             const playerId = slotApi.getValue && slotApi.getValue();
+            
+            // Сохраняем стиль игрока в кэш
+            if (playerId) {
+                setPlayerStyleToCache(playerId, styleValue);
+            }
+            
             const player = players.find(p => String(p.id) === String(playerId));
             if (player) {
                 logPlayerWeatherCoef({
@@ -2641,20 +2992,31 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2") {
                 // Проверяем форму игрока при установке
                 if (v) {
                     const player = players.find(p => String(p.id) === String(v));
-                    if (player && slotApi.physicalFormSelect) {
-                        const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
-                        const autoFormId = getPhysicalFormIdFromData(player.form, player.form_mod, tournamentType);
+                    if (player) {
+                        // Загружаем стиль игрока из кэша
+                        const cachedStyle = getPlayerStyleFromCache(v);
+                        if (cachedStyle && cachedStyle !== 'norm') {
+                            slotApi.customStyleValue = cachedStyle;
+                            if (styleSelect && styleSelect.setValue) {
+                                styleSelect.setValue(cachedStyle);
+                            }
+                        }
                         
-                        // Устанавливаем форму только если она ещё не установлена (null)
-                        // Если форма уже установлена вручную, не перезаписываем её
-                        if (slotApi.physicalFormValue === null) {
-                            slotApi.physicalFormSelect.setValue(autoFormId);
-                            slotApi.physicalFormValue = autoFormId;
+                        if (slotApi.physicalFormSelect) {
+                            const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
+                            const autoFormId = getPhysicalFormIdFromData(player.form, player.form_mod, tournamentType);
                             
-                            // Пересчитываем realStr с учетом физ формы
-                            const baseRealStr = Number(player.baseRealStr || player.realStr) || 0;
-                            const modifiedRealStr = applyPhysicalFormToRealStr(baseRealStr, autoFormId);
-                            slotApi.modifiedRealStr = modifiedRealStr;
+                            // Устанавливаем форму только если она ещё не установлена (null)
+                            // Если форма уже установлена вручную, не перезаписываем её
+                            if (slotApi.physicalFormValue === null) {
+                                slotApi.physicalFormSelect.setValue(autoFormId);
+                                slotApi.physicalFormValue = autoFormId;
+                                
+                                // Пересчитываем realStr с учетом физ формы
+                                const baseRealStr = Number(player.baseRealStr || player.realStr) || 0;
+                                const modifiedRealStr = applyPhysicalFormToRealStr(baseRealStr, autoFormId);
+                                slotApi.modifiedRealStr = modifiedRealStr;
+                            }
                         }
                     }
                 }
@@ -2834,8 +3196,23 @@ function refreshCaptainOptions(lineupBlock, players) {
     sel.innerHTML = '<option value="" class="captain-placeholder">— не выбран —</option>';
     available.forEach(p => {
         const percent = estimateCaptainPercent(p, dummyEntries);
-        const captainRealStr = Number(p.realStr) || 0;
-        const captainBonus = captainRealStr * percent;
+        
+        // Находим слот капитана для получения его позиции и формы
+        const captainSlot = lineupBlock.lineup.find(slot => {
+            const pid = slot.getValue && slot.getValue();
+            return pid && String(pid) === String(p.id);
+        });
+        
+        let captainCalculatedStr;
+        if (captainSlot && captainSlot.posValue && captainSlot.physicalFormValue) {
+            // Используем calculatePlayerStrengthGlobal для точного расчета
+            captainCalculatedStr = calculatePlayerStrengthGlobal(p, captainSlot.posValue, captainSlot.physicalFormValue);
+        } else {
+            // Fallback на realStr если нет данных о позиции/форме
+            captainCalculatedStr = Number(p.realStr) || 0;
+        }
+        
+        const captainBonus = captainCalculatedStr * percent;
         
         const opt = document.createElement('option');
         opt.value = p.id;
@@ -2929,68 +3306,120 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
         team.formation = formationSelector.value;
         if (typeof onChange === 'function') onChange();
     });
+    
+    const tacticSelect = createDummySelect();
+    const defenseSelect = createDefenceTypeSelector(team, onChange);
+    const roughSelect = createRoughSelector(team, onChange);
+    const moraleSelect = createMoraleSelector(team, onChange);
+    
+    if (team === window.homeTeam) {
+        window.homeDefenceTypeSelect = defenseSelect;
+        window.homeRoughSelect = roughSelect;
+        window.homeMoraleSelect = moraleSelect;
+    }
+    if (team === window.awayTeam) {
+        window.awayDefenceTypeSelect = defenseSelect;
+        window.awayRoughSelect = roughSelect;
+        window.awayMoraleSelect = moraleSelect;
+    }
+    
+    // Создаем блок с таблицей
     const block = document.createElement('div');
     block.style.marginBottom = '8px';
-    block.style.display = 'flex';
-    block.style.flexDirection = 'column';
-    block.style.alignItems = 'flex-start';
-    const styleDiv = document.createElement('div');
-    styleDiv.style.marginBottom = '8px';
-    const styleLabel = document.createElement('label');
-    styleLabel.textContent = 'стиль: ';
-    styleLabel.appendChild(styleSelector);
-    styleDiv.appendChild(styleLabel);
-    block.appendChild(styleDiv);
-    const formationDiv = document.createElement('div');
-    const formationLabel = document.createElement('label');
-    formationLabel.textContent = 'формация: ';
-    const formationHelpBtn = document.createElement('button');
-    formationHelpBtn.textContent = '?';
-    formationHelpBtn.style.marginLeft = '4px';
-    formationHelpBtn.title = 'Подсказка по формации';
-    formationHelpBtn.onclick = function (e) {
-        e.preventDefault();
-        alert(
-            '• В 4-2-4 крайние CM могут меняться на LM/RM синхронно и обратно.\n• При отсутствии AM: LM↔LW и RM↔RW доступны.\n• CF в 4-2-4 может стать ST.');
+    
+    const table = document.createElement('table');
+    table.id = team === window.homeTeam ? 'vs-home-settings-table' : 'vs-away-settings-table';
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    
+    // Функция для создания строк таблицы (заголовок и селектор на разных строках)
+    const createRow = (labelText, selectElement, extraElement = null, rowId = null) => {
+        // Строка с заголовком
+        const trLabel = document.createElement('tr');
+        if (rowId) {
+            trLabel.id = `${rowId}-label`;
+        }
+        
+        const tdLabel = document.createElement('td');
+        tdLabel.className = 'txt';
+        tdLabel.textContent = labelText;
+        tdLabel.style.paddingBottom = '2px';
+        tdLabel.style.fontSize = '11px';
+        tdLabel.style.fontWeight = 'bold';
+        
+        trLabel.appendChild(tdLabel);
+        
+        // Строка с селектором
+        const trSelect = document.createElement('tr');
+        if (rowId) {
+            trSelect.id = `${rowId}-select`;
+        }
+        
+        const tdSelect = document.createElement('td');
+        tdSelect.className = 'txt';
+        tdSelect.style.paddingBottom = '6px';
+        
+        // Применяем стили как у селекторов игроков
+        if (selectElement.tagName === 'SELECT') {
+            selectElement.style.width = '100%';
+            selectElement.style.height = '20px';
+            selectElement.style.fontSize = '11px';
+            selectElement.style.border = '1px solid #aaa';
+            selectElement.style.borderRadius = '0';
+            selectElement.style.padding = '2px 4px';
+            selectElement.style.boxSizing = 'border-box';
+            selectElement.style.background = 'transparent';
+            selectElement.style.color = '#444';
+            selectElement.style.lineHeight = '16px';
+        }
+        
+        // Если есть дополнительный элемент (кнопка помощи), создаем flex контейнер
+        if (extraElement) {
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.gap = '4px';
+            container.style.alignItems = 'center';
+            selectElement.style.flex = '1';
+            container.appendChild(selectElement);
+            container.appendChild(extraElement);
+            tdSelect.appendChild(container);
+        } else {
+            tdSelect.appendChild(selectElement);
+        }
+        
+        trSelect.appendChild(tdSelect);
+        
+        return [trLabel, trSelect];
     };
-    formationLabel.appendChild(formationSelector);
-    formationLabel.appendChild(formationHelpBtn);
-    formationDiv.appendChild(formationLabel);
-    block.appendChild(formationDiv);
-    const tacticDiv = document.createElement('div');
-    const tacticLabel = document.createElement('label');
-    tacticLabel.textContent = 'тактика: ';
-    const tacticSelect = createDummySelect();
-    tacticLabel.appendChild(tacticSelect);
-    tacticDiv.appendChild(tacticLabel);
-    block.appendChild(tacticDiv);
-    const defenseDiv = document.createElement('div');
-    const defenseLabel = document.createElement('label');
-    defenseLabel.textContent = 'вид защиты: ';
-    const defenseSelect = createDefenceTypeSelector(team, onChange);
-    defenseLabel.appendChild(defenseSelect);
-    defenseDiv.appendChild(defenseLabel);
-    block.appendChild(defenseDiv);
-    if (team === window.homeTeam) window.homeDefenceTypeSelect = defenseSelect;
-    if (team === window.awayTeam) window.awayDefenceTypeSelect = defenseSelect;
-    const roughDiv = document.createElement('div');
-    const roughLabel = document.createElement('label');
-    roughLabel.textContent = 'грубость: ';
-    const roughSelect = createRoughSelector(team, onChange);
-    roughLabel.appendChild(roughSelect);
-    roughDiv.appendChild(roughLabel);
-    block.appendChild(roughDiv);
-    if (team === window.homeTeam) window.homeRoughSelect = roughSelect;
-    if (team === window.awayTeam) window.awayRoughSelect = roughSelect;
-    const moraleDiv = document.createElement('div');
-    const moraleLabel = document.createElement('label');
-    moraleLabel.textContent = 'настрой: ';
-    const moraleSelect = createMoraleSelector(team, onChange);
-    moraleLabel.appendChild(moraleSelect);
-    moraleDiv.appendChild(moraleLabel);
-    block.appendChild(moraleDiv);
-    if (team === window.homeTeam) window.homeMoraleSelect = moraleSelect;
-    if (team === window.awayTeam) window.awayMoraleSelect = moraleSelect;
+    
+    const teamPrefix = team === window.homeTeam ? 'home' : 'away';
+    
+    // Добавляем строки (каждая пара: заголовок + селектор)
+    const [styleLabelRow, styleSelectRow] = createRow('стиль:', styleSelector, null, `vs-${teamPrefix}-style`);
+    table.appendChild(styleLabelRow);
+    table.appendChild(styleSelectRow);
+    
+    const [formLabelRow, formSelectRow] = createRow('формация:', formationSelector, null, `vs-${teamPrefix}-formation`);
+    table.appendChild(formLabelRow);
+    table.appendChild(formSelectRow);
+    
+    const [tacticLabelRow, tacticSelectRow] = createRow('тактика:', tacticSelect, null, `vs-${teamPrefix}-tactic`);
+    table.appendChild(tacticLabelRow);
+    table.appendChild(tacticSelectRow);
+    
+    const [defenseLabelRow, defenseSelectRow] = createRow('вид защиты:', defenseSelect, null, `vs-${teamPrefix}-defense`);
+    table.appendChild(defenseLabelRow);
+    table.appendChild(defenseSelectRow);
+    
+    const [roughLabelRow, roughSelectRow] = createRow('грубость:', roughSelect, null, `vs-${teamPrefix}-rough`);
+    table.appendChild(roughLabelRow);
+    table.appendChild(roughSelectRow);
+    
+    const [moraleLabelRow, moraleSelectRow] = createRow('настрой:', moraleSelect, null, `vs-${teamPrefix}-morale`);
+    table.appendChild(moraleLabelRow);
+    table.appendChild(moraleSelectRow);
+    
+    block.appendChild(table);
     team._styleSelector = styleSelector;
     team._formationSelector = formationSelector;
     return block;
@@ -3074,7 +3503,7 @@ function getTournamentType() {
         ]);
         const oldUI = document.getElementById('vsol-calculator-ui');
         if (oldUI) oldUI.remove();
-        const ui = createUI(null, null, homePlayers, awayPlayers);
+        const ui = createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers);
         const comparisonTable = document.querySelector('table.tobl');
         if (comparisonTable && comparisonTable.parentNode) {
             comparisonTable.parentNode.insertBefore(ui, comparisonTable.nextSibling);
@@ -3242,6 +3671,439 @@ function getTournamentType() {
         });
     }
 
+    /* ----------------------------- SHIRTS DATA FUNCTIONS ----------------------------- */
+    function getLastMatchForTeam(teamId) {
+        return new Promise((resolve, reject) => {
+            const url = `https://www.virtualsoccer.ru/roster_m.php?num=${teamId}`;
+            GM_xmlhttpRequest({
+                method: "GET",
+                url: url,
+                onload: function (response) {
+                    if (response.status !== 200) {
+                        reject(new Error('Failed to load roster_m'));
+                        return;
+                    }
+                    
+                    try {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(response.responseText, 'text/html');
+                        
+                        // Ищем все строки матчей (только viewmatch.php - это сыгранные матчи)
+                        const matchLinks = Array.from(doc.querySelectorAll('a[href*="viewmatch.php"]'));
+                        
+                        console.log('[Shirts] Found match links:', matchLinks.length);
+                        
+                        // Ищем последний сыгранный матч (идем с конца списка)
+                        for (let i = matchLinks.length - 1; i >= 0; i--) {
+                            const link = matchLinks[i];
+                            const scoreText = link.textContent.trim();
+                            
+                            // Пропускаем несыгранные матчи (счет ?:?)
+                            if (scoreText === '?:?') {
+                                continue;
+                            }
+                            
+                            const href = link.getAttribute('href');
+                            const match = href.match(/day=(\d+)&match_id=(\d+)/);
+                            if (match) {
+                                console.log('[Shirts] Found last played match:', { day: match[1], matchId: match[2], score: scoreText });
+                                resolve({ day: match[1], matchId: match[2] });
+                                return;
+                            }
+                        }
+                        
+                        console.log('[Shirts] No played matches found');
+                        resolve(null);
+                    } catch (error) {
+                        reject(error);
+                    }
+                },
+                onerror: function (err) {
+                    reject(err);
+                }
+            });
+        });
+    }
+
+    function getMatchLineup(day, matchId, teamId) {
+        return new Promise((resolve, reject) => {
+            const url = `https://www.virtualsoccer.ru/viewmatch.php?day=${day}&match_id=${matchId}`;
+            console.log('[Shirts] Loading match page:', url);
+            
+            GM_xmlhttpRequest({
+                method: "GET",
+                url: url,
+                onload: function (response) {
+                    if (response.status !== 200) {
+                        reject(new Error('Failed to load viewmatch'));
+                        return;
+                    }
+                    
+                    console.log('[Shirts] Match page loaded, response length:', response.responseText.length);
+                    
+                    try {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(response.responseText, 'text/html');
+                        
+                        // Определяем, дома или в гостях играла команда
+                        const teamLinks = doc.querySelectorAll('table.tobl a[href^="roster.php?num="]');
+                        let isHome = false;
+                        
+                        if (teamLinks.length >= 2) {
+                            const homeTeamId = new URL(teamLinks[0].href, 'https://www.virtualsoccer.ru').searchParams.get('num');
+                            isHome = (homeTeamId === String(teamId));
+                        }
+                        
+                        // Извлекаем футболки
+                        const prefix = isHome ? 'gif_0_' : 'gif_1_';
+                        const shirts = {};
+                        
+                        console.log('[Shirts] Looking for shirts with prefix', prefix, 'isHome:', isHome);
+                        
+                        // Пробуем разные селекторы
+                        let shirtDivs = doc.querySelectorAll(`div.shirt.qf[id^="${prefix}"]`);
+                        console.log('[Shirts] Found shirt divs with selector 1:', shirtDivs.length);
+                        
+                        if (shirtDivs.length === 0) {
+                            // Пробуем без класса qf
+                            shirtDivs = doc.querySelectorAll(`div.shirt[id^="${prefix}"]`);
+                            console.log('[Shirts] Found shirt divs with selector 2:', shirtDivs.length);
+                        }
+                        
+                        if (shirtDivs.length === 0) {
+                            // Пробуем просто по id
+                            shirtDivs = doc.querySelectorAll(`div[id^="${prefix}"]`);
+                            console.log('[Shirts] Found shirt divs with selector 3:', shirtDivs.length);
+                        }
+                        
+                        if (shirtDivs.length === 0) {
+                            // Пробуем найти все div с классом shirt
+                            const allShirts = doc.querySelectorAll('div.shirt');
+                            console.log('[Shirts] Total shirt divs found:', allShirts.length);
+                            
+                            if (allShirts.length === 0) {
+                                // Проверяем что вообще есть на странице
+                                const allDivs = doc.querySelectorAll('div');
+                                console.log('[Shirts] Total divs on page:', allDivs.length);
+                                
+                                // Проверяем есть ли таблица с составом
+                                const tables = doc.querySelectorAll('table.tobl');
+                                console.log('[Shirts] Tables found:', tables.length);
+                                
+                                // Ищем любые div с id содержащим gif
+                                const gifDivs = Array.from(allDivs).filter(d => d.id && d.id.includes('gif'));
+                                console.log('[Shirts] Divs with "gif" in id:', gifDivs.length);
+                                if (gifDivs.length > 0) {
+                                    console.log('[Shirts] Sample gif div:', {
+                                        id: gifDivs[0].id,
+                                        className: gifDivs[0].className,
+                                        textContent: gifDivs[0].textContent,
+                                        style: gifDivs[0].getAttribute('style')?.substring(0, 100)
+                                    });
+                                }
+                            } else {
+                                console.log('[Shirts] Sample shirt div:', allShirts[0] ? {
+                                    id: allShirts[0].id,
+                                    className: allShirts[0].className,
+                                    innerHTML: allShirts[0].innerHTML.substring(0, 100)
+                                } : 'none');
+                            }
+                        }
+                        
+                        // Если нашли элементы через querySelector
+                        if (shirtDivs.length > 0) {
+                            shirtDivs.forEach((div, idx) => {
+                                const position = div.textContent.trim();
+                                const style = div.getAttribute('style');
+                                const bgMatch = style ? style.match(/background-image:\s*url\(['"]*([^'"()]+)['"]*\)/) : null;
+                                
+                                if (idx < 3) {
+                                    console.log('[Shirts] Processing div #' + idx + ':', { 
+                                        id: div.id,
+                                        position, 
+                                        styleLength: style ? style.length : 0,
+                                        bgMatch: bgMatch ? bgMatch[1] : null 
+                                    });
+                                }
+                                
+                                if (bgMatch) {
+                                    const shirtUrl = bgMatch[1];
+                                    if (!shirts.gk && position === 'GK') {
+                                        shirts.gk = shirtUrl;
+                                        console.log('[Shirts] ✓ Found GK shirt:', shirtUrl);
+                                    } else if (!shirts.field && position !== 'GK') {
+                                        shirts.field = shirtUrl;
+                                        console.log('[Shirts] ✓ Found field shirt:', shirtUrl);
+                                    }
+                                }
+                            });
+                        } else {
+                            // Если не нашли через querySelector, парсим сырой HTML
+                            console.log('[Shirts] Trying to extract shirts from raw HTML...');
+                            const htmlText = response.responseText;
+                            
+                            // Ищем паттерн: id="gif_X_Y" ... background-image:url('pics/shirts/sh_XXX_sm.png')>POSITION<
+                            const shirtPattern = new RegExp(`id="${prefix}\\d+"[^>]*?background-image:url\\(['"]*([^'"()]+)['"]*\\)[^>]*?>(\\w+)<`, 'g');
+                            const matches = [...htmlText.matchAll(shirtPattern)];
+                            
+                            console.log('[Shirts] Found shirt patterns in HTML:', matches.length);
+                            
+                            if (matches.length > 0) {
+                                matches.forEach((match, idx) => {
+                                    if (idx < 3) {
+                                        console.log('[Shirts] Pattern match #' + idx + ':', {
+                                            shirtUrl: match[1],
+                                            position: match[2]
+                                        });
+                                    }
+                                    
+                                    const shirtUrl = match[1];
+                                    const position = match[2];
+                                    
+                                    if (position) {
+                                        if (!shirts.gk && position === 'GK') {
+                                            shirts.gk = shirtUrl;
+                                            console.log('[Shirts] ✓ Found GK shirt from HTML:', shirtUrl);
+                                        } else if (!shirts.field && position !== 'GK') {
+                                            shirts.field = shirtUrl;
+                                            console.log('[Shirts] ✓ Found field shirt from HTML:', shirtUrl);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        
+                        console.log('[Shirts] Final shirts object:', shirts);
+                        resolve(shirts);
+                    } catch (error) {
+                        reject(error);
+                    }
+                },
+                onerror: function (err) {
+                    reject(err);
+                }
+            });
+        });
+    }
+
+    async function getTeamShirts(teamId) {
+        console.log('[Shirts] Getting shirts for team', teamId);
+        
+        // Проверяем кэш
+        const cached = getCachedShirts(teamId);
+        if (cached) {
+            console.log('[Shirts] Using cached shirts for team', teamId, cached);
+            return cached;
+        }
+        
+        try {
+            // Получаем последний матч
+            const lastMatch = await getLastMatchForTeam(teamId);
+            
+            if (!lastMatch) {
+                console.log('[Shirts] No matches found for team', teamId);
+                return { gk: DEFAULT_GK_SHIRT, field: DEFAULT_SHIRT };
+            }
+            
+            console.log('[Shirts] Found last match for team', teamId, lastMatch);
+            
+            // Получаем расстановку
+            const shirts = await getMatchLineup(lastMatch.day, lastMatch.matchId, teamId);
+            
+            console.log('[Shirts] Extracted shirts for team', teamId, shirts);
+            
+            // Если не нашли футболки, используем дефолтные
+            if (!shirts.gk) {
+                console.warn('[Shirts] No GK shirt found, using default');
+                shirts.gk = DEFAULT_GK_SHIRT;
+            }
+            if (!shirts.field) {
+                console.warn('[Shirts] No field shirt found, using default');
+                shirts.field = DEFAULT_SHIRT;
+            }
+            
+            // Кэшируем
+            setCachedShirts(teamId, shirts);
+            
+            return shirts;
+        } catch (error) {
+            console.error('[Shirts] Error getting shirts for team', teamId, error);
+            return { gk: DEFAULT_GK_SHIRT, field: DEFAULT_SHIRT };
+        }
+    }
+
+    /* ----------------------------- SHIRTS DISPLAY FUNCTIONS ----------------------------- */
+    function createShirtElement(position, shirtUrl, top, left, playerName = null) {
+        const div = document.createElement('div');
+        div.style.cssText = `
+            position: absolute;
+            width: 40px;
+            height: 34px;
+            background-image: url('${shirtUrl}');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            top: ${top}px;
+            left: ${left}px;
+            transform: translate(-50%, -50%);
+            font-size: 9px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            line-height: 34px;
+            text-shadow: 0 0 3px black, 0 0 3px black, 0 0 3px black;
+            cursor: default;
+            z-index: 10;
+        `;
+        div.textContent = position;
+        div.title = playerName ? `${position}: ${playerName}` : position;
+        
+        return div;
+    }
+
+    function displayShirtsOnField(fieldCol, homeShirts, awayShirts, homeFormation, awayFormation, homeLineup = null, awayLineup = null) {
+        // Создаём или очищаем контейнер для футболок
+        let shirtsContainer = fieldCol.querySelector('.shirts-container');
+        if (!shirtsContainer) {
+            shirtsContainer = document.createElement('div');
+            shirtsContainer.className = 'shirts-container';
+            shirtsContainer.style.cssText = 'position: absolute; top: 34px; left: 34px; right: 34px; bottom: 34px;';
+            fieldCol.appendChild(shirtsContainer);
+        } else {
+            shirtsContainer.innerHTML = '';
+        }
+        
+        // Получаем позиции - используем актуальные posValue из lineup, если доступны
+        let homePositions = FORMATIONS[homeFormation] || FORMATIONS['4-4-2'];
+        let awayPositions = FORMATIONS[awayFormation] || FORMATIONS['4-4-2'];
+        
+        // Если есть lineup с актуальными позициями, используем их
+        if (homeLineup && homeLineup.length > 0) {
+            const actualPositions = homeLineup.map(slot => slot.posValue || '').filter(p => p);
+            if (actualPositions.length === homePositions.length) {
+                homePositions = actualPositions;
+            }
+        }
+        
+        if (awayLineup && awayLineup.length > 0) {
+            const actualPositions = awayLineup.map(slot => slot.posValue || '').filter(p => p);
+            if (actualPositions.length === awayPositions.length) {
+                awayPositions = actualPositions;
+            }
+        }
+        
+        // Генерируем координаты для каждой команды
+        const homeCoords = generateFieldPositions(homePositions, 'home');
+        const awayCoords = generateFieldPositions(awayPositions, 'away');
+        
+        console.log('[Shirts] Generated positions', { 
+            homeFormation, 
+            awayFormation, 
+            homePositions,
+            awayPositions,
+            homeCoords: homeCoords.length, 
+            awayCoords: awayCoords.length 
+        });
+        
+        // Отображаем футболки хозяев
+        homeCoords.forEach((coord, idx) => {
+            if (!coord) return;
+            
+            const position = coord.position;
+            const shirtUrl = position === 'GK' ? homeShirts.gk : homeShirts.field;
+            let playerName = null;
+            
+            // Пытаемся получить имя игрока из состава
+            if (homeLineup && homeLineup[idx]) {
+                const playerId = homeLineup[idx].getValue && homeLineup[idx].getValue();
+                if (playerId && homeLineup[idx].selectedPlayer) {
+                    playerName = homeLineup[idx].selectedPlayer.name;
+                }
+            }
+            
+            const shirt = createShirtElement(position, shirtUrl, coord.top, coord.left, playerName);
+            if (shirt) shirtsContainer.appendChild(shirt);
+        });
+        
+        // Отображаем футболки гостей
+        awayCoords.forEach((coord, idx) => {
+            if (!coord) return;
+            
+            const position = coord.position;
+            const shirtUrl = position === 'GK' ? awayShirts.gk : awayShirts.field;
+            let playerName = null;
+            
+            // Пытаемся получить имя игрока из состава
+            if (awayLineup && awayLineup[idx]) {
+                const playerId = awayLineup[idx].getValue && awayLineup[idx].getValue();
+                if (playerId && awayLineup[idx].selectedPlayer) {
+                    playerName = awayLineup[idx].selectedPlayer.name;
+                }
+            }
+            
+            const shirt = createShirtElement(position, shirtUrl, coord.top, coord.left, playerName);
+            if (shirt) shirtsContainer.appendChild(shirt);
+        });
+    }
+
+    async function initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock = null, awayLineupBlock = null) {
+        console.log('[Shirts] Initializing shirts system');
+        
+        // Добавляем индикатор загрузки
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.className = 'shirts-loading';
+        loadingIndicator.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 100;
+        `;
+        loadingIndicator.textContent = 'Загрузка футболок...';
+        fieldCol.style.position = 'relative';
+        fieldCol.appendChild(loadingIndicator);
+        
+        try {
+            // Получаем футболки для обеих команд
+            const [homeShirts, awayShirts] = await Promise.all([
+                getTeamShirts(homeTeamId),
+                getTeamShirts(awayTeamId)
+            ]);
+            
+            console.log('[Shirts] Got shirts', { homeShirts, awayShirts });
+            
+            // Убираем индикатор загрузки
+            loadingIndicator.remove();
+            
+            // Отображаем футболки
+            const updateShirts = () => {
+                const homeFormation = homeFormationSelect.value || '4-4-2';
+                const awayFormation = awayFormationSelect.value || '4-4-2';
+                const homeLineup = homeLineupBlock ? homeLineupBlock.lineup : null;
+                const awayLineup = awayLineupBlock ? awayLineupBlock.lineup : null;
+                displayShirtsOnField(fieldCol, homeShirts, awayShirts, homeFormation, awayFormation, homeLineup, awayLineup);
+            };
+            
+            updateShirts();
+            
+            // Обновляем при изменении формации
+            homeFormationSelect.addEventListener('change', updateShirts);
+            awayFormationSelect.addEventListener('change', updateShirts);
+            
+            // Сохраняем функцию обновления для использования извне
+            window.__updateShirtsDisplay = updateShirts;
+        } catch (error) {
+            console.error('[Shirts] Failed to initialize shirts system', error);
+            loadingIndicator.textContent = 'Ошибка загрузки футболок';
+            setTimeout(() => loadingIndicator.remove(), 3000);
+        }
+    }
+
     function replaceTeamIcons() {
         const divs = Array.from(document.querySelectorAll('div[style*="pics/teams32"]'));
         divs.forEach(div => {
@@ -3315,7 +4177,7 @@ function getTournamentType() {
         }, 100);
     }
 
-    function createUI(homeTeam, awayTeam, homePlayers, awayPlayers) {
+    function createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers) {
         const parsedWeather = parseWeatherFromPreview();
         const weatherUI = createWeatherUI(parsedWeather?.weather, parsedWeather?.temperature, parsedWeather?.icon);
         const container = document.createElement('div');
@@ -3360,8 +4222,8 @@ function getTournamentType() {
         const awayStyle = window.awayTeam._styleSelector;
         const homeFormationSelect = window.homeTeam._formationSelector;
         const awayFormationSelect = window.awayTeam._formationSelector;
-        const homeLineupBlock = createTeamLineupBlock(homePlayers);
-        const awayLineupBlock = createTeamLineupBlock(awayPlayers);
+        const homeLineupBlock = createTeamLineupBlock(homePlayers, "4-4-2", "home");
+        const awayLineupBlock = createTeamLineupBlock(awayPlayers, "4-4-2", "away");
         const homeCaptainRow = makeCaptainRow(homeLineupBlock);
         const awayCaptainRow = makeCaptainRow(awayLineupBlock);
         window.homeStyle = homeStyle;
@@ -3390,6 +4252,11 @@ function getTournamentType() {
             refreshCaptainOptions(homeLineupBlock, homePlayers);
             refreshCaptainOptions(awayLineupBlock, awayPlayers);
             saveAllStates();
+            
+            // Обновляем отображение футболок при изменении состава
+            if (typeof window.__updateShirtsDisplay === 'function') {
+                window.__updateShirtsDisplay();
+            }
         };
         const mainTable = document.createElement('table');
         mainTable.style.width = '750px';
@@ -3417,19 +4284,19 @@ function getTournamentType() {
         tr1.appendChild(awayCol1);
         mainTable.appendChild(tr1);
         const lineupsTable = document.createElement('table');
-        lineupsTable.style.width = '830px';
+        lineupsTable.style.width = '800px';
         lineupsTable.style.margin = '0 auto 10px auto';
         lineupsTable.style.borderCollapse = 'separate';
         lineupsTable.style.tableLayout = 'fixed';
         const tr2 = document.createElement('tr');
         const homeCol2 = document.createElement('td');
         homeCol2.style.verticalAlign = 'top';
-        homeCol2.style.width = '415px';
+        homeCol2.style.width = '400px';
         homeCol2.appendChild(homeLineupBlock.block);
         homeCol2.appendChild(homeCaptainRow);
         const awayCol2 = document.createElement('td');
         awayCol2.style.verticalAlign = 'top';
-        awayCol2.style.width = '415px';
+        awayCol2.style.width = '400px';
         awayCol2.appendChild(awayLineupBlock.block);
         awayCol2.appendChild(awayCaptainRow);
         tr2.appendChild(homeCol2);
@@ -3458,8 +4325,13 @@ function getTournamentType() {
         tournamentSelect.value = detectedType;
         
         tournamentSelect.style.marginLeft = '4px';
-        tournamentSelect.addEventListener('change', () => {
-            const selectedType = tournamentSelect.value;
+        tournamentSelect.style.borderRadius = '0';
+        tournamentSelect.style.color = '#444';
+        tournamentSelect.style.padding = '2px 4px';
+        tournamentSelect.style.lineHeight = '16px';
+        
+        // Функция обновления селекторов формы
+        const updatePhysicalFormSelectors = (selectedType) => {
             // Обновляем все селекторы физ форм и пересчитываем формы игроков
             [homeLineupBlock, awayLineupBlock].forEach((block, blockIdx) => {
                 if (block && block.lineup) {
@@ -3497,9 +4369,18 @@ function getTournamentType() {
                     }
                 }
             });
+        };
+        
+        // Обработчик изменения типа турнира
+        tournamentSelect.addEventListener('change', () => {
+            updatePhysicalFormSelectors(tournamentSelect.value);
         });
+        
         tournamentLabel.appendChild(tournamentSelect);
         tournamentTypeUI.appendChild(tournamentLabel);
+        
+        // Применяем определенный тип турнира к селекторам формы при первичной загрузке
+        updatePhysicalFormSelectors(detectedType);
         
         const title = document.createElement('h3');
         title.textContent = 'Калькулятор силы';
@@ -3938,10 +4819,35 @@ function getTournamentType() {
                     // Капитанский бонус: если это капитан, бонус 0, иначе вычисляем от calculatedRealStr капитана
                     let captainBonusForPlayer = 0;
                     if (!isCaptain && captainPlayer && teamCaptainPercent !== 0) {
-                        // Нужно вычислить calculatedRealStr капитана
-                        // Для простоты используем baseStr капитана (можно улучшить позже)
-                        const captainBaseStr = Number(captainPlayer.baseStrength) || 0;
-                        const captainCalculatedStr = captainBaseStr; // Упрощенно, без модификаторов
+                        // Находим slot капитана для получения его позиции и формы
+                        const captainSlot = lineup.find(s => {
+                            const pid = s.getValue && s.getValue();
+                            return pid && String(pid) === String(captainId);
+                        });
+                        
+                        let captainCalculatedStr;
+                        if (captainSlot && captainSlot.posValue) {
+                            // Вычисляем calculatedRealStr капитана с учетом всех модификаторов
+                            const captainBaseStr = Number(captainPlayer.baseStrength) || 0;
+                            
+                            // Форма капитана
+                            let captainFormId = captainSlot.physicalFormValue;
+                            if (!captainFormId) {
+                                const tournamentType = getTournamentType();
+                                captainFormId = getPhysicalFormIdFromData(captainPlayer.form, captainPlayer.form_mod, tournamentType);
+                            }
+                            
+                            const captainPhysicalFormModifier = getPhysicalFormModifier(captainFormId);
+                            const captainFatigueModifier = getFatigueBonus(captainPlayer.fatigue);
+                            const captainRealityModifier = getRealityBonus(captainPlayer.real_status, captainPlayer.real_sign);
+                            const captainPositionModifier = getPositionModifier(captainPlayer.mainPos, captainPlayer.secondPos, captainSlot.posValue);
+                            
+                            captainCalculatedStr = captainBaseStr * captainPhysicalFormModifier * captainFatigueModifier * captainRealityModifier * captainPositionModifier;
+                        } else {
+                            // Fallback на realStr если нет данных о позиции
+                            captainCalculatedStr = Number(captainPlayer.realStr) || 0;
+                        }
+                        
                         captainBonusForPlayer = captainCalculatedStr * teamCaptainPercent;
                     }
                     
@@ -3992,7 +4898,7 @@ function getTournamentType() {
                     totalMoraleBonus
                 });
                 
-                return total;
+                return total
             }
             try {
                 const [homeStrength, awayStrength] = await Promise.all([
@@ -4017,6 +4923,43 @@ function getTournamentType() {
         };
         container.appendChild(btn);
         window.saveAllStates = saveAllStates;
+        
+        // Кнопка обновления футболок
+        const refreshShirtsBtn = document.createElement('button');
+        refreshShirtsBtn.textContent = 'Обновить футболки';
+        refreshShirtsBtn.style.marginTop = '10px';
+        refreshShirtsBtn.style.marginLeft = '10px';
+        refreshShirtsBtn.className = 'butn';
+        refreshShirtsBtn.style.padding = '6px 12px';
+        refreshShirtsBtn.style.fontSize = '12px';
+        refreshShirtsBtn.title = 'Очистить кэш и загрузить футболки заново';
+        refreshShirtsBtn.onclick = async () => {
+            if (!homeTeamId || !awayTeamId) return;
+            
+            // Очищаем кэш
+            try {
+                localStorage.removeItem(getShirtsCacheKey(homeTeamId));
+                localStorage.removeItem(getShirtsCacheKey(awayTeamId));
+                console.log('[Shirts] Cache cleared');
+                
+                // Перезагружаем футболки
+                await initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock, awayLineupBlock);
+                
+                alert('Футболки успешно обновлены!');
+            } catch (error) {
+                console.error('[Shirts] Failed to refresh:', error);
+                alert('Ошибка при обновлении футболок');
+            }
+        };
+        container.appendChild(refreshShirtsBtn);
+        
+        // Инициализируем систему футболок
+        if (homeTeamId && awayTeamId && fieldCol) {
+            initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock, awayLineupBlock)
+                .then(() => console.log('[Shirts] System initialized successfully'))
+                .catch(err => console.error('[Shirts] Failed to initialize:', err));
+        }
+        
         return container;
     }
     init();
