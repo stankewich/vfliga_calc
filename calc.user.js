@@ -1,17 +1,43 @@
 // ==UserScript==
 // @name         Virtual Soccer Strength Analyzer
 // @namespace    http://tampermonkey.net/
-// @version      0.909
+//@license MIT
+// @version      0.916
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        https://www.virtualsoccer.ru/previewmatch.php*
+// @match        https://www.vfleague.com/previewmatch.php*
+// @match        https://www.vfliga.ru/previewmatch.php*
 // @connect      virtualsoccer.ru
+// @connect      vfleague.com
+// @connect      vfliga.ru
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
 
 /* ----------------------------- CONFIGURATION & CONSTANTS ----------------------------- */
+
+// Определяем базовый URL в зависимости от текущего домена
+const SITE_CONFIG = (() => {
+    const hostname = window.location.hostname;
+
+    if (hostname.includes('vfleague.com')) {
+        return {
+            BASE_URL: 'https://www.vfleague.com'
+        };
+    } else if (hostname.includes('vfliga.ru')) {
+        return {
+            BASE_URL: 'https://www.vfliga.ru'
+        };
+    } else {
+        // По умолчанию virtualsoccer.ru
+        return {
+            BASE_URL: 'https://www.virtualsoccer.ru'
+        };
+    }
+})();
+
 // Centralized configuration object
 const CONFIG = {
     COLLISION: {
@@ -65,13 +91,13 @@ const CONFIG = {
         },
         POSITION_BONUS_TABLE: {
             // стиль команды: {позиция: коэффициент}
-            bb:    { ST: 0.11, CF: 0.06, LF: 0.00, RF: 0.00, AM: -0.05, CM: -0.05, DM: 0.00, LW: -0.05, LM: -0.05, LB: 0.11, LD: 0.00, RW: -0.05, RM: -0.05, RB: 0.11, RD: 0.00, CD: 0.06, SW: 0.00, FR: 0.00, GK: 0.00 },
-            tiki:  { ST: -0.05, CF: 0.00, LF: 0.00, RF: 0.00, AM: 0.04, CM: 0.08, DM: 0.00, LW: 0.04, LM: 0.04, LB: 0.00, LD: -0.05, RW: 0.04, RM: 0.04, RB: 0.00, RD: -0.00, CD: 0.00, SW: 0.05, FR: 0.00, GK: 0.00 },
-            brit:  { ST: 0.00, CF: -0.05, LF: 0.05, RF: 0.05, AM: -0.09, CM: -0.05, DM: -0.09, LW: 0.09, LM: 0.05, LB: 0.05, LD: 0.05, RW: 0.09, RM: 0.05, RB: 0.05, RD: 0.05, CD: 0.00, SW: -0.05, FR: 0.00, GK: 0.00 },
-            sp:    { ST: 0.00, CF: 0.07, LF: -0.06, RF: -0.06, AM: 0.09, CM: 0.00, DM: 0.09, LW: -0.11, LM: -0.05, LB: -0.11, LD: 0.00, RW: -0.11, RM: -0.05, RB: -0.11, RD: 0.00, CD: 0.00, SW: 0.05, FR: 0.00, GK: 0.00 },
-            kat:   { ST: -0.04, CF: -0.04, LF: -0.04, RF: -0.04, AM: -0.04, CM: 0.00, DM: 0.07, LW: -0.04, LM: 0.00, LB: 0.07, LD: 0.07, RW: -0.04, RM: 0.00, RB: 0.07, RD: 0.07, CD: 0.00, SW: 0.13, FR: 0.00, GK: 0.00 },
-            brazil:{ ST: 0.08, CF: 0.04, LF: 0.04, RF: 0.04, AM: 0.04, CM: 0.00, DM: -0.05, LW: 0.04, LM: 0.00, LB: 0.00, LD: -0.05, RW: 0.04, RM: 0.00, RB: 0.00, RD: -0.05, CD: -0.05, SW: -0.09, FR: 0.00, GK: 0.00 },
-            norm:  {}
+            bb: { ST: 0.11, CF: 0.06, LF: 0.00, RF: 0.00, AM: -0.05, CM: -0.05, DM: 0.00, LW: -0.05, LM: -0.05, LB: 0.11, LD: 0.00, RW: -0.05, RM: -0.05, RB: 0.11, RD: 0.00, CD: 0.06, SW: 0.00, FR: 0.00, GK: 0.00 },
+            tiki: { ST: -0.05, CF: 0.00, LF: 0.00, RF: 0.00, AM: 0.04, CM: 0.08, DM: 0.00, LW: 0.04, LM: 0.04, LB: 0.00, LD: -0.05, RW: 0.04, RM: 0.04, RB: 0.00, RD: -0.00, CD: 0.00, SW: 0.05, FR: 0.00, GK: 0.00 },
+            brit: { ST: 0.00, CF: -0.05, LF: 0.05, RF: 0.05, AM: -0.09, CM: -0.05, DM: -0.09, LW: 0.09, LM: 0.05, LB: 0.05, LD: 0.05, RW: 0.09, RM: 0.05, RB: 0.05, RD: 0.05, CD: 0.00, SW: -0.05, FR: 0.00, GK: 0.00 },
+            sp: { ST: 0.00, CF: 0.07, LF: -0.06, RF: -0.06, AM: 0.09, CM: 0.00, DM: 0.09, LW: -0.11, LM: -0.05, LB: -0.11, LD: 0.00, RW: -0.11, RM: -0.05, RB: -0.11, RD: 0.00, CD: 0.00, SW: 0.05, FR: 0.00, GK: 0.00 },
+            kat: { ST: -0.04, CF: -0.04, LF: -0.04, RF: -0.04, AM: -0.04, CM: 0.00, DM: 0.07, LW: -0.04, LM: 0.00, LB: 0.07, LD: 0.07, RW: -0.04, RM: 0.00, RB: 0.07, RD: 0.07, CD: 0.00, SW: 0.13, FR: 0.00, GK: 0.00 },
+            brazil: { ST: 0.08, CF: 0.04, LF: 0.04, RF: 0.04, AM: 0.04, CM: 0.00, DM: -0.05, LW: 0.04, LM: 0.00, LB: 0.00, LD: -0.05, RW: 0.04, RM: 0.00, RB: 0.00, RD: -0.05, CD: -0.05, SW: -0.09, FR: 0.00, GK: 0.00 },
+            norm: {}
         }
     },
     STORAGE_KEYS: {
@@ -89,29 +115,29 @@ const CONFIG = {
             'SW': 1.0,
             'CD': 1.0,
             'LD': 0.9, 'RD': 0.9, 'LB': 0.85, 'RB': 0.85,
-            'DM': 0.95,      
+            'DM': 0.95,
             'CM': 0.8, 'LM': 0.7, 'RM': 0.7, 'FR': 1.0,
-            'AM': 0.75, 
+            'AM': 0.75,
             'CF': 0.7, 'ST': 0.7, 'LF': 0.7, 'RF': 0.7, 'LW': 0.7, 'RW': 0.7
         },
         'LD': {
             'SW': 0.9,
             'CD': 0.9,
-            'LD': 1.0, 
+            'LD': 1.0,
             'RD': 0.8, 'LB': 0.95, 'RB': 0.75,
-            'DM': 0.85, 
-            'LM': 0.9, 'RM': 0.8, 
-            'CM': 0.7, 'FR': 1.0, 
-            'AM': 0.65,   
-            'LW': 0.85, 'RW': 0.65,  
-            'CF': 0.7, 'ST': 0.7, 'LF': 0.7, 'RF': 0.7 
+            'DM': 0.85,
+            'LM': 0.9, 'RM': 0.8,
+            'CM': 0.7, 'FR': 1.0,
+            'AM': 0.65,
+            'LW': 0.85, 'RW': 0.65,
+            'CF': 0.7, 'ST': 0.7, 'LF': 0.7, 'RF': 0.7
         },
         'RD': {
             'SW': 0.9,
             'CD': 0.9,
             'RD': 1.0,
             'LD': 0.8, 'LB': 0.75, 'RB': 0.95,
-            'DM': 0.85, 
+            'DM': 0.85,
             'LM': 0.8, 'RM': 0.9,
             'CM': 0.7, 'FR': 1.0,
             'AM': 0.65,
@@ -119,25 +145,25 @@ const CONFIG = {
             'CF': 0.7, 'ST': 0.7, 'LF': 0.7, 'RF': 0.7
         },
         //полузащитники
-        'CM': { 
-            'SW': 0.8,  
-            'CD': 0.8,  
-            'LD': 0.7, 'RD': 0.7, 'LB': 0.7, 'RB': 0.7,  
-            'DM': 0.95,   
-            'CM': 1.0,  
-            'LM': 0.9, 'RM': 0.9, 'FR': 1.0, 
-            'AM': 0.95,   
-            'CF': 0.8, 'ST': 0.8, 'LF': 0.7, 'RF': 0.7, 'LW': 0.7, 'RW': 0.7 
+        'CM': {
+            'SW': 0.8,
+            'CD': 0.8,
+            'LD': 0.7, 'RD': 0.7, 'LB': 0.7, 'RB': 0.7,
+            'DM': 0.95,
+            'CM': 1.0,
+            'LM': 0.9, 'RM': 0.9, 'FR': 1.0,
+            'AM': 0.95,
+            'CF': 0.8, 'ST': 0.8, 'LF': 0.7, 'RF': 0.7, 'LW': 0.7, 'RW': 0.7
         },
         'LM': {
             'SW': 0.7, 'CD': 0.7, 'DM': 0.85, 'CM': 0.9, 'AM': 0.7, 'CF': 0.7, 'ST': 0.7,
             'LD': 0.9, 'LB': 0.95, 'LM': 1.0, 'LW': 0.95, 'LF': 0.9,
             'RD': 0.7, 'RB': 0.7, 'RM': 0.8, 'RW': 0.7, 'RF': 0.7,
-            'FR': 1.0,  
+            'FR': 1.0,
         },
         'RM': {
             'SW': 0.7, 'CD': 0.7, 'DM': 0.85, 'CM': 0.9, 'AM': 0.7, 'CF': 0.7, 'ST': 0.7,
-            'LD': 0.7, 'LB': 0.7, 'LM': 0.8, 'LW': 0.7, 'LF': 0.7, 
+            'LD': 0.7, 'LB': 0.7, 'LM': 0.8, 'LW': 0.7, 'LF': 0.7,
             'RD': 0.9, 'RB': 0.95, 'RM': 1.0, 'RW': 0.95, 'RF': 0.9,
             'FR': 1.0
         },
@@ -145,19 +171,19 @@ const CONFIG = {
         'CF': {
             'SW': 0.7, 'CD': 0.7, 'DM': 0.75, 'CM': 0.8, 'AM': 0.9, 'CF': 1.0, 'ST': 1.0,
             'LD': 0.7, 'LB': 0.7, 'LM': 0.7, 'LW': 0.7, 'LF': 0.9,
-            'RD': 0.7, 'RB': 0.7, 'RM': 0.7, 'RW': 0.7, 'RF': 0.9,          
+            'RD': 0.7, 'RB': 0.7, 'RM': 0.7, 'RW': 0.7, 'RF': 0.9,
             'FR': 1.0,
         },
         'LF': {
             'SW': 0.7, 'CD': 0.7, 'DM': 0.7, 'CM': 0.7, 'AM': 0.7, 'CF': 0.9, 'ST': 0.9,
             'LD': 0.7, 'LB': 0.85, 'LM': 0.9, 'LW': 0.95, 'LF': 1.0,
-            'RD': 0.7, 'RB': 0.7, 'RM': 0.7, 'RW': 0.7, 'RF': 0.9,          
+            'RD': 0.7, 'RB': 0.7, 'RM': 0.7, 'RW': 0.7, 'RF': 0.9,
             'FR': 1.0,
         },
         'RF': {
             'SW': 0.7, 'CD': 0.7, 'DM': 0.7, 'CM': 0.7, 'AM': 0.7, 'CF': 0.9, 'ST': 0.9,
             'LD': 0.7, 'LB': 0.7, 'LM': 0.7, 'LW': 0.7, 'LF': 0.9,
-            'RD': 0.7, 'RB': 0.85, 'RM': 0.9, 'RW': 0.95, 'RF': 1.0,          
+            'RD': 0.7, 'RB': 0.85, 'RM': 0.9, 'RW': 0.95, 'RF': 1.0,
             'FR': 1.0,
         }
     },
@@ -177,7 +203,7 @@ const CONFIG = {
             'C_117_up': { percent: 117, trend: 'up', title: '117%, растёт', bgPosition: '0px -171px', modifier: 1.17, type: 'C' },
             'C_124_down': { percent: 124, trend: 'down', title: '124%, падает', bgPosition: '-18px -209px', modifier: 1.24, type: 'C' },
             'C_124_up': { percent: 124, trend: 'up', title: '124%, растёт', bgPosition: '0px -209px', modifier: 1.24, type: 'C' },
-            
+
             // Тип B (чемпионат, кубок межсезонья)
             'B_75_up': { percent: 75, trend: 'up', title: '75%, растёт', bgPosition: '0px 0px', modifier: 0.75, type: 'B' },
             'B_79_down': { percent: 79, trend: 'down', title: '79%, падает', bgPosition: '-18px -38px', modifier: 0.79, type: 'B' },
@@ -190,10 +216,10 @@ const CONFIG = {
             'B_121_down': { percent: 121, trend: 'down', title: '121%, падает', bgPosition: '-18px -190px', modifier: 1.21, type: 'B' },
             'B_121_up': { percent: 121, trend: 'up', title: '121%, растёт', bgPosition: '0px -190px', modifier: 1.21, type: 'B' },
             'B_125_down': { percent: 125, trend: 'down', title: '125%, падает', bgPosition: '-18px -228px', modifier: 1.25, type: 'B' },
-            
+
             // Товарищеские матчи
             'FRIENDLY_100': { percent: 100, trend: 'stable', title: '100% (товарищеский)', bgPosition: '0px -114px', modifier: 1.0, type: 'FRIENDLY' },
-            
+
             // Неизвестная форма
             'UNKNOWN': { percent: 100, trend: 'unknown', title: 'Неизвестно', bgPosition: '0px -247px', modifier: 1.0, type: 'UNKNOWN' }
         },
@@ -201,7 +227,7 @@ const CONFIG = {
         TOURNAMENT_TYPES: {
             'typeC': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'UNKNOWN'],
             'typeB': ['B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'B_125_down', 'UNKNOWN'],
-            'typeB_amateur': ['B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up',  'B_125_down', 'UNKNOWN'],
+            'typeB_amateur': ['B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'B_125_down', 'UNKNOWN'],
             'friendly': ['FRIENDLY_100', 'UNKNOWN'],
             'all': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'B_125_down', 'FRIENDLY_100', 'UNKNOWN']
         }
@@ -216,26 +242,26 @@ function generateFieldPositions(formation, side) {
     const fieldWidth = 332;  // 400 - 68
     const fieldHeight = 498; // 566 - 68
     const isHome = side === 'home';
-    
+
     // Определяем зоны по высоте для каждой команды (относительно контейнера)
     const zones = isHome ? {
         gk: 497,      // Вратарь (близко к нижнему краю)
-        def: 450,  
+        def: 450,
         semidef: 400,
-        mid: 355,  
+        mid: 355,
         semiatt: 310,
-        att: 265   
+        att: 265
     } : {
         gk: 1,       // Вратарь (близко к верхнему краю)
-        def: 50,  
+        def: 50,
         semidef: 100,
-        mid: 145,  
+        mid: 145,
         semiatt: 190,
-        att: 235   
+        att: 235
     };
-    
+
     const positions = [];
-    
+
     // Группируем позиции по линиям
     const lines = {
         gk: [],
@@ -245,7 +271,7 @@ function generateFieldPositions(formation, side) {
         semiatt: [],
         att: []
     };
-    
+
     formation.forEach((pos, idx) => {
         if (pos === 'GK') {
             lines.gk.push({ pos, idx });
@@ -261,12 +287,12 @@ function generateFieldPositions(formation, side) {
             lines.att.push({ pos, idx });
         }
     });
-    
+
     // Функция для распределения игроков по ширине поля
     function distributeHorizontally(count) {
         const margin = 10; // Отступ от краёв 
         const usableWidth = fieldWidth - 2 * margin;
-        
+
         if (count === 1) {
             return [fieldWidth / 2];
         } else if (count === 2) {
@@ -280,7 +306,7 @@ function generateFieldPositions(formation, side) {
         } else if (count === 6) {
             return [margin, margin + usableWidth / 5, margin + 2 * usableWidth / 5, margin + 3 * usableWidth / 5, margin + 4 * usableWidth / 5, fieldWidth - margin];
         }
-        
+
         // Для большего количества игроков
         const positions = [];
         for (let i = 0; i < count; i++) {
@@ -288,14 +314,14 @@ function generateFieldPositions(formation, side) {
         }
         return positions;
     }
-    
+
     // Размещаем вратаря
     if (lines.gk.length > 0) {
         lines.gk.forEach(({ pos, idx }) => {
             positions[idx] = { position: pos, top: zones.gk, left: fieldWidth / 2 };
         });
     }
-    
+
     // Размещаем защитников
     if (lines.def.length > 0) {
         const xPositions = distributeHorizontally(lines.def.length);
@@ -304,7 +330,7 @@ function generateFieldPositions(formation, side) {
             positions[idx] = { position: pos, top: zones.def, left: xPositions[xIdx] };
         });
     }
-    
+
     // Размещаем линию между защитой и полузащитой - DM, LB, RB
     if (lines.semidef.length > 0) {
         const xPositions = distributeHorizontally(lines.semidef.length);
@@ -313,7 +339,7 @@ function generateFieldPositions(formation, side) {
             positions[idx] = { position: pos, top: zones.semidef, left: xPositions[xIdx] };
         });
     }
-    
+
     // Размещаем центральных полузащитников - LM, CM, RM
     if (lines.mid.length > 0) {
         const xPositions = distributeHorizontally(lines.mid.length);
@@ -322,7 +348,7 @@ function generateFieldPositions(formation, side) {
             positions[idx] = { position: pos, top: zones.mid, left: xPositions[xIdx] };
         });
     }
-    
+
     // Размещаем атакующих полузащитников (между полузащитой и атакой) - AM, FR, RW, LW
     if (lines.semiatt.length > 0) {
         const xPositions = distributeHorizontally(lines.semiatt.length);
@@ -331,7 +357,7 @@ function generateFieldPositions(formation, side) {
             positions[idx] = { position: pos, top: zones.semiatt, left: xPositions[xIdx] };
         });
     }
-    
+
     // Размещаем нападающих
     if (lines.att.length > 0) {
         const xPositions = distributeHorizontally(lines.att.length);
@@ -340,7 +366,7 @@ function generateFieldPositions(formation, side) {
             positions[idx] = { position: pos, top: zones.att, left: xPositions[xIdx] };
         });
     }
-    
+
     return positions;
 }
 
@@ -351,13 +377,13 @@ const DEFAULT_GK_SHIRT = 'pics/shirts/sh_4_sm.png';
  * Отладочная функция для визуализации сетки координат на поле
  * Вызов из консоли: window.debugFieldGrid()
  */
-window.debugFieldGrid = function() {
+window.debugFieldGrid = function () {
     const fieldCol = document.querySelector('td[style*="field_01.webp"]');
     if (!fieldCol) {
         console.error('Field not found');
         return;
     }
-    
+
     // Удаляем старую сетку
     const oldGrid = fieldCol.querySelector('.debug-grid');
     if (oldGrid) {
@@ -365,7 +391,7 @@ window.debugFieldGrid = function() {
         console.log('Debug grid removed.');
         return;
     }
-    
+
     const grid = document.createElement('div');
     grid.className = 'debug-grid';
     grid.style.cssText = `
@@ -378,7 +404,7 @@ window.debugFieldGrid = function() {
         z-index: 5;
         border: 2px solid rgba(255, 0, 0, 0.5);
     `;
-    
+
     // Горизонтальные линии зон (относительно контейнера с отступами)
     [1, 50, 100, 145, 190, 235, 265, 310, 355, 400, 450, 497].forEach(y => {
         const line = document.createElement('div');
@@ -392,7 +418,7 @@ window.debugFieldGrid = function() {
         `;
         grid.appendChild(line);
     });
-    
+
     // Вертикальные линии (центр и края с отступами)
     const centerX = 332 / 2; // 166px
     [10, centerX, 322].forEach(x => {
@@ -407,7 +433,7 @@ window.debugFieldGrid = function() {
         `;
         grid.appendChild(line);
     });
-    
+
     fieldCol.appendChild(grid);
     console.log('Debug grid added. Red lines = zones, Blue lines = horizontal distribution. Call window.debugFieldGrid() again to remove.');
 };
@@ -436,7 +462,8 @@ function VSStorage() {
                 if (hasGMSet) return GM_setValue(key, value);
                 localStorage.setItem(key, value);
             } catch (e) {
-                /* ignore */ }
+                /* ignore */
+}
         }
     };
 }
@@ -464,7 +491,9 @@ const collision_bonuses = {
 };
 
 function pickClosest(target, nums) {
-    if (!nums || !nums.length) return null;
+    if (!nums || !nums.length) {
+        return null;
+    }
     let best = nums[0],
         bestDiff = Math.abs(nums[0] - target);
     for (let i = 1; i < nums.length; i++) {
@@ -505,10 +534,16 @@ function normalizeTemperatureGlobally(result, temperature) {
     return pickClosest(Number(temperature), temps);
 }
 
-function getWeatherStrengthValueFromParsed(result, temperature, weather, strength, callback) {
-    if (!result) return callback({
-        found: false
-    });
+// Линейная интерполяция между двумя точками
+function linearInterpolate(x, x0, y0, x1, y1) {
+    if (x1 === x0) return y0; // Избегаем деления на ноль
+    return y0 + (y1 - y0) * ((x - x0) / (x1 - x0));
+}
+
+// Новая функция с интерполяцией
+function getWeatherStrengthWithInterpolation(result, temperature, weather, strength, callback) {
+    if (!result) return callback({ found: false });
+
     const weatherMap = {
         "очень жарко": [0, 2],
         "жарко": [3, 6],
@@ -518,80 +553,121 @@ function getWeatherStrengthValueFromParsed(result, temperature, weather, strengt
         "дождь": [22, 25],
         "снег": [26, 28]
     };
-    let colRange = weatherMap[weather.toLowerCase()];
-    if (!colRange) return callback({
-        found: false,
-        error: "Погода не найдена"
-    });
-    let tempIdx = -1;
+
+    const colRange = weatherMap[weather.toLowerCase()];
+    if (!colRange) return callback({ found: false, error: "Погода не найдена" });
+
+    // Находим строку с нужной силой
+    const row = result.strengthTable.find(r => parseInt(r.strength, 10) === strength);
+    if (!row) return callback({ found: false, error: "Сила не найдена" });
+
+    // Собираем все доступные температуры и значения силы для данной погоды
+    const dataPoints = [];
     for (let i = colRange[0]; i <= colRange[1]; i++) {
-        if (parseInt(result.temperatures[i], 10) === temperature) {
-            tempIdx = i;
-            break;
+        const temp = parseInt(result.temperatures[i], 10);
+        const value = parseInt(row.values[i], 10);
+        if (!Number.isNaN(temp) && !Number.isNaN(value)) {
+            dataPoints.push({ temp, value });
         }
     }
-    let normalizedTemp = temperature;
-    if (tempIdx === -1) {
-        const n = normalizeTemperatureForWeather(result, weather, temperature);
-        if (n != null) {
-            normalizedTemp = n;
-            for (let i = colRange[0]; i <= colRange[1]; i++) {
-                if (parseInt(result.temperatures[i], 10) === normalizedTemp) {
-                    tempIdx = i;
-                    break;
-                }
-            }
-        }
+
+    if (dataPoints.length === 0) {
+        return callback({ found: false, error: "Нет данных для интерполяции" });
     }
-    if (tempIdx === -1) {
-        const g = normalizeTemperatureGlobally(result, temperature);
-        if (g != null) {
-            normalizedTemp = g;
-            for (let i = 0; i < result.temperatures.length; i++) {
-                if (parseInt(result.temperatures[i], 10) === normalizedTemp) {
-                    tempIdx = i;
-                    break;
-                }
-            }
-        }
-    }
-    if (tempIdx === -1) {
+
+    // Сортируем по температуре
+    dataPoints.sort((a, b) => a.temp - b.temp);
+
+    const minTemp = dataPoints[0].temp;
+    const maxTemp = dataPoints[dataPoints.length - 1].temp;
+
+    // Если температура точно совпадает с одной из точек
+    const exactMatch = dataPoints.find(p => p.temp === temperature);
+    if (exactMatch) {
         return callback({
-            found: false,
-            error: "Температура не найдена для этой погоды",
-            normalizedTried: normalizedTemp,
-            availableTempsInRange: Array.from({
-                length: colRange[1] - colRange[0] + 1
-            }, (_, k) => parseInt(result.temperatures[colRange[0] + k], 10)).filter(v => !Number.isNaN(v))
+            found: true,
+            weatherStr: exactMatch.value,
+            interpolated: false,
+            details: {
+                temperature,
+                requestedTemperature: temperature,
+                weather,
+                strength,
+                method: 'exact'
+            }
         });
     }
-    let row = result.strengthTable.find(r => parseInt(r.strength, 10) === strength);
-    if (!row) return callback({
-        found: false,
-        error: "Сила не найдена"
-    });
-    let weatherStr = row.values[tempIdx];
-    const rangeTemps = [];
-    for (let i = colRange[0]; i <= colRange[1]; i++) {
-        const v = parseInt(result.temperatures[i], 10);
-        if (!Number.isNaN(v)) rangeTemps.push(v);
-    }
-    const wasNormalized = normalizedTemp !== temperature;
-    callback({
-        found: true,
-        weatherStr: weatherStr,
-        details: {
-            temperature: normalizedTemp,
-            requestedTemperature: temperature,
-            wasNormalized,
-            weather,
-            strength,
-            tempIdx,
-            range: colRange,
-            rangeTemps
+
+    // Если температура в диапазоне - делаем интерполяцию
+    if (temperature >= minTemp && temperature <= maxTemp) {
+        // Находим две ближайшие точки
+        let lowerPoint = dataPoints[0];
+        let upperPoint = dataPoints[dataPoints.length - 1];
+
+        for (let i = 0; i < dataPoints.length - 1; i++) {
+            if (dataPoints[i].temp <= temperature && dataPoints[i + 1].temp >= temperature) {
+                lowerPoint = dataPoints[i];
+                upperPoint = dataPoints[i + 1];
+                break;
+            }
         }
-    });
+
+        const interpolatedValue = linearInterpolate(
+            temperature,
+            lowerPoint.temp,
+            lowerPoint.value,
+            upperPoint.temp,
+            upperPoint.value
+        );
+
+        return callback({
+            found: true,
+            weatherStr: Math.round(interpolatedValue),
+            interpolated: true,
+            details: {
+                temperature,
+                requestedTemperature: temperature,
+                weather,
+                strength,
+                method: 'interpolation',
+                lowerPoint,
+                upperPoint,
+                interpolatedValue
+            }
+        });
+    }
+
+    // Если температура вне диапазона - используем ближайшую точку
+    if (temperature < minTemp) {
+        return callback({
+            found: true,
+            weatherStr: dataPoints[0].value,
+            interpolated: false,
+            details: {
+                temperature: minTemp,
+                requestedTemperature: temperature,
+                weather,
+                strength,
+                method: 'extrapolation_min'
+            }
+        });
+    } else {
+        return callback({
+            found: true,
+            weatherStr: dataPoints[dataPoints.length - 1].value,
+            interpolated: false,
+            details: {
+                temperature: maxTemp,
+                requestedTemperature: temperature,
+                weather,
+                strength,
+                method: 'extrapolation_max'
+            }
+        });
+    }
 }
+
+// Старая функция удалена - используем только интерполяцию
 
 function getCollisionInfo(teamStyleId, oppStyleId) {
     if (!teamStyleId || !oppStyleId) {
@@ -632,7 +708,9 @@ const SUPPORTED_ABILITY_TYPES = new Set(['Ск', 'Г', 'Пд', 'Пк', 'Д', 'К
 const KNOWN_STYLE_IDS = new Set(['sp', 'brazil', 'tiki', 'bb', 'kat', 'brit', 'norm']);
 
 function parseAbilities(abilitiesStr) {
-    if (!abilitiesStr) return [];
+    if (!abilitiesStr) {
+        return [];
+    }
     const res = [];
     const singleFlags = abilitiesStr.match(/\b[А-ЯЁA-Z]\b/gi) || [];
     singleFlags.forEach(f => {
@@ -693,8 +771,8 @@ function defenceTypeBonus({
     if (!team.log) team.log = [];
     team.log.push(
         bonusActive ?
-        `DefenceTypeBonus: +${totalBonus.toFixed(2)} (${defenceType === 'zonal' ? 'зональный' : 'персональный'}; атакующих у соперника: ${oppAttCount})` :
-        `DefenceTypeBonus: 0 (условия не выполнены; атакующих у соперника: ${oppAttCount})`
+            `DefenceTypeBonus: +${totalBonus.toFixed(2)} (${defenceType === 'zonal' ? 'зональный' : 'персональный'}; атакующих у соперника: ${oppAttCount})` :
+            `DefenceTypeBonus: 0 (условия не выполнены; атакующих у соперника: ${oppAttCount})`
     );
     if (withResult) {
         return {
@@ -718,14 +796,16 @@ function getMoraleBonusBounds({
 }) {
     const h = Math.round(homeRating);
     const a = Math.round(awayRating);
-    if (!h || !a) return {
-        superBonus: 0.27,
-        restBonus: -0.1
-    };
+    if (!h || !a) {
+        return {
+            superBonus: CONFIG.BONUSES.MORALE.SUPER_DEFAULT,
+            restBonus: CONFIG.BONUSES.MORALE.REST_DEFAULT
+        };
+    }
     let ratio = h > a ? h / a : a / h;
     ratio = Math.max(1, ratio);
-    let superBonus = 0.27;
-    let restBonus = -0.1;
+    let superBonus = CONFIG.BONUSES.MORALE.SUPER_DEFAULT;
+    let restBonus = CONFIG.BONUSES.MORALE.REST_DEFAULT;
     if (sideLabel === 'home') {
         if (h < a) {
             superBonus = Math.min(0.54, (ratio - 1) / 2 + 0.27);
@@ -754,8 +834,12 @@ function getMoraleBonusForPlayer({
     baseContrib,
     bounds
 }) {
-    if (moraleMode === 'super') return baseContrib * bounds.superBonus;
-    if (moraleMode === 'rest') return baseContrib * bounds.restBonus;
+    if (moraleMode === 'super') {
+        return baseContrib * bounds.superBonus;
+    }
+    if (moraleMode === 'rest') {
+        return baseContrib * bounds.restBonus;
+    }
     return 0;
 }
 
@@ -764,7 +848,9 @@ function getRough(team) {
 }
 
 function getRoughBonusForPlayer(realStr, roughMode) {
-    if (roughMode !== 'rough') return 0;
+    if (roughMode !== 'rough') {
+        return 0;
+    }
     const base = (Number(realStr) || 0) * 0.08;
     return Math.max(base, 5.0);
 }
@@ -775,7 +861,9 @@ function roughBonus({
 }) {
     const mode = getRough(team);
     team.roughContribution = new Array(slotEntries.length).fill(0);
-    if (mode !== 'rough') return 0;
+    if (mode !== 'rough') {
+        return 0;
+    }
     let total = 0;
     slotEntries.forEach((e, idx) => {
         const rs = Number(e.player.realStr) || 0;
@@ -787,9 +875,13 @@ function roughBonus({
 }
 
 function getCaptainAbilityLevel(abilitiesStr) {
-    if (!abilitiesStr) return 0;
+    if (!abilitiesStr) {
+        return 0;
+    }
     const m = abilitiesStr.match(/Ка(\d)?/);
-    if (!m) return 0;
+    if (!m) {
+        return 0;
+    }
     const lvl = m[1] ? Number(m[1]) : 1;
     return Math.max(1, Math.min(lvl, 4));
 }
@@ -817,7 +909,9 @@ function getAgeCaptainPercent(age) {
 }
 
 function getCaptainAbilityMinPercent(age, kaLevel) {
-    if (!kaLevel) return null;
+    if (!kaLevel) {
+        return null;
+    }
     const a = Number(age) || 0;
     const row = (() => {
         if (a >= 34) return [0.08, 0.08, 0.09, 0.12];
@@ -837,7 +931,9 @@ function getCaptainAbilityMinPercent(age, kaLevel) {
 }
 
 function estimateCaptainPercent(captainPlayer, lineupEntries) {
-    if (!captainPlayer) return 0;
+    if (!captainPlayer) {
+        return 0;
+    }
     const captainRealStr = Number(captainPlayer.realStr) || 0;
     const captainAge = Number(captainPlayer.age) || 0;
     const avgRealStr = computeAverageRealStrForLineup((lineupEntries || []).filter(Boolean));
@@ -856,7 +952,9 @@ function estimateCaptainPercent(captainPlayer, lineupEntries) {
 
 function computeAverageRealStrForLineup(entries) {
     const valid = entries.filter(e => e && e.player);
-    if (!valid.length) return 0;
+    if (!valid.length) {
+        return 0;
+    }
     const sum = valid.reduce((acc, e) => acc + (Number(e.player.realStr) || 0), 0);
     return sum / valid.length;
 }
@@ -918,7 +1016,9 @@ function getLineByMatchPos(matchPos) {
 
 function getAbilitiesBonusesDetailed(abilitiesStr, teamStyleId) {
     const arr = parseAbilities(abilitiesStr);
-    if (!arr || !arr.length) return [];
+    if (!arr || !arr.length) {
+        return [];
+    }
     const result = [];
     for (const ab of arr) {
         const map = STYLE_ABILITIES_BONUS_MAP[ab.type];
@@ -937,9 +1037,13 @@ function getAbilitiesBonusesDetailed(abilitiesStr, teamStyleId) {
 }
 
 function getAbilitiesBonusForStyleId(abilitiesStr, teamStyleId) {
-    if (!abilitiesStr) return 0;
+    if (!abilitiesStr) {
+        return 0;
+    }
     const arr = parseAbilities(abilitiesStr);
-    if (!arr || !arr.length) return 0;
+    if (!arr || !arr.length) {
+        return 0;
+    }
     const styleId = KNOWN_STYLE_IDS.has(teamStyleId) ? teamStyleId : 'norm';
     let sum = 0;
     for (const ab of arr) {
@@ -961,11 +1065,25 @@ function getWeatherStrengthValueCached(styleId, temperature, weather, strength, 
     if (cachedRaw) {
         try {
             const cached = JSON.parse(cachedRaw);
-            return getWeatherStrengthValueFromParsed(cached, temperature, weather, strength, callback);
+            // Используем интерполяцию
+            return getWeatherStrengthWithInterpolation(cached, temperature, weather, strength, (interpolationResult) => {
+                if (interpolationResult && interpolationResult.found) {
+                    callback(interpolationResult);
+                } else {
+                    console.error('[Weather] Interpolation failed (cached)', {
+                        temperature,
+                        weather,
+                        strength,
+                        error: interpolationResult?.error
+                    });
+                    callback({ found: false, error: 'Interpolation failed' });
+                }
+            });
         } catch (e) {
-            /* перекачаем */ }
+            /* перекачаем */
+}
     }
-    const url = `https://www.virtualsoccer.ru/weather.php?step=1&style=${encodeURIComponent(styleId)}`;
+    const url = `${SITE_CONFIG.BASE_URL}/weather.php?step=1&style=${encodeURIComponent(styleId)}`;
     GM_xmlhttpRequest({
         method: "GET",
         url: url,
@@ -1021,8 +1139,23 @@ function getWeatherStrengthValueCached(styleId, temperature, weather, strength, 
                 try {
                     vsStorage.set(cacheKey, JSON.stringify(result));
                 } catch (e) {
-                    /* ignore */ }
-                getWeatherStrengthValueFromParsed(result, temperature, weather, strength, callback);
+                    /* ignore */
+}
+
+                // Используем интерполяцию
+                getWeatherStrengthWithInterpolation(result, temperature, weather, strength, (interpolationResult) => {
+                    if (interpolationResult && interpolationResult.found) {
+                        callback(interpolationResult);
+                    } else {
+                        console.error('[Weather] Interpolation failed (fresh)', {
+                            temperature,
+                            weather,
+                            strength,
+                            error: interpolationResult?.error
+                        });
+                        callback({ found: false, error: 'Interpolation failed' });
+                    }
+                });
             } catch (e) {
                 callback(null);
             }
@@ -1046,10 +1179,10 @@ function getFavoriteStyleBonus(teamStyleId, playerStyleId) {
 
 function getPositionBonus(teamStyleId, playerPosition) {
     if (!teamStyleId || !playerPosition) return 0;
-    
+
     const styleTable = CONFIG.BONUSES.POSITION_BONUS_TABLE[teamStyleId];
     if (!styleTable) return 0;
-    
+
     return styleTable[playerPosition] || 0;
 }
 
@@ -1057,7 +1190,7 @@ function getRealityBonus(realStatus, realSign) {
     // Маппинг бонусов реальности на основе real_status (p[31]) и real_sign (p[32])
     const status = Number(realStatus) || 0;
     const sign = Number(realSign) || 0;
-    
+
     if (status === 0) {
         // Обычная реальность
         const bonuses = [1.0, 1.03, 1.05, 1.0, 1.07];
@@ -1067,7 +1200,7 @@ function getRealityBonus(realStatus, realSign) {
         const bonuses = [1.0, 1.07, 1.10, 1.0, 1.15];
         return bonuses[sign] || 1.0;
     }
-    
+
     return 1.0;
 }
 
@@ -1080,7 +1213,7 @@ function getFatigueBonus(fatigue) {
 function getPositionModifier(mainPos, secondPos, matchPosition) {
     if (!matchPosition) return 1.0;
     if (!mainPos && !secondPos) return 1.0;
-    
+
     // Маппинг бонусов за универсальность (сочетание позиций дает +5% бонус)
     const versatilityBonuses = {
         // вингбеки
@@ -1088,11 +1221,11 @@ function getPositionModifier(mainPos, secondPos, matchPosition) {
         'LD_LM': { 'LB': 1.05 },
         'RB_RM': { 'RB': 1.05 },
         'RD_RM': { 'RB': 1.05 },
-        
+
         // Опорники
         'CD_CM': { 'DM': 1.05 },
         'CM_CD': { 'DM': 1.05 },
-        
+
         // AM + вингеры
         'CM_CF': { 'AM': 1.05 },
         'CF_CM': { 'AM': 1.05 },
@@ -1100,41 +1233,41 @@ function getPositionModifier(mainPos, secondPos, matchPosition) {
         'RM_RF': { 'RW': 1.05 },
         'LM_LF': { 'LW': 1.05 },
         'RF_RM': { 'RW': 1.05 },
-        
+
     };
-    
+
     // ШАГ 1: Проверяем бонус за универсальность (если есть обе позиции)
     if (mainPos && secondPos) {
         const positions = [mainPos, secondPos].sort();
         const posKey = positions.join('_');
         const bonuses = versatilityBonuses[posKey];
-        
+
         if (bonuses && bonuses[matchPosition]) {
             return bonuses[matchPosition];
         }
     }
-    
+
     // ШАГ 2: Получаем модификаторы из таблицы штрафов для обеих позиций
     let modifier1 = 1.0;
     let modifier2 = 1.0;
-    
+
     if (mainPos) {
         const modifiers = CONFIG.POSITION_MODIFIERS[mainPos];
         if (modifiers) {
             modifier1 = modifiers[matchPosition] || 1.0;
         }
     }
-    
+
     if (secondPos) {
         const modifiers = CONFIG.POSITION_MODIFIERS[secondPos];
         if (modifiers) {
             modifier2 = modifiers[matchPosition] || 1.0;
         }
     }
-    
+
     // ШАГ 3: Выбираем лучший модификатор
     const finalModifier = Math.max(modifier1, modifier2);
-    
+
     return finalModifier;
 }
 
@@ -1168,17 +1301,17 @@ function getPhysicalFormIdFromData(formPercent, formDirection, tournamentType = 
     if (tournamentType === 'friendly') {
         return 'FRIENDLY_100';
     }
-    
+
     // Если форма неизвестна
     if (!formPercent || formPercent === '' || formPercent === '0' || formPercent === 0) {
         return 'UNKNOWN';
     }
-    
+
     const percent = Number(formPercent);
     if (!Number.isFinite(percent)) {
         return 'UNKNOWN';
     }
-    
+
     // Определяем направление: 1 = up, 2 = down, иначе unknown
     let trend = 'down';
     if (formDirection === 1 || formDirection === '1') {
@@ -1186,17 +1319,17 @@ function getPhysicalFormIdFromData(formPercent, formDirection, tournamentType = 
     } else if (formDirection === 2 || formDirection === '2') {
         trend = 'down';
     }
-    
+
     // Определяем тип турнира (B или C)
     const isTypeB = tournamentType === 'typeB' || tournamentType === 'typeB_amateur';
     const prefix = isTypeB ? 'B' : 'C';
-    
+
     // Ищем точное совпадение
     const exactFormId = `${prefix}_${percent}_${trend}`;
     if (CONFIG.PHYSICAL_FORM.FORMS[exactFormId]) {
         return exactFormId;
     }
-    
+
     // Если точного совпадения нет, ищем ближайшую форму
     const availableForms = Object.keys(CONFIG.PHYSICAL_FORM.FORMS)
         .filter(id => id.startsWith(prefix) && CONFIG.PHYSICAL_FORM.FORMS[id].trend === trend)
@@ -1205,11 +1338,11 @@ function getPhysicalFormIdFromData(formPercent, formDirection, tournamentType = 
             percent: CONFIG.PHYSICAL_FORM.FORMS[id].percent
         }))
         .sort((a, b) => Math.abs(a.percent - percent) - Math.abs(b.percent - percent));
-    
+
     if (availableForms.length > 0) {
         return availableForms[0].id;
     }
-    
+
     // Если ничего не найдено, возвращаем UNKNOWN
     return 'UNKNOWN';
 }
@@ -1280,10 +1413,12 @@ class BonusCalculator {
     static getMoraleBonusBounds({ homeRating, awayRating, sideLabel }) {
         const h = Math.round(homeRating);
         const a = Math.round(awayRating);
-        if (!h || !a) return {
-            superBonus: CONFIG.BONUSES.MORALE.SUPER_DEFAULT,
-            restBonus: CONFIG.BONUSES.MORALE.REST_DEFAULT
-        };
+        if (!h || !a) {
+            return {
+                superBonus: CONFIG.BONUSES.MORALE.SUPER_DEFAULT,
+                restBonus: CONFIG.BONUSES.MORALE.REST_DEFAULT
+            };
+        }
 
         let ratio = h > a ? h / a : a / h;
         ratio = Math.max(1, ratio);
@@ -1408,7 +1543,7 @@ class GameState {
         try {
             const homeState = localStorage.getItem(CONFIG.STORAGE_KEYS.HOME);
             const awayState = localStorage.getItem(CONFIG.STORAGE_KEYS.AWAY);
-            
+
             if (homeState) {
                 Object.assign(this.teams.home, JSON.parse(homeState));
             }
@@ -1477,7 +1612,7 @@ class StateManager {
     static saveAllStates() {
         // Use the centralized game state
         gameState.saveState();
-        
+
         // Also update UI-specific values
         if (gameState.ui.homeLineupBlock && gameState.ui.awayLineupBlock) {
             StateManager.syncUIToState();
@@ -1487,22 +1622,22 @@ class StateManager {
     static syncUIToState() {
         const homeTeam = gameState.getTeam('home');
         const awayTeam = gameState.getTeam('away');
-        
+
         // Sync synergy values
         homeTeam.synergy = getSynergyPercentHome();
         awayTeam.synergy = getSynergyPercentAway();
-        
+
         // Sync lineup data
         if (gameState.ui.homeLineupBlock) {
             homeTeam.lineup = gameState.ui.homeLineupBlock.lineup.map(slot => slot.getValue());
-            homeTeam.miniPositions = gameState.ui.homeLineupBlock.lineup.map(slot => 
+            homeTeam.miniPositions = gameState.ui.homeLineupBlock.lineup.map(slot =>
                 slot.miniPositionSelect ? slot.miniPositionSelect.getValue() : null
             );
         }
-        
+
         if (gameState.ui.awayLineupBlock) {
             awayTeam.lineup = gameState.ui.awayLineupBlock.lineup.map(slot => slot.getValue());
-            awayTeam.miniPositions = gameState.ui.awayLineupBlock.lineup.map(slot => 
+            awayTeam.miniPositions = gameState.ui.awayLineupBlock.lineup.map(slot =>
                 slot.miniPositionSelect ? slot.miniPositionSelect.getValue() : null
             );
         }
@@ -1514,7 +1649,7 @@ class StateManager {
             formation: formationSel.value,
             captain: captainSel.value,
             lineup: lineupBlock.lineup.map(slot => slot.getValue()),
-            miniPositions: lineupBlock.lineup.map(slot => 
+            miniPositions: lineupBlock.lineup.map(slot =>
                 slot.miniPositionSelect ? slot.miniPositionSelect.getValue() : null
             ),
             physicalForms: lineupBlock.lineup.map(slot => slot.physicalFormValue)
@@ -1600,8 +1735,11 @@ function createMoraleSelector(team, onChange) {
     select.value = initial;
 
     function setTeamMorale(val) {
-        if (team === window.homeTeam) window.homeTeam.morale = val;
-        else if (team === window.awayTeam) window.awayTeam.morale = val;
+        if (team === window.homeTeam) {
+            window.homeTeam.morale = val;
+        } else if (team === window.awayTeam) {
+            window.awayTeam.morale = val;
+        }
         team.morale = val;
     }
     select.addEventListener('change', () => {
@@ -1609,7 +1747,7 @@ function createMoraleSelector(team, onChange) {
         setTeamMorale(val);
         try {
             if (typeof saveAllStates === 'function') saveAllStates();
-        } catch (e) {}
+        } catch (e) { }
         if (typeof onChange === 'function') onChange();
         if (typeof window.__vs_recalcAll === 'function') window.__vs_recalcAll();
     });
@@ -1653,19 +1791,19 @@ function setPlayerStyleToCache(playerId, styleValue) {
 // Глобальная функция для расчета силы игрока с учетом всех модификаторов
 function calculatePlayerStrengthGlobal(player, matchPosition, physicalFormId) {
     const baseStr = Number(player.baseStrength) || 0;
-    
+
     // Определяем форму игрока
     let actualFormId = physicalFormId;
     if (!actualFormId || actualFormId === 'FRIENDLY_100') {
         const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
         actualFormId = getPhysicalFormIdFromData(player.form, player.form_mod, tournamentType);
     }
-    
+
     // Применяем все модификаторы
     const physicalFormModifier = getPhysicalFormModifier(actualFormId);
     const realityModifier = getRealityBonus(player.real_status, player.real_sign);
     const positionModifier = getPositionModifier(player.mainPos, player.secondPos, matchPosition);
-    
+
     // Для товарищеских матчей усталость всегда 25%
     let fatigueModifier;
     const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
@@ -1674,9 +1812,9 @@ function calculatePlayerStrengthGlobal(player, matchPosition, physicalFormId) {
     } else {
         fatigueModifier = getFatigueBonus(player.fatigue);
     }
-    
+
     const calculatedStr = baseStr * physicalFormModifier * fatigueModifier * realityModifier * positionModifier;
-    
+
     return Math.round(calculatedStr);
 }
 
@@ -1723,18 +1861,18 @@ class UIFactory {
         select.style.padding = '2px 4px';
         select.style.lineHeight = '16px';
         const [max, min] = CONFIG.WEATHER.TEMP_MAP[weather] || [25, 5];
-        
+
         for (let t = max; t >= min; t--) {
             const opt = document.createElement('option');
             opt.value = t;
             opt.textContent = t + '°';
             select.appendChild(opt);
         }
-        
+
         if (selectedValue && selectedValue >= min && selectedValue <= max) {
             select.value = selectedValue;
         }
-        
+
         return select;
     }
 }
@@ -1937,33 +2075,33 @@ function createDummySelect() {
 
 // --- PLAYER SELECTORS ---
 const PLAYER_STYLES = [{
-        value: 'sp',
-        icon: 'styles/o1.gif'
-    },
-    {
-        value: 'brazil',
-        icon: 'styles/o3.gif'
-    },
-    {
-        value: 'tiki',
-        icon: 'styles/o4.gif'
-    },
-    {
-        value: 'bb',
-        icon: 'styles/o2.gif'
-    },
-    {
-        value: 'kat',
-        icon: 'styles/o5.gif'
-    },
-    {
-        value: 'brit',
-        icon: 'styles/o6.gif'
-    },
-    {
-        value: 'norm',
-        icon: 'styles/o8.gif'
-    }
+    value: 'sp',
+    icon: 'styles/o1.gif'
+},
+{
+    value: 'brazil',
+    icon: 'styles/o3.gif'
+},
+{
+    value: 'tiki',
+    icon: 'styles/o4.gif'
+},
+{
+    value: 'bb',
+    icon: 'styles/o2.gif'
+},
+{
+    value: 'kat',
+    icon: 'styles/o5.gif'
+},
+{
+    value: 'brit',
+    icon: 'styles/o6.gif'
+},
+{
+    value: 'norm',
+    icon: 'styles/o8.gif'
+}
 ];
 
 function createCustomStyleSelect(onChange) {
@@ -2044,47 +2182,47 @@ function createCustomStyleSelect(onChange) {
 function createPhysicalFormSelect(onChange, dayType = 'all') {
     const wrapper = document.createElement('div');
     wrapper.className = 'physical-form-select';
-    
+
     const selectedDiv = document.createElement('div');
     selectedDiv.className = 'selected';
     selectedDiv.title = 'Физическая форма';
-    
+
     const selectedIcon = document.createElement('div');
     selectedIcon.className = 'form-icon';
     selectedIcon.style.cssText = 'width: 18px; height: 19px; background: url(form/sprite-1.4.gif) no-repeat; display: inline-block; vertical-align: middle;';
-    
+
     const selectedLabel = document.createElement('span');
     selectedLabel.textContent = '100%';
     selectedLabel.style.marginLeft = '4px';
-    
+
     selectedDiv.appendChild(selectedIcon);
     selectedDiv.appendChild(selectedLabel);
     wrapper.appendChild(selectedDiv);
-    
+
     const optionsUl = document.createElement('ul');
     optionsUl.className = 'options physical-form-options';
     optionsUl.id = `physical-form-options-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     let currentValue = 'FRIENDLY_100'; // По умолчанию 100%
     let availableForms = getPhysicalFormsByDayType(dayType);
-    
+
     function renderOptions() {
         optionsUl.innerHTML = '';
         availableForms.forEach(form => {
             const li = document.createElement('li');
             li.dataset.value = form.id;
             li.title = form.title; // Подсказка при наведении
-            
+
             const icon = document.createElement('div');
             icon.className = 'form-icon';
             icon.style.cssText = `width: 18px; height: 19px; background: url(form/sprite-1.4.gif) no-repeat ${form.bgPosition}; display: inline-block; vertical-align: middle;`;
-            
+
             const label = document.createElement('span');
             label.textContent = form.percent + '%';
-            
+
             li.appendChild(icon);
             li.appendChild(label);
-            
+
             li.addEventListener('click', () => {
                 currentValue = form.id;
                 selectedLabel.textContent = form.percent + '%';
@@ -2094,14 +2232,14 @@ function createPhysicalFormSelect(onChange, dayType = 'all') {
                 optionsUl.style.display = 'none';
                 if (onChange) onChange(currentValue);
             });
-            
+
             optionsUl.appendChild(li);
         });
     }
-    
+
     renderOptions();
     wrapper.appendChild(optionsUl);
-    
+
     // Установка начального значения
     const initialForm = CONFIG.PHYSICAL_FORM.FORMS[currentValue];
     if (initialForm) {
@@ -2109,20 +2247,20 @@ function createPhysicalFormSelect(onChange, dayType = 'all') {
         selectedIcon.style.backgroundPosition = initialForm.bgPosition;
         selectedDiv.title = initialForm.title;
     }
-    
+
     selectedDiv.addEventListener('click', (e) => {
         e.stopPropagation();
         const open = wrapper.classList.toggle('open');
         optionsUl.style.display = open ? 'block' : 'none';
     });
-    
+
     document.addEventListener('click', (e) => {
         if (!wrapper.contains(e.target)) {
             wrapper.classList.remove('open');
             optionsUl.style.display = 'none';
         }
     });
-    
+
     wrapper.getValue = () => currentValue;
     wrapper.setValue = (val) => {
         currentValue = val || 'FRIENDLY_100';
@@ -2133,7 +2271,7 @@ function createPhysicalFormSelect(onChange, dayType = 'all') {
             selectedDiv.title = form.title;
         }
     };
-    
+
     wrapper.setDayType = (newDayType) => {
         dayType = newDayType;
         availableForms = getPhysicalFormsByDayType(dayType);
@@ -2145,11 +2283,11 @@ function createPhysicalFormSelect(onChange, dayType = 'all') {
             if (onChange) onChange(currentValue);
         }
     };
-    
+
     wrapper.setTournamentType = (tournamentType) => {
         return wrapper.setDayType(tournamentType);
     };
-    
+
     return wrapper;
 }
 
@@ -2416,11 +2554,13 @@ function getAllowedMiniOptions({
     const hasLW = positions.includes('LW');
     const hasRW = positions.includes('RW');
     const add = (arr, v, extra = {}) => {
-        if (!arr.some(o => o.value === v)) arr.push({
-            value: v,
-            label: v,
-            ...extra
-        });
+        if (!arr.some(o => o.value === v)) {
+            arr.push({
+                value: v,
+                label: v,
+                ...extra
+            });
+        }
     };
     const cmIdxs = (counts.indexes && counts.indexes['CM']) || [];
     const cmCount = cmIdxs.length;
@@ -2741,19 +2881,19 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
 
     function calculatePlayerStr(player, matchPosition, physicalFormId) {
         const baseStr = Number(player.baseStrength) || 0;
-        
+
         // Определяем форму игрока
         let actualFormId = physicalFormId;
         if (!actualFormId || actualFormId === 'FRIENDLY_100') {
             const tournamentType = getTournamentType();
             actualFormId = getPhysicalFormIdFromData(player.form, player.form_mod, tournamentType);
         }
-        
+
         // Применяем все модификаторы
         const physicalFormModifier = getPhysicalFormModifier(actualFormId);
         const realityModifier = getRealityBonus(player.real_status, player.real_sign);
         const positionModifier = getPositionModifier(player.mainPos, player.secondPos, matchPosition);
-        
+
         // Для товарищеских матчей усталость всегда 25%
         let fatigueModifier;
         const tournamentType = getTournamentType();
@@ -2762,23 +2902,23 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         } else {
             fatigueModifier = getFatigueBonus(player.fatigue);
         }
-        
+
         const calculatedStr = baseStr * physicalFormModifier * fatigueModifier * realityModifier * positionModifier;
-        
+
         return Math.round(calculatedStr);
     }
-    
+
     function toOptionLabel(p, matchPosition, physicalFormId) {
         const pos = [p.mainPos, p.secondPos].filter(Boolean).join('/');
         const percent = (Number(p.form) || 0) + '%';
-        
+
         // Определяем какую силу показывать
         let displayStr;
-        
+
         // Определяем автоматическую форму игрока
         const tournamentType = getTournamentType();
         const autoFormId = getPhysicalFormIdFromData(p.form, p.form_mod, tournamentType);
-        
+
         if (autoFormId === 'UNKNOWN' || (physicalFormId && physicalFormId !== autoFormId)) {
             // Форма неизвестна или изменена пользователем - рассчитываем от baseStr
             displayStr = calculatePlayerStr(p, matchPosition, physicalFormId || autoFormId);
@@ -2788,7 +2928,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             const positionModifier = getPositionModifier(p.mainPos, p.secondPos, matchPosition);
             displayStr = Math.round(realStr * positionModifier);
         }
-        
+
         return `${p.name.padEnd(16, ' ')} ${pos.padEnd(6, ' ')} ${percent.padStart(3, ' ')}   ${displayStr}`;
     }
 
@@ -2799,20 +2939,20 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             const placeholder = buildPlaceholder(slot.posValue);
             const matchPosition = slot.posValue;
             const currentSlotFormId = slot.physicalFormValue;  // Может быть null - это нормально
-            
+
             // Для каждого игрока в dropdown используем его собственную форму
             const opts = pool.map(p => {
                 // Находим слот, в котором находится этот игрок (если он выбран где-то)
                 const playerSlot = lineup.find(s => s.getValue() === String(p.id));
                 const playerFormId = playerSlot ? playerSlot.physicalFormValue : null;
-                
+
                 return {
                     value: String(p.id),
                     label: toOptionLabel(p, matchPosition, playerFormId)
                 };
             });
             slot.setOptions(opts);
-            
+
             // Обновляем label выбранного игрока с его собственной формой
             if (currentVal) {
                 const selectedPlayer = pool.find(p => String(p.id) === currentVal);
@@ -2838,14 +2978,14 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         if (!captainSelectRef) return;
         const inLineupIds = new Set(lineup.map(s => s.getValue()).filter(Boolean));
         const available = players.filter(p => inLineupIds.has(String(p.id)));
-        
+
         // Обновляем title селектора
         if (available.length === 0) {
             captainSelectRef.title = 'Некому быть капитаном';
         } else {
             captainSelectRef.title = 'Выберите капитана';
         }
-        
+
         const dummyEntries = lineup.map(slot => {
             const pid = slot.getValue && slot.getValue();
             if (!pid) return null;
@@ -2858,13 +2998,13 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         captainSelectRef.innerHTML = '<option value="" class="captain-placeholder">— не выбран —</option>';
         available.forEach(p => {
             const percent = estimateCaptainPercent(p, dummyEntries);
-            
+
             // Находим слот капитана для получения его позиции и формы
             const captainSlot = lineup.find(slot => {
                 const pid = slot.getValue && slot.getValue();
                 return pid && String(pid) === String(p.id);
             });
-            
+
             let captainCalculatedStr;
             if (captainSlot && captainSlot.posValue && captainSlot.physicalFormValue) {
                 // Используем calculatePlayerStr для точного расчета
@@ -2873,19 +3013,19 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                 // Fallback на realStr если нет данных о позиции/форме
                 captainCalculatedStr = Number(p.realStr) || 0;
             }
-            
+
             const captainBonus = captainCalculatedStr * percent;
-            
+
             const opt = document.createElement('option');
             opt.value = p.id;
-            
+
             // Форматирование: если бонус положительный - показываем число и проценты, если отрицательный/нулевой - только проценты
             if (captainBonus > 0) {
                 opt.textContent = `${p.name} — ${captainBonus.toFixed(2)} (+${(percent * 100).toFixed(0)}%)`;
             } else {
                 opt.textContent = `${p.name} — ${captainBonus.toFixed(1)} (${(percent * 100).toFixed(0)}%)`;
             }
-            
+
             captainSelectRef.appendChild(opt);
         });
         if (prev && Array.from(captainSelectRef.options).some(o => o.value === prev)) {
@@ -2964,12 +3104,12 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         const styleSelect = createCustomStyleSelect((styleValue) => {
             slotApi.customStyleValue = styleValue;
             const playerId = slotApi.getValue && slotApi.getValue();
-            
+
             // Сохраняем стиль игрока в кэш
             if (playerId) {
                 setPlayerStyleToCache(playerId, styleValue);
             }
-            
+
             const player = players.find(p => String(p.id) === String(playerId));
             if (player) {
                 logPlayerWeatherCoef({
@@ -3006,17 +3146,17 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                                 styleSelect.setValue(cachedStyle);
                             }
                         }
-                        
+
                         if (slotApi.physicalFormSelect) {
                             const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
                             const autoFormId = getPhysicalFormIdFromData(player.form, player.form_mod, tournamentType);
-                            
+
                             // Устанавливаем форму только если она ещё не установлена (null)
                             // Если форма уже установлена вручную, не перезаписываем её
                             if (slotApi.physicalFormValue === null) {
                                 slotApi.physicalFormSelect.setValue(autoFormId);
                                 slotApi.physicalFormValue = autoFormId;
-                                
+
                                 // Пересчитываем realStr с учетом физ формы
                                 const baseRealStr = Number(player.baseRealStr || player.realStr) || 0;
                                 const modifiedRealStr = applyPhysicalFormToRealStr(baseRealStr, autoFormId);
@@ -3049,19 +3189,19 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     customStyleValue: slotApi.customStyleValue || 'norm',
                     strength: Number(player.realStr) || 0
                 });
-                
+
                 // Автоматически устанавливаем форму на основе данных игрока
                 if (slotApi.physicalFormSelect) {
                     const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
                     const formId = getPhysicalFormIdFromData(player.form, player.form_mod, tournamentType);
                     slotApi.physicalFormSelect.setValue(formId);
                     slotApi.physicalFormValue = formId;
-                    
+
                     // Пересчитываем realStr с учетом физ формы
                     const baseRealStr = Number(player.baseRealStr || player.realStr) || 0;
                     const modifiedRealStr = applyPhysicalFormToRealStr(baseRealStr, formId);
                     slotApi.modifiedRealStr = modifiedRealStr;
-                    
+
                     // Обновляем селекторы игроков с новой формой
                     updatePlayerSelectOptions();
                 }
@@ -3085,16 +3225,16 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         // Ячейка с селектором игрока
         tdSel.className = 'player-cell';
         tdSel.appendChild(orders.el);
-        
+
         // Ячейка с селектором стиля
         const tdStyle = document.createElement('td');
         tdStyle.className = 'txt style-cell';
         tdStyle.appendChild(styleSelect);
-        
+
         // Ячейка с селектором физической формы
         const tdForm = document.createElement('td');
         tdForm.className = 'txt form-cell';
-        
+
         const physicalFormSelect = createPhysicalFormSelect((formId) => {
             slotApi.physicalFormValue = formId;
             const playerId = slotApi.getValue && slotApi.getValue();
@@ -3104,12 +3244,12 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                 const baseRealStr = Number(player.baseRealStr || player.realStr) || 0;
                 const modifiedRealStr = applyPhysicalFormToRealStr(baseRealStr, formId);
                 slotApi.modifiedRealStr = modifiedRealStr;
-                
+
                 // Обновляем все селекторы (каждый игрок сохраняет свою форму)
                 updatePlayerSelectOptions();
             }
         }, 'typeC');
-        
+
         physicalFormSelect.style.display = 'block';
         const physFormSelected = physicalFormSelect.querySelector('.selected');
         if (physFormSelected) {
@@ -3119,10 +3259,10 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             physFormSelected.style.padding = '1px 4px';
             physFormSelected.style.boxSizing = 'border-box';
         }
-        
+
         tdForm.appendChild(physicalFormSelect);
         slotApi.physicalFormSelect = physicalFormSelect;
-        
+
         // Добавляем все ячейки в строку
         tr.appendChild(tdPos);
         tr.appendChild(tdSel);
@@ -3181,14 +3321,14 @@ function refreshCaptainOptions(lineupBlock, players) {
     if (!sel) return;
     const inLineupIds = new Set(lineupBlock.lineup.map(s => s.getValue()).filter(Boolean));
     const available = players.filter(p => inLineupIds.has(String(p.id)));
-    
+
     // Обновляем title селектора
     if (available.length === 0) {
         sel.title = 'Некому быть капитаном';
     } else {
         sel.title = 'Выберите капитана';
     }
-    
+
     const dummyEntries = lineupBlock.lineup.map(slot => {
         const pid = slot.getValue && slot.getValue();
         if (!pid) return null;
@@ -3201,13 +3341,13 @@ function refreshCaptainOptions(lineupBlock, players) {
     sel.innerHTML = '<option value="" class="captain-placeholder">— не выбран —</option>';
     available.forEach(p => {
         const percent = estimateCaptainPercent(p, dummyEntries);
-        
+
         // Находим слот капитана для получения его позиции и формы
         const captainSlot = lineupBlock.lineup.find(slot => {
             const pid = slot.getValue && slot.getValue();
             return pid && String(pid) === String(p.id);
         });
-        
+
         let captainCalculatedStr;
         if (captainSlot && captainSlot.posValue && captainSlot.physicalFormValue) {
             // Используем calculatePlayerStrengthGlobal для точного расчета
@@ -3216,19 +3356,19 @@ function refreshCaptainOptions(lineupBlock, players) {
             // Fallback на realStr если нет данных о позиции/форме
             captainCalculatedStr = Number(p.realStr) || 0;
         }
-        
+
         const captainBonus = captainCalculatedStr * percent;
-        
+
         const opt = document.createElement('option');
         opt.value = p.id;
-        
+
         // Форматирование: если бонус положительный - показываем число и проценты, если отрицательный/нулевой - только проценты
         if (captainBonus > 0) {
             opt.textContent = `${p.name} — ${captainBonus.toFixed(2)} (+${(percent * 100).toFixed(0)}%)`;
         } else {
             opt.textContent = `${p.name} — ${captainBonus.toFixed(1)} (${(percent * 100).toFixed(0)}%)`;
         }
-        
+
         sel.appendChild(opt);
     });
     if (prev && Array.from(sel.options).some(o => o.value === prev)) sel.value = prev;
@@ -3282,18 +3422,22 @@ function createDefenceTypeSelector(team, onChange) {
 
 function createTeamSettingsBlock(team, sideLabel, onChange) {
     if (sideLabel === 'home') {
-        if (!window.homeTeam) window.homeTeam = {
-            defenceType: 'zonal',
-            rough: 'clean',
-            morale: 'normal'
-        };
+        if (!window.homeTeam) {
+            window.homeTeam = {
+                defenceType: 'zonal',
+                rough: 'clean',
+                morale: 'normal'
+            };
+        }
         team = window.homeTeam;
     } else {
-        if (!window.awayTeam) window.awayTeam = {
-            defenceType: 'zonal',
-            rough: 'clean',
-            morale: 'normal'
-        };
+        if (!window.awayTeam) {
+            window.awayTeam = {
+                defenceType: 'zonal',
+                rough: 'clean',
+                morale: 'normal'
+            };
+        }
         team = window.awayTeam;
     }
     const styleSelector = createStyleSelector();
@@ -3311,12 +3455,12 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
         team.formation = formationSelector.value;
         if (typeof onChange === 'function') onChange();
     });
-    
+
     const tacticSelect = createDummySelect();
     const defenseSelect = createDefenceTypeSelector(team, onChange);
     const roughSelect = createRoughSelector(team, onChange);
     const moraleSelect = createMoraleSelector(team, onChange);
-    
+
     if (team === window.homeTeam) {
         window.homeDefenceTypeSelect = defenseSelect;
         window.homeRoughSelect = roughSelect;
@@ -3327,16 +3471,16 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
         window.awayRoughSelect = roughSelect;
         window.awayMoraleSelect = moraleSelect;
     }
-    
+
     // Создаем блок с таблицей
     const block = document.createElement('div');
     block.style.marginBottom = '8px';
-    
+
     const table = document.createElement('table');
     table.id = team === window.homeTeam ? 'vs-home-settings-table' : 'vs-away-settings-table';
     table.style.width = '100%';
     table.style.borderCollapse = 'collapse';
-    
+
     // Функция для создания строк таблицы (заголовок и селектор на разных строках)
     const createRow = (labelText, selectElement, extraElement = null, rowId = null) => {
         // Строка с заголовком
@@ -3344,26 +3488,26 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
         if (rowId) {
             trLabel.id = `${rowId}-label`;
         }
-        
+
         const tdLabel = document.createElement('td');
         tdLabel.className = 'txt';
         tdLabel.textContent = labelText;
         tdLabel.style.paddingBottom = '2px';
         tdLabel.style.fontSize = '11px';
         tdLabel.style.fontWeight = 'bold';
-        
+
         trLabel.appendChild(tdLabel);
-        
+
         // Строка с селектором
         const trSelect = document.createElement('tr');
         if (rowId) {
             trSelect.id = `${rowId}-select`;
         }
-        
+
         const tdSelect = document.createElement('td');
         tdSelect.className = 'txt';
         tdSelect.style.paddingBottom = '6px';
-        
+
         // Применяем стили как у селекторов игроков
         if (selectElement.tagName === 'SELECT') {
             selectElement.style.width = '100%';
@@ -3377,7 +3521,7 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
             selectElement.style.color = '#444';
             selectElement.style.lineHeight = '16px';
         }
-        
+
         // Если есть дополнительный элемент (кнопка помощи), создаем flex контейнер
         if (extraElement) {
             const container = document.createElement('div');
@@ -3391,39 +3535,39 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
         } else {
             tdSelect.appendChild(selectElement);
         }
-        
+
         trSelect.appendChild(tdSelect);
-        
+
         return [trLabel, trSelect];
     };
-    
+
     const teamPrefix = team === window.homeTeam ? 'home' : 'away';
-    
+
     // Добавляем строки (каждая пара: заголовок + селектор)
     const [styleLabelRow, styleSelectRow] = createRow('стиль:', styleSelector, null, `vs-${teamPrefix}-style`);
     table.appendChild(styleLabelRow);
     table.appendChild(styleSelectRow);
-    
+
     const [formLabelRow, formSelectRow] = createRow('формация:', formationSelector, null, `vs-${teamPrefix}-formation`);
     table.appendChild(formLabelRow);
     table.appendChild(formSelectRow);
-    
+
     const [tacticLabelRow, tacticSelectRow] = createRow('тактика:', tacticSelect, null, `vs-${teamPrefix}-tactic`);
     table.appendChild(tacticLabelRow);
     table.appendChild(tacticSelectRow);
-    
+
     const [defenseLabelRow, defenseSelectRow] = createRow('вид защиты:', defenseSelect, null, `vs-${teamPrefix}-defense`);
     table.appendChild(defenseLabelRow);
     table.appendChild(defenseSelectRow);
-    
+
     const [roughLabelRow, roughSelectRow] = createRow('грубость:', roughSelect, null, `vs-${teamPrefix}-rough`);
     table.appendChild(roughLabelRow);
     table.appendChild(roughSelectRow);
-    
+
     const [moraleLabelRow, moraleSelectRow] = createRow('настрой:', moraleSelect, null, `vs-${teamPrefix}-morale`);
     table.appendChild(moraleLabelRow);
     table.appendChild(moraleSelectRow);
-    
+
     block.appendChild(table);
     team._styleSelector = styleSelector;
     team._formationSelector = formationSelector;
@@ -3455,7 +3599,7 @@ function detectTournamentTypeFromPage() {
     try {
         const matchInfo = parseMatchInfo(document.body.innerHTML);
         const tournamentType = matchInfo.tournamentType;
-        
+
         // Конвертируем типы турниров в типы физ форм
         const typeMapping = {
             'friendly': 'friendly',              // Товарищеский
@@ -3465,7 +3609,7 @@ function detectTournamentTypeFromPage() {
             'challenge_cup': 'typeC',            // Кубок вызова
             'amators': 'typeB_amateur'           // Конференция любительских
         };
-        
+
         return typeMapping[tournamentType] || 'typeC';
     } catch (e) {
         console.warn('[TournamentType] Failed to detect, using default typeC', e);
@@ -3478,7 +3622,7 @@ function getTournamentType() {
     if (select) {
         return select.value;
     }
-    
+
     // Если селектор еще не создан, пытаемся определить автоматически
     return detectTournamentTypeFromPage();
 }
@@ -3486,7 +3630,7 @@ function getTournamentType() {
 // --- MAIN LOGIC ---
 (function () {
     'use strict';
-    
+
     async function init() {
         replaceTeamIcons();
         const teamLinks = document.querySelectorAll('table.tobl a[href^="roster.php?num="]');
@@ -3647,7 +3791,7 @@ function getTournamentType() {
         };
         const sort = sortMap[tournamentType];
         if (!sort) return Promise.reject(new Error('Неизвестный тип турнира'));
-        const url = `https://www.virtualsoccer.ru/roster.php?num=${teamId}&sort=${sort}`;
+        const url = `${SITE_CONFIG.BASE_URL}/roster.php?num=${teamId}&sort=${sort}`;
         return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 method: "GET",
@@ -3679,7 +3823,7 @@ function getTournamentType() {
     /* ----------------------------- SHIRTS DATA FUNCTIONS ----------------------------- */
     function getLastMatchForTeam(teamId) {
         return new Promise((resolve, reject) => {
-            const url = `https://www.virtualsoccer.ru/roster_m.php?num=${teamId}`;
+            const url = `${SITE_CONFIG.BASE_URL}/roster_m.php?num=${teamId}`;
             GM_xmlhttpRequest({
                 method: "GET",
                 url: url,
@@ -3688,24 +3832,24 @@ function getTournamentType() {
                         reject(new Error('Failed to load roster_m'));
                         return;
                     }
-                    
+
                     try {
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(response.responseText, 'text/html');
-                        
+
                         // Ищем все строки матчей (только viewmatch.php - это сыгранные матчи)
                         const matchLinks = Array.from(doc.querySelectorAll('a[href*="viewmatch.php"]'));
-                        
+
                         // Ищем последний сыгранный матч (идем с конца списка)
                         for (let i = matchLinks.length - 1; i >= 0; i--) {
                             const link = matchLinks[i];
                             const scoreText = link.textContent.trim();
-                            
+
                             // Пропускаем несыгранные матчи (счет ?:?)
                             if (scoreText === '?:?') {
                                 continue;
                             }
-                            
+
                             const href = link.getAttribute('href');
                             const match = href.match(/day=(\d+)&match_id=(\d+)/);
                             if (match) {
@@ -3713,7 +3857,7 @@ function getTournamentType() {
                                 return;
                             }
                         }
-                        
+
                         resolve(null);
                     } catch (error) {
                         reject(error);
@@ -3728,8 +3872,8 @@ function getTournamentType() {
 
     function getMatchLineup(day, matchId, teamId) {
         return new Promise((resolve, reject) => {
-            const url = `https://www.virtualsoccer.ru/viewmatch.php?day=${day}&match_id=${matchId}`;
-            
+            const url = `${SITE_CONFIG.BASE_URL}/viewmatch.php?day=${day}&match_id=${matchId}`;
+
             GM_xmlhttpRequest({
                 method: "GET",
                 url: url,
@@ -3738,54 +3882,54 @@ function getTournamentType() {
                         reject(new Error('Failed to load viewmatch'));
                         return;
                     }
-                    
+
                     try {
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(response.responseText, 'text/html');
-                        
+
                         // Определяем, дома или в гостях играла команда
                         const teamLinks = doc.querySelectorAll('table.tobl a[href^="roster.php?num="]');
                         let isHome = false;
-                        
+
                         if (teamLinks.length >= 2) {
-                            const homeTeamId = new URL(teamLinks[0].href, 'https://www.virtualsoccer.ru').searchParams.get('num');
+                            const homeTeamId = new URL(teamLinks[0].href, SITE_CONFIG.BASE_URL).searchParams.get('num');
                             isHome = (homeTeamId === String(teamId));
                         }
-                        
+
                         // Извлекаем футболки
                         const prefix = isHome ? 'gif_0_' : 'gif_1_';
                         const shirts = {};
-                        
+
                         // Пробуем разные селекторы
                         let shirtDivs = doc.querySelectorAll(`div.shirt.qf[id^="${prefix}"]`);
-                        
+
                         if (shirtDivs.length === 0) {
                             // Пробуем без класса qf
                             shirtDivs = doc.querySelectorAll(`div.shirt[id^="${prefix}"]`);
                         }
-                        
+
                         if (shirtDivs.length === 0) {
                             // Пробуем просто по id
                             shirtDivs = doc.querySelectorAll(`div[id^="${prefix}"]`);
                         }
-                        
+
                         if (shirtDivs.length === 0) {
                             // Пробуем найти все div с классом shirt
                             const allShirts = doc.querySelectorAll('div.shirt');
-                            
-                            
+
+
                             if (allShirts.length === 0) {
                                 // Проверяем что вообще есть на странице
                                 const allDivs = doc.querySelectorAll('div');
-                                
-                                
+
+
                                 // Проверяем есть ли таблица с составом
                                 const tables = doc.querySelectorAll('table.tobl');
-                                
-                                
+
+
                                 // Ищем любые div с id содержащим gif
                                 const gifDivs = Array.from(allDivs).filter(d => d.id && d.id.includes('gif'));
-                                
+
                                 if (gifDivs.length > 0) {
                                     console.log('[Shirts] Sample gif div:', {
                                         id: gifDivs[0].id,
@@ -3802,45 +3946,45 @@ function getTournamentType() {
                                 } : 'none');
                             }
                         }
-                        
+
                         // Если нашли элементы через querySelector
                         if (shirtDivs.length > 0) {
                             shirtDivs.forEach((div, idx) => {
                                 const position = div.textContent.trim();
                                 const style = div.getAttribute('style');
                                 const bgMatch = style ? style.match(/background-image:\s*url\(['"]*([^'"()]+)['"]*\)/) : null;
-                                
+
                                 if (idx < 3) {
-                                    console.log('[Shirts] Processing div #' + idx + ':', { 
+                                    console.log('[Shirts] Processing div #' + idx + ':', {
                                         id: div.id,
-                                        position, 
+                                        position,
                                         styleLength: style ? style.length : 0,
-                                        bgMatch: bgMatch ? bgMatch[1] : null 
+                                        bgMatch: bgMatch ? bgMatch[1] : null
                                     });
                                 }
-                                
+
                                 if (bgMatch) {
                                     const shirtUrl = bgMatch[1];
                                     if (!shirts.gk && position === 'GK') {
                                         shirts.gk = shirtUrl;
-                                        
+
                                     } else if (!shirts.field && position !== 'GK') {
                                         shirts.field = shirtUrl;
-                                        
+
                                     }
                                 }
                             });
                         } else {
                             // Если не нашли через querySelector, парсим сырой HTML
-                            
+
                             const htmlText = response.responseText;
-                            
+
                             // Ищем паттерн: id="gif_X_Y" ... background-image:url('pics/shirts/sh_XXX_sm.png')>POSITION<
                             const shirtPattern = new RegExp(`id="${prefix}\\d+"[^>]*?background-image:url\\(['"]*([^'"()]+)['"]*\\)[^>]*?>(\\w+)<`, 'g');
                             const matches = [...htmlText.matchAll(shirtPattern)];
-                            
-                            
-                            
+
+
+
                             if (matches.length > 0) {
                                 matches.forEach((match, idx) => {
                                     if (idx < 3) {
@@ -3849,24 +3993,24 @@ function getTournamentType() {
                                             position: match[2]
                                         });
                                     }
-                                    
+
                                     const shirtUrl = match[1];
                                     const position = match[2];
-                                    
+
                                     if (position) {
                                         if (!shirts.gk && position === 'GK') {
                                             shirts.gk = shirtUrl;
-                                            
+
                                         } else if (!shirts.field && position !== 'GK') {
                                             shirts.field = shirtUrl;
-                                            
+
                                         }
                                     }
                                 });
                             }
                         }
-                        
-                        
+
+
                         resolve(shirts);
                     } catch (error) {
                         reject(error);
@@ -3880,31 +4024,31 @@ function getTournamentType() {
     }
 
     async function getTeamShirts(teamId) {
-        
-        
+
+
         // Проверяем кэш
         const cached = getCachedShirts(teamId);
         if (cached) {
-            
+
             return cached;
         }
-        
+
         try {
             // Получаем последний матч
             const lastMatch = await getLastMatchForTeam(teamId);
-            
+
             if (!lastMatch) {
-                
+
                 return { gk: DEFAULT_GK_SHIRT, field: DEFAULT_SHIRT };
             }
-            
-            
-            
+
+
+
             // Получаем расстановку
             const shirts = await getMatchLineup(lastMatch.day, lastMatch.matchId, teamId);
-            
-            
-            
+
+
+
             // Если не нашли футболки, используем дефолтные
             if (!shirts.gk) {
                 console.warn('[Shirts] No GK shirt found, using default');
@@ -3914,10 +4058,10 @@ function getTournamentType() {
                 console.warn('[Shirts] No field shirt found, using default');
                 shirts.field = DEFAULT_SHIRT;
             }
-            
+
             // Кэшируем
             setCachedShirts(teamId, shirts);
-            
+
             return shirts;
         } catch (error) {
             console.error('[Shirts] Error getting shirts for team', teamId, error);
@@ -3950,7 +4094,7 @@ function getTournamentType() {
         `;
         div.textContent = position;
         div.title = playerName ? `${position}: ${playerName}` : position;
-        
+
         return div;
     }
 
@@ -3965,11 +4109,11 @@ function getTournamentType() {
         } else {
             shirtsContainer.innerHTML = '';
         }
-        
+
         // Получаем позиции - используем актуальные posValue из lineup, если доступны
         let homePositions = FORMATIONS[homeFormation] || FORMATIONS['4-4-2'];
         let awayPositions = FORMATIONS[awayFormation] || FORMATIONS['4-4-2'];
-        
+
         // Если есть lineup с актуальными позициями, используем их
         if (homeLineup && homeLineup.length > 0) {
             const actualPositions = homeLineup.map(slot => slot.posValue || '').filter(p => p);
@@ -3977,35 +4121,35 @@ function getTournamentType() {
                 homePositions = actualPositions;
             }
         }
-        
+
         if (awayLineup && awayLineup.length > 0) {
             const actualPositions = awayLineup.map(slot => slot.posValue || '').filter(p => p);
             if (actualPositions.length === awayPositions.length) {
                 awayPositions = actualPositions;
             }
         }
-        
+
         // Генерируем координаты для каждой команды
         const homeCoords = generateFieldPositions(homePositions, 'home');
         const awayCoords = generateFieldPositions(awayPositions, 'away');
-        
-        console.log('[Shirts] Generated positions', { 
-            homeFormation, 
-            awayFormation, 
+
+        console.log('[Shirts] Generated positions', {
+            homeFormation,
+            awayFormation,
             homePositions,
             awayPositions,
-            homeCoords: homeCoords.length, 
-            awayCoords: awayCoords.length 
+            homeCoords: homeCoords.length,
+            awayCoords: awayCoords.length
         });
-        
+
         // Отображаем футболки хозяев
         homeCoords.forEach((coord, idx) => {
             if (!coord) return;
-            
+
             const position = coord.position;
             const shirtUrl = position === 'GK' ? homeShirts.gk : homeShirts.field;
             let playerName = null;
-            
+
             // Пытаемся получить имя игрока из состава
             if (homeLineup && homeLineup[idx]) {
                 const playerId = homeLineup[idx].getValue && homeLineup[idx].getValue();
@@ -4013,19 +4157,19 @@ function getTournamentType() {
                     playerName = homeLineup[idx].selectedPlayer.name;
                 }
             }
-            
+
             const shirt = createShirtElement(position, shirtUrl, coord.top, coord.left, playerName);
             if (shirt) shirtsContainer.appendChild(shirt);
         });
-        
+
         // Отображаем футболки гостей
         awayCoords.forEach((coord, idx) => {
             if (!coord) return;
-            
+
             const position = coord.position;
             const shirtUrl = position === 'GK' ? awayShirts.gk : awayShirts.field;
             let playerName = null;
-            
+
             // Пытаемся получить имя игрока из состава
             if (awayLineup && awayLineup[idx]) {
                 const playerId = awayLineup[idx].getValue && awayLineup[idx].getValue();
@@ -4033,15 +4177,15 @@ function getTournamentType() {
                     playerName = awayLineup[idx].selectedPlayer.name;
                 }
             }
-            
+
             const shirt = createShirtElement(position, shirtUrl, coord.top, coord.left, playerName);
             if (shirt) shirtsContainer.appendChild(shirt);
         });
     }
 
     async function initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock = null, awayLineupBlock = null) {
-        
-        
+
+
         // Добавляем индикатор загрузки
         const loadingIndicator = document.createElement('div');
         loadingIndicator.className = 'shirts-loading';
@@ -4060,19 +4204,19 @@ function getTournamentType() {
         loadingIndicator.textContent = 'Загрузка футболок...';
         fieldCol.style.position = 'relative';
         fieldCol.appendChild(loadingIndicator);
-        
+
         try {
             // Получаем футболки для обеих команд
             const [homeShirts, awayShirts] = await Promise.all([
                 getTeamShirts(homeTeamId),
                 getTeamShirts(awayTeamId)
             ]);
-            
-            
-            
+
+
+
             // Убираем индикатор загрузки
             loadingIndicator.remove();
-            
+
             // Отображаем футболки
             const updateShirts = () => {
                 const homeFormation = homeFormationSelect.value || '4-4-2';
@@ -4081,13 +4225,13 @@ function getTournamentType() {
                 const awayLineup = awayLineupBlock ? awayLineupBlock.lineup : null;
                 displayShirtsOnField(fieldCol, homeShirts, awayShirts, homeFormation, awayFormation, homeLineup, awayLineup);
             };
-            
+
             updateShirts();
-            
+
             // Обновляем при изменении формации
             homeFormationSelect.addEventListener('change', updateShirts);
             awayFormationSelect.addEventListener('change', updateShirts);
-            
+
             // Сохраняем функцию обновления для использования извне
             window.__updateShirtsDisplay = updateShirts;
         } catch (error) {
@@ -4149,7 +4293,7 @@ function getTournamentType() {
                 }
             });
         }
-        
+
         // Загрузка физических форм
         if (state.physicalForms && Array.isArray(state.physicalForms)) {
             state.physicalForms.forEach((formId, idx) => {
@@ -4158,13 +4302,13 @@ function getTournamentType() {
                     lineupBlock.lineup[idx].physicalFormValue = formId;
                 }
             });
-            
+
             // Обновляем селекторы игроков после восстановления форм
             if (lineupBlock.updatePlayerSelectOptions) {
                 lineupBlock.updatePlayerSelectOptions();
             }
         }
-        
+
         setTimeout(() => {
             if (state.captain) captainSel.value = state.captain;
         }, 100);
@@ -4227,10 +4371,14 @@ function getTournamentType() {
         window.awayLineupBlock = awayLineupBlock;
         const homeSaved = loadTeamState(CONFIG.STORAGE_KEYS.HOME);
         const awaySaved = loadTeamState(CONFIG.STORAGE_KEYS.AWAY);
-        if (homeSaved) setTeamState(homeSaved, homeStyle, homeFormationSelect, homeLineupBlock.captainSelect,
-            homeLineupBlock, homePlayers);
-        if (awaySaved) setTeamState(awaySaved, awayStyle, awayFormationSelect, awayLineupBlock.captainSelect,
-            awayLineupBlock, awayPlayers);
+        if (homeSaved) {
+            setTeamState(homeSaved, homeStyle, homeFormationSelect, homeLineupBlock.captainSelect,
+                homeLineupBlock, homePlayers);
+        }
+        if (awaySaved) {
+            setTeamState(awaySaved, awayStyle, awayFormationSelect, awayLineupBlock.captainSelect,
+                awayLineupBlock, awayPlayers);
+        }
         // ✅ Восстановление morale — ПОСЛЕ создания селекторов
         if (homeSaved?.morale && window.homeMoraleSelect) {
             window.homeTeam.morale = homeSaved.morale;
@@ -4245,7 +4393,7 @@ function getTournamentType() {
             refreshCaptainOptions(homeLineupBlock, homePlayers);
             refreshCaptainOptions(awayLineupBlock, awayPlayers);
             saveAllStates();
-            
+
             // Обновляем отображение футболок при изменении состава
             if (typeof window.__updateShirtsDisplay === 'function') {
                 window.__updateShirtsDisplay();
@@ -4295,7 +4443,7 @@ function getTournamentType() {
         tr2.appendChild(homeCol2);
         tr2.appendChild(awayCol2);
         lineupsTable.appendChild(tr2);
-        
+
         // Селектор типа турнира для физ форм
         const tournamentTypeUI = document.createElement('div');
         tournamentTypeUI.className = 'lh16';
@@ -4306,23 +4454,23 @@ function getTournamentType() {
         const tournamentSelect = document.createElement('select');
         tournamentSelect.id = 'vs_tournament_type';
         tournamentSelect.innerHTML = `
-            <option value="friendly">Товарищеский матч (100%)</option>
-            <option value="typeC">Тип C (обычный турнир)</option>
+            <option value="friendly">Товарищеский матч</option>
+            <option value="typeC">Тип C (кубок, мирокубок и тд)</option>
             <option value="typeB">Тип B (чемпионат, кубок межсезонья)</option>
             <option value="typeB_amateur">Конференция любительских клубов (тип B)</option>
             <option value="all">Все формы</option>
         `;
-        
+
         // Автоматически определяем тип турнира
         const detectedType = detectTournamentTypeFromPage();
         tournamentSelect.value = detectedType;
-        
+
         tournamentSelect.style.marginLeft = '4px';
         tournamentSelect.style.borderRadius = '0';
         tournamentSelect.style.color = '#444';
         tournamentSelect.style.padding = '2px 4px';
         tournamentSelect.style.lineHeight = '16px';
-        
+
         // Функция обновления селекторов формы
         const updatePhysicalFormSelectors = (selectedType) => {
             // Обновляем все селекторы физ форм и пересчитываем формы игроков
@@ -4333,7 +4481,7 @@ function getTournamentType() {
                         if (slot.physicalFormSelect && slot.physicalFormSelect.setTournamentType) {
                             slot.physicalFormSelect.setTournamentType(selectedType);
                         }
-                        
+
                         // Пересчитываем форму игрока для нового типа турнира
                         const playerId = slot.getValue && slot.getValue();
                         if (playerId) {
@@ -4342,39 +4490,35 @@ function getTournamentType() {
                                 const formId = getPhysicalFormIdFromData(player.form, player.form_mod, selectedType);
                                 slot.physicalFormSelect.setValue(formId);
                                 slot.physicalFormValue = formId;
-                                
+
                                 // Пересчитываем realStr
                                 const baseRealStr = Number(player.baseRealStr || player.realStr) || 0;
                                 const modifiedRealStr = applyPhysicalFormToRealStr(baseRealStr, formId);
                                 slot.modifiedRealStr = modifiedRealStr;
-                                
-                                // Обновляем отображаемый текст
-                                const matchPosition = slot.posValue;
-                                const newLabel = toOptionLabel(player, matchPosition, formId);
-                                slot.setValue(playerId, newLabel);
                             }
                         }
                     });
-                    
+
                     // Обновляем все опции в селекторах после изменения типа турнира
+                    // Это также обновит отображаемый текст для всех игроков
                     if (block.updatePlayerSelectOptions) {
                         block.updatePlayerSelectOptions();
                     }
                 }
             });
         };
-        
+
         // Обработчик изменения типа турнира
         tournamentSelect.addEventListener('change', () => {
             updatePhysicalFormSelectors(tournamentSelect.value);
         });
-        
+
         tournamentLabel.appendChild(tournamentSelect);
         tournamentTypeUI.appendChild(tournamentLabel);
-        
+
         // Применяем определенный тип турнира к селекторам формы при первичной загрузке
         updatePhysicalFormSelectors(detectedType);
-        
+
         const title = document.createElement('h3');
         title.textContent = 'Калькулятор силы';
         container.appendChild(tournamentTypeUI);
@@ -4546,12 +4690,12 @@ function getTournamentType() {
                     awayRating: teamRatings.away,
                     sideLabel
                 });
-                
+
                 // Бонус дома только для турниров типа B
                 const tournamentType = getTournamentType();
                 const isTypeB = tournamentType === 'typeB' || tournamentType === 'typeB_amateur';
                 const homeBonusValue = isTypeB ? getHomeBonus(homeBonusPercent) : 0;
-                
+
                 const myStyleId = teamStyleId || 'norm';
                 const oppStyleId = opponentTeamStyleId || 'norm';
                 const inLineupPlayers = lineup.map(slot => {
@@ -4611,6 +4755,21 @@ function getTournamentType() {
                                 });
                             }
                             const ws = parseNumericWeatherStr(res.weatherStr);
+
+                            // Логируем ws для отладки
+                            console.log('[Weather] Player WS calculated', {
+                                player: player.name,
+                                baseStr: player.baseStrength,
+                                temperature: wt.temperature,
+                                weather: wt.weather,
+                                weatherStr: res.weatherStr,
+                                ws: ws,
+                                method: res.details?.method,
+                                interpolated: res.interpolated,
+                                lowerPoint: res.details?.lowerPoint,
+                                upperPoint: res.details?.upperPoint
+                            });
+
                             resolve({
                                 player,
                                 weatherStr: (ws == null || ws === 0) ? null :
@@ -4648,7 +4807,7 @@ function getTournamentType() {
                     realStr: slotEntries.map(e => Number(e.player.realStr) || 0),
                     contribution: slotEntries.map(e => 0),
                     defenceType: (sideLabel === 'home' ? (window.homeTeam && window.homeTeam
-                            .defenceType) : (window.awayTeam && window.awayTeam.defenceType)) ||
+                        .defenceType) : (window.awayTeam && window.awayTeam.defenceType)) ||
                         'zonal',
                     rough: (sideLabel === 'home' ? (window.homeTeam && window.homeTeam.rough) : (
                         window.awayTeam && window.awayTeam.rough)) || 'clean',
@@ -4660,8 +4819,8 @@ function getTournamentType() {
                 const opponent = {
                     positions: (sideLabel === 'home' ? (window.awayLineupBlock && window
                         .awayLineupBlock.lineup.map(slot => slot.posValue)) : (window
-                        .homeLineupBlock && window.homeLineupBlock.lineup.map(slot => slot
-                            .posValue))) || []
+                            .homeLineupBlock && window.homeLineupBlock.lineup.map(slot => slot
+                                .posValue))) || []
                 };
                 const totalRoughBonus = roughBonus({
                     team,
@@ -4719,14 +4878,14 @@ function getTournamentType() {
                     const slotEntryIdx = slotEntries.findIndex(e => String(e.player.id) === String(entry
                         .player.id));
                     if (slotEntryIdx < 0) return;
-                    
+
                     // НОВАЯ ЛОГИКА: Рассчитываем силу игрока на основе baseStr с модификаторами
                     const slotEntry = slotEntries[slotEntryIdx];
                     const slot = slotEntry.slot;  // Используем slot из slotEntry
                     const idx = slotEntry.idx;    // Используем оригинальный индекс
                     const baseStr = Number(entry.player.baseStrength) || 0;
                     const ws = Number(entry.weatherStr);
-                    
+
                     if (!ws || ws === 0) {
                         console.warn('[Calc] Skip player due to invalid WeatherStrength', {
                             side: sideLabel,
@@ -4736,7 +4895,7 @@ function getTournamentType() {
                         });
                         return;
                     }
-                    
+
                     const denom = ws / (baseStr || 1);
                     if (!Number.isFinite(denom) || denom === 0) {
                         console.warn('[Calc] Skip player due to invalid denominator', {
@@ -4748,7 +4907,7 @@ function getTournamentType() {
                         });
                         return;
                     }
-                    
+
                     // Шаг 1: Получаем все модификаторы для baseStr
                     // Если форма не установлена вручную, определяем автоматически
                     let actualFormId = slot?.physicalFormValue;
@@ -4756,57 +4915,57 @@ function getTournamentType() {
                         const tournamentType = getTournamentType();
                         actualFormId = getPhysicalFormIdFromData(entry.player.form, entry.player.form_mod, tournamentType);
                     }
-                    
+
                     const physicalFormModifier = getPhysicalFormModifier(actualFormId);
                     const fatigueModifier = getFatigueBonus(entry.player.fatigue);
                     const realityModifier = getRealityBonus(entry.player.real_status, entry.player.real_sign);
-                    
+
                     const playerMatchPos = idx >= 0 ? slotEntries[idx]?.matchPos : null;
                     const playerMainPos = entry.player.mainPos || null;
                     const playerSecondPos = entry.player.secondPos || null;
                     const positionModifier = getPositionModifier(playerMainPos, playerSecondPos, playerMatchPos);
-                    
+
                     // Шаг 2: Вычисляем calculatedRealStr = baseStr * все модификаторы
                     const calculatedRealStr = baseStr * physicalFormModifier * fatigueModifier * realityModifier * positionModifier;
-                    
+
                     // Шаг 3: Вычисляем contribBase = calculatedRealStr * denom
                     const contribBase = calculatedRealStr * denom;
                     // Шаг 4: Бонусы от contribBase
                     const abilityBonusesDetailed = getAbilitiesBonusesDetailed(entry.player.abilities, myStyleId);
                     const abilitiesBonus = getAbilitiesBonusForStyleId(entry.player.abilities, myStyleId);
                     const favoriteStyleBonus = getFavoriteStyleBonus(myStyleId, entry.playerStyleId);
-                    
+
                     const synergyBonus = getSynergyBonus(entry.player, inLineupPlayers, myStyleId, userSynergy);
                     const synergyBonusForPlayer = contribBase * synergyBonus;
-                    
+
                     const chemistryBonus = getChemistryBonus(entry.player, inLineupPlayers, myStyleId);
                     const chemistryBonusForPlayer = contribBase * chemistryBonus;
                     totalChemistryBonus += chemistryBonusForPlayer;
-                    
+
                     const positionBonus = getPositionBonus(myStyleId, playerMatchPos);
                     const positionBonusForPlayer = contribBase * positionBonus;
                     totalPositionBonus += positionBonusForPlayer;
-                    
+
                     const moraleBonusForPlayer = getMoraleBonusForPlayer({
                         moraleMode,
                         baseContrib: contribBase,
                         bounds: moraleBounds
                     });
-                    
+
                     const homeBonusForPlayer = contribBase * homeBonusValue;
                     totalHomeBonus += homeBonusForPlayer;
-                    
+
                     let collisionWinBonusForPlayer = 0;
                     if (teamStatus === COLLISION_WIN && teamBonus > 0) {
                         collisionWinBonusForPlayer = contribBase * teamBonus;
                         totalCollisionWinBonus += collisionWinBonusForPlayer;
                     }
-                    
+
                     const defenceTypeBonusForPlayer = idx >= 0 ? (team.contribution[idx] || 0) : 0;
-                    
+
                     const totalBonus = abilitiesBonus + favoriteStyleBonus;
                     const contribWithIndividualBonuses = contribBase * (1 + totalBonus);
-                    
+
                     // Шаг 5: Бонусы от calculatedRealStr
                     const isCaptain = captainId && String(entry.player.id) === String(captainId);
                     // Капитанский бонус: если это капитан, бонус 0, иначе вычисляем от calculatedRealStr капитана
@@ -4817,36 +4976,36 @@ function getTournamentType() {
                             const pid = s.getValue && s.getValue();
                             return pid && String(pid) === String(captainId);
                         });
-                        
+
                         let captainCalculatedStr;
                         if (captainSlot && captainSlot.posValue) {
                             // Вычисляем calculatedRealStr капитана с учетом всех модификаторов
                             const captainBaseStr = Number(captainPlayer.baseStrength) || 0;
-                            
+
                             // Форма капитана
                             let captainFormId = captainSlot.physicalFormValue;
                             if (!captainFormId) {
                                 const tournamentType = getTournamentType();
                                 captainFormId = getPhysicalFormIdFromData(captainPlayer.form, captainPlayer.form_mod, tournamentType);
                             }
-                            
+
                             const captainPhysicalFormModifier = getPhysicalFormModifier(captainFormId);
                             const captainFatigueModifier = getFatigueBonus(captainPlayer.fatigue);
                             const captainRealityModifier = getRealityBonus(captainPlayer.real_status, captainPlayer.real_sign);
                             const captainPositionModifier = getPositionModifier(captainPlayer.mainPos, captainPlayer.secondPos, captainSlot.posValue);
-                            
+
                             captainCalculatedStr = captainBaseStr * captainPhysicalFormModifier * captainFatigueModifier * captainRealityModifier * captainPositionModifier;
                         } else {
                             // Fallback на realStr если нет данных о позиции
                             captainCalculatedStr = Number(captainPlayer.realStr) || 0;
                         }
-                        
+
                         captainBonusForPlayer = captainCalculatedStr * teamCaptainPercent;
                     }
-                    
+
                     const roughMode = getRough(team);
                     const roughBonusForPlayer = getRoughBonusForPlayer(calculatedRealStr, roughMode);
-                    
+
                     const leadershipBonusForPlayer = leadershipBonusByPlayerId.get(String(entry.player.id)) || 0;
                     const contribution = contribWithIndividualBonuses +
                         captainBonusForPlayer +
@@ -4860,7 +5019,7 @@ function getTournamentType() {
                         positionBonusForPlayer +
                         moraleBonusForPlayer;
                     total += contribution;
-                    
+
                     console.log('[Calc] Player contribution', {
                         side: sideLabel,
                         name: entry.player.name,
@@ -4875,7 +5034,7 @@ function getTournamentType() {
                 const nonCaptainCount = results.filter(entry => entry && entry.player && (!captainId ||
                     String(entry.player.id) !== String(captainId))).length;
                 const totalCaptainBonus = (Number(captainBonus) || 0) * nonCaptainCount;
-                
+
                 console.log('[Calc] Team total', {
                     side: sideLabel,
                     total,
@@ -4890,7 +5049,7 @@ function getTournamentType() {
                     totalPositionBonus,
                     totalMoraleBonus
                 });
-                
+
                 return total
             }
             try {
@@ -4916,7 +5075,7 @@ function getTournamentType() {
         };
         container.appendChild(btn);
         window.saveAllStates = saveAllStates;
-        
+
         // Кнопка обновления футболок
         const refreshShirtsBtn = document.createElement('button');
         refreshShirtsBtn.textContent = 'Обновить футболки';
@@ -4928,16 +5087,16 @@ function getTournamentType() {
         refreshShirtsBtn.title = 'Очистить кэш и загрузить футболки заново';
         refreshShirtsBtn.onclick = async () => {
             if (!homeTeamId || !awayTeamId) return;
-            
+
             // Очищаем кэш
             try {
                 localStorage.removeItem(getShirtsCacheKey(homeTeamId));
                 localStorage.removeItem(getShirtsCacheKey(awayTeamId));
-                
-                
+
+
                 // Перезагружаем футболки
                 await initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock, awayLineupBlock);
-                
+
                 alert('Футболки успешно обновлены!');
             } catch (error) {
                 console.error('[Shirts] Failed to refresh:', error);
@@ -4945,13 +5104,13 @@ function getTournamentType() {
             }
         };
         container.appendChild(refreshShirtsBtn);
-        
+
         // Инициализируем систему футболок
         if (homeTeamId && awayTeamId && fieldCol) {
             initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock, awayLineupBlock)
                 .catch(err => console.error('[Shirts] Failed to initialize:', err));
         }
-        
+
         return container;
     }
     init();
