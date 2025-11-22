@@ -5,9 +5,10 @@
 // @version      0.916
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
-// @match        https://www.virtualsoccer.ru/previewmatch.php*
-// @match        https://www.vfleague.com/previewmatch.php*
-// @match        https://www.vfliga.ru/previewmatch.php*
+// @match        *://*.virtualsoccer.ru/previewmatch.php*
+// @match        *://*.vfleague.com/previewmatch.php*
+// @match        *://*.vfliga.ru/previewmatch.php*
+// @match        *://*.vfliga.com/previewmatch.php*
 // @connect      virtualsoccer.ru
 // @connect      vfleague.com
 // @connect      vfliga.ru
@@ -21,21 +22,17 @@
 // Определяем базовый URL в зависимости от текущего домена
 const SITE_CONFIG = (() => {
     const hostname = window.location.hostname;
-
+    let baseUrl = 'https://www.virtualsoccer.ru'; // default
+    
     if (hostname.includes('vfleague.com')) {
-        return {
-            BASE_URL: 'https://www.vfleague.com'
-        };
+        baseUrl = 'https://www.vfleague.com';
+    } else if (hostname.includes('vfliga.com')) {
+        baseUrl = 'https://www.vfliga.com';
     } else if (hostname.includes('vfliga.ru')) {
-        return {
-            BASE_URL: 'https://www.vfliga.ru'
-        };
-    } else {
-        // По умолчанию virtualsoccer.ru
-        return {
-            BASE_URL: 'https://www.virtualsoccer.ru'
-        };
+        baseUrl = 'https://www.vfliga.ru';
     }
+    
+    return { BASE_URL: baseUrl };
 })();
 
 // Centralized configuration object
@@ -226,6 +223,7 @@ const CONFIG = {
         // Типы турниров и доступные физ формы
         TOURNAMENT_TYPES: {
             'typeC': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'UNKNOWN'],
+            'typeC_international': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'UNKNOWN'],
             'typeB': ['B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'B_125_down', 'UNKNOWN'],
             'typeB_amateur': ['B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'B_125_down', 'UNKNOWN'],
             'friendly': ['FRIENDLY_100', 'UNKNOWN'],
@@ -704,7 +702,7 @@ function getCollisionInfo(teamStyleId, oppStyleId) {
         oppBonus
     };
 }
-const SUPPORTED_ABILITY_TYPES = new Set(['Ск', 'Г', 'Пд', 'Пк', 'Д', 'Км']);
+const SUPPORTED_ABILITY_TYPES = new Set(['Ск', 'Г', 'Пд', 'Пк', 'Д', 'Км', 'В', 'Р']);
 const KNOWN_STYLE_IDS = new Set(['sp', 'brazil', 'tiki', 'bb', 'kat', 'brit', 'norm']);
 
 function parseAbilities(abilitiesStr) {
@@ -796,6 +794,13 @@ function getMoraleBonusBounds({
 }) {
     const h = Math.round(homeRating);
     const a = Math.round(awayRating);
+    
+    console.log('[MoraleBonus] Calculating bounds', {
+        sideLabel,
+        homeRating: h,
+        awayRating: a
+    });
+    
     if (!h || !a) {
         return {
             superBonus: CONFIG.BONUSES.MORALE.SUPER_DEFAULT,
@@ -808,21 +813,32 @@ function getMoraleBonusBounds({
     let restBonus = CONFIG.BONUSES.MORALE.REST_DEFAULT;
     if (sideLabel === 'home') {
         if (h < a) {
-            superBonus = Math.min(0.54, (ratio - 1) / 2 + 0.27);
-            restBonus = -0.1;
+            console.log('[MoraleBonus] Home is weaker');
+            superBonus = Math.min(0.54, (ratio - 1) / 2 + CONFIG.BONUSES.MORALE.SUPER_DEFAULT);
+            restBonus = CONFIG.BONUSES.MORALE.REST_DEFAULT;
         } else {
-            superBonus = 0.27;
-            restBonus = Math.max(-0.25, Math.min(-0.1, -((ratio - 1) / 4) - 0.1));
+            console.log('[MoraleBonus] Home is stronger or equal');
+            superBonus = CONFIG.BONUSES.MORALE.SUPER_DEFAULT;
+            restBonus = Math.max(-0.25, Math.min(CONFIG.BONUSES.MORALE.REST_DEFAULT, -((ratio - 1) / 4) + CONFIG.BONUSES.MORALE.REST_DEFAULT));
         }
     } else {
         if (a < h) {
-            superBonus = Math.min(0.54, (ratio - 1) / 2 + 0.27);
-            restBonus = -0.1;
+            console.log('[MoraleBonus] Away is weaker');
+            superBonus = Math.min(0.54, (ratio - 1) / 2 + CONFIG.BONUSES.MORALE.SUPER_DEFAULT);
+            restBonus = CONFIG.BONUSES.MORALE.REST_DEFAULT;
         } else {
-            superBonus = 0.27;
-            restBonus = Math.max(-0.25, Math.min(-0.1, -((ratio - 1) / 4) - 0.1));
+            console.log('[MoraleBonus] Away is stronger or equal');
+            superBonus = CONFIG.BONUSES.MORALE.SUPER_DEFAULT;
+            restBonus = Math.max(-0.25, Math.min(CONFIG.BONUSES.MORALE.REST_DEFAULT, -((ratio - 1) / 4) + CONFIG.BONUSES.MORALE.REST_DEFAULT));
         }
     }
+    
+    console.log('[MoraleBonus] Result', {
+        ratio: ratio.toFixed(2),
+        superBonus: superBonus.toFixed(3),
+        restBonus: restBonus.toFixed(3)
+    });
+    
     return {
         superBonus,
         restBonus
@@ -831,16 +847,20 @@ function getMoraleBonusBounds({
 
 function getMoraleBonusForPlayer({
     moraleMode,
-    baseContrib,
+    contribBase,
     bounds
 }) {
     if (moraleMode === 'super') {
-        return baseContrib * bounds.superBonus;
+        return contribBase * bounds.superBonus;
     }
     if (moraleMode === 'rest') {
-        return baseContrib * bounds.restBonus;
+        return contribBase * bounds.restBonus;
     }
     return 0;
+}
+
+function getAtmosphereBonus(contribBase, atmosphereValue) {
+    return contribBase * atmosphereValue;
 }
 
 function getRough(team) {
@@ -1002,6 +1022,18 @@ const STYLE_ABILITIES_BONUS_MAP = {
         other: [0.02, 0.04, 0.06, 0.08]
     }
 };
+
+// Вратарские способности: зависят от наличия SW в защите
+const GOALKEEPER_ABILITIES_BONUS = {
+    'В': {
+        withSW: [0.03, 0.06, 0.09, 0.12],
+        withoutSW: [0.08, 0.16, 0.24, 0.32]
+    },
+    'Р': {
+        withSW: [0.08, 0.16, 0.24, 0.32],
+        withoutSW: [0.03, 0.06, 0.09, 0.12]
+    }
+};
 const LEADERSHIP_LEVEL_COEFF = [0, 0.03, 0.06, 0.09, 0.12];
 
 function getLineByMatchPos(matchPos) {
@@ -1052,6 +1084,35 @@ function getAbilitiesBonusForStyleId(abilitiesStr, teamStyleId) {
         if (!map) continue;
         const table = map[styleId] || map.other;
         if (!Array.isArray(table) || table.length < 4) continue;
+        const idx = Math.min(Math.max((Number(ab.level) || 1) - 1, 0), 3);
+        const bonus = Number(table[idx]) || 0;
+        sum += bonus;
+    }
+    return sum;
+}
+
+// Расчет вратарских способностей (зависит от наличия SW в защите)
+function getGoalkeeperAbilitiesBonus(abilitiesStr, hasSW) {
+    if (!abilitiesStr) {
+        return 0;
+    }
+    const arr = parseAbilities(abilitiesStr);
+    if (!arr || !arr.length) {
+        return 0;
+    }
+    
+    let sum = 0;
+    for (const ab of arr) {
+        const map = GOALKEEPER_ABILITIES_BONUS[ab.type];
+        if (!map) {
+            continue;
+        }
+        
+        const table = hasSW ? map.withSW : map.withoutSW;
+        if (!Array.isArray(table) || table.length < 4) {
+            continue;
+        }
+        
         const idx = Math.min(Math.max((Number(ab.level) || 1) - 1, 0), 3);
         const bonus = Number(table[idx]) || 0;
         sum += bonus;
@@ -1322,7 +1383,8 @@ function getPhysicalFormIdFromData(formPercent, formDirection, tournamentType = 
 
     // Определяем тип турнира (B или C)
     const isTypeB = tournamentType === 'typeB' || tournamentType === 'typeB_amateur';
-    const prefix = isTypeB ? 'B' : 'C';
+    const isTypeC = tournamentType === 'typeC' || tournamentType === 'typeC_international';
+    const prefix = isTypeB ? 'B' : (isTypeC ? 'C' : 'C');
 
     // Ищем точное совпадение
     const exactFormId = `${prefix}_${percent}_${trend}`;
@@ -1348,22 +1410,37 @@ function getPhysicalFormIdFromData(formPercent, formDirection, tournamentType = 
 }
 const TEAM_I_LEVEL_COEFF = [0, 0.005, 0.01, 0.02, 0.03];
 
-function getTeamIBonusForLineup(inLineupPlayers) {
+function getTeamIBonusForLineup(inLineupPlayers, lineup) {
     const teamIBonusByPlayer = [];
     let teamIBonusTotal = 0;
     for (const p of inLineupPlayers) {
         const abilities = parseAbilities(p.abilities);
         const intuition = abilities.find(a => a.type === 'И');
-        if (!intuition) continue;
+        if (!intuition) {
+            continue;
+        }
         const lvl = Math.max(1, Math.min(4, Number(intuition.level) || 1));
         const coeff = TEAM_I_LEVEL_COEFF[lvl] || 0;
-        const realStr = Number(p.realStr) || 0;
-        const bonus = realStr * coeff;
+        
+        // Используем calculatedRealStr вместо realStr
+        let calculatedStr = 0;
+        const playerSlot = lineup.find(s => {
+            const pid = s.getValue && s.getValue();
+            return pid && String(pid) === String(p.id);
+        });
+        
+        if (playerSlot && playerSlot.posValue && playerSlot.physicalFormValue) {
+            calculatedStr = calculatePlayerStrengthGlobal(p, playerSlot.posValue, playerSlot.physicalFormValue);
+        } else {
+            calculatedStr = Number(p.realStr) || 0;
+        }
+        
+        const bonus = calculatedStr * coeff;
         teamIBonusByPlayer.push({
             playerId: p.id,
             name: p.name,
             level: lvl,
-            realStr,
+            calculatedStr,
             coeff,
             bonus
         });
@@ -1379,12 +1456,41 @@ function parseTeamsRatingFromPage() {
     const table = Array.from(document.querySelectorAll('table.nol')).find(tbl =>
         tbl.textContent.includes('Рейтинг силы команд')
     );
-    if (!table) return null;
+    if (!table) {
+        console.warn('[Rating] Table not found');
+        return null;
+    }
     const tds = table.querySelectorAll('td.rdl, td.gdl');
-    if (tds.length < 2) return null;
-    const home = parseInt(tds[0].textContent, 10);
-    const away = parseInt(tds[1].textContent, 10);
-    if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
+    if (tds.length < 2) {
+        console.warn('[Rating] Not enough cells found');
+        return null;
+    }
+    
+    // Берем только первый текстовый узел, игнорируя span и div
+    const getFirstTextNode = (element) => {
+        for (const node of element.childNodes) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent.trim();
+                if (text) return text;
+            }
+        }
+        return '';
+    };
+    
+    const homeText = getFirstTextNode(tds[0]);
+    const awayText = getFirstTextNode(tds[1]);
+    
+    console.log('[Rating] Raw text', { homeText, awayText });
+    
+    const home = parseInt(homeText, 10);
+    const away = parseInt(awayText, 10);
+    
+    console.log('[Rating] Parsed values', { home, away });
+    
+    if (!Number.isFinite(home) || !Number.isFinite(away)) {
+        console.warn('[Rating] Invalid numbers');
+        return null;
+    }
     return {
         home,
         away
@@ -3576,7 +3682,7 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
 
 // Вспомогательные функции для определения типа турнира
 function parseMatchInfo(html) {
-    const typeRegex = /(?:Чемпионат|Кубок межсезонья|Кубок страны|Кубок вызова|Товарищеский матч)/i;
+    const typeRegex = /(?:Чемпионат|Кубок межсезонья|Кубок страны|Кубок вызова|Товарищеский матч|Лига Европы|Лига европейских чемпионов|Кубок азиатской конфедерации|Лига чемпионов Азии|Кубок африканской конфедерации|Лига чемпионов Африки|Кубок Южной Америки|Кубок Либертадорес|Кубок Сев\. и Центр\. Америки|Лига чемпионов Америки)/i;
     const typeMatch = html.match(typeRegex);
     let tournamentType = null;
     if (typeMatch) {
@@ -3587,6 +3693,16 @@ function parseMatchInfo(html) {
         else if (t.includes('вызова')) tournamentType = 'challenge_cup';
         else if (t.includes('товарищеский')) tournamentType = 'friendly';
         else if (t.includes('любительских')) tournamentType = 'amators';
+        else if (t.includes('лига европы')) tournamentType = 'europa_league';
+        else if (t.includes('европейских чемпионов')) tournamentType = 'champions_league_europe';
+        else if (t.includes('азиатской конфедерации')) tournamentType = 'asian_confederation_cup';
+        else if (t.includes('чемпионов азии')) tournamentType = 'asian_champions_league';
+        else if (t.includes('африканской конфедерации')) tournamentType = 'african_confederation_cup';
+        else if (t.includes('чемпионов африки')) tournamentType = 'african_champions_league';
+        else if (t.includes('южной америки')) tournamentType = 'south_america_cup';
+        else if (t.includes('либертадорес')) tournamentType = 'libertadores';
+        else if (t.includes('сев. и центр. америки')) tournamentType = 'north_central_america_cup';
+        else if (t.includes('чемпионов америки')) tournamentType = 'americas_champions_league';
     } else {
         throw new Error('Неизвестный тип турнира');
     }
@@ -3607,7 +3723,18 @@ function detectTournamentTypeFromPage() {
             'preseason_cup': 'typeB',            // Кубок межсезонья
             'national_cup': 'typeC',             // Кубок страны
             'challenge_cup': 'typeC',            // Кубок вызова
-            'amators': 'typeB_amateur'           // Конференция любительских
+            'amators': 'typeB_amateur',          // Конференция любительских
+            // Международные турниры с бонусом дома
+            'europa_league': 'typeC_international',
+            'champions_league_europe': 'typeC_international',
+            'asian_confederation_cup': 'typeC_international',
+            'asian_champions_league': 'typeC_international',
+            'african_confederation_cup': 'typeC_international',
+            'african_champions_league': 'typeC_international',
+            'south_america_cup': 'typeC_international',
+            'libertadores': 'typeC_international',
+            'north_central_america_cup': 'typeC_international',
+            'americas_champions_league': 'typeC_international'
         };
 
         return typeMapping[tournamentType] || 'typeC';
@@ -3646,13 +3773,15 @@ function getTournamentType() {
             alert(e.message);
             return;
         }
-        const [homePlayers, awayPlayers] = await Promise.all([
+        const [homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere] = await Promise.all([
             loadTeamRoster(homeTeamId, tournamentType),
-            loadTeamRoster(awayTeamId, tournamentType)
+            loadTeamRoster(awayTeamId, tournamentType),
+            loadTeamAtmosphere(homeTeamId),
+            loadTeamAtmosphere(awayTeamId)
         ]);
         const oldUI = document.getElementById('vsol-calculator-ui');
         if (oldUI) oldUI.remove();
-        const ui = createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers);
+        const ui = createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere);
         const comparisonTable = document.querySelector('table.tobl');
         if (comparisonTable && comparisonTable.parentNode) {
             comparisonTable.parentNode.insertBefore(ui, comparisonTable.nextSibling);
@@ -3787,7 +3916,18 @@ function getTournamentType() {
             championship: 3,
             national_cup: 4,
             amators: 10,
-            challenge_cup: 47
+            challenge_cup: 47,
+            // Международные турниры
+            champions_league_europe: 8,
+            europa_league: 14,
+            asian_champions_league: 26,
+            asian_confederation_cup: 27,
+            african_champions_league: 28,
+            african_confederation_cup: 29,
+            libertadores: 30,
+            south_america_cup: 31,
+            americas_champions_league: 32,
+            north_central_america_cup: 48
         };
         const sort = sortMap[tournamentType];
         if (!sort) return Promise.reject(new Error('Неизвестный тип турнира'));
@@ -3815,6 +3955,55 @@ function getTournamentType() {
                 },
                 onerror: function (err) {
                     reject(err);
+                }
+            });
+        });
+    }
+
+    function loadTeamAtmosphere(teamId) {
+        const url = `${SITE_CONFIG.BASE_URL}/roster_s.php?num=${teamId}`;
+        return new Promise((resolve, reject) => {
+            GM_xmlhttpRequest({
+                method: "GET",
+                url: url,
+                onload: function (response) {
+                    if (response.status !== 200) {
+                        console.warn('[Atmosphere] Failed to load roster_s for team', teamId);
+                        resolve(0);
+                        return;
+                    }
+                    try {
+                        const html = response.responseText;
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Ищем строку с "Атмосфера в команде:"
+                        const rows = doc.querySelectorAll('tr');
+                        for (const row of rows) {
+                            const text = row.textContent;
+                            if (text.includes('Атмосфера в команде:')) {
+                                // Ищем значение в формате "+2%" или "-1%"
+                                const match = text.match(/([+-]?\d+)%/);
+                                if (match) {
+                                    const percent = parseInt(match[1], 10);
+                                    const atmosphere = percent / 100; // Конвертируем в 0.02, -0.01 и т.д.
+                                    console.log('[Atmosphere] Parsed for team', teamId, ':', atmosphere);
+                                    resolve(atmosphere);
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        console.log('[Atmosphere] Not found for team', teamId, ', using default 0');
+                        resolve(0);
+                    } catch (error) {
+                        console.error('[Atmosphere] Parse error for team', teamId, ':', error);
+                        resolve(0);
+                    }
+                },
+                onerror: function (err) {
+                    console.error('[Atmosphere] Request error for team', teamId, ':', err);
+                    resolve(0);
                 }
             });
         });
@@ -4314,7 +4503,7 @@ function getTournamentType() {
         }, 100);
     }
 
-    function createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers) {
+    function createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere = 0, awayAtmosphere = 0) {
         const parsedWeather = parseWeatherFromPreview();
         const weatherUI = createWeatherUI(parsedWeather?.weather, parsedWeather?.temperature, parsedWeather?.icon);
         const container = document.createElement('div');
@@ -4398,6 +4587,11 @@ function getTournamentType() {
             if (typeof window.__updateShirtsDisplay === 'function') {
                 window.__updateShirtsDisplay();
             }
+            
+            // Автоматически пересчитываем силу при изменении позиций
+            if (typeof window.__vs_recalculateStrength === 'function') {
+                window.__vs_recalculateStrength();
+            }
         };
         const mainTable = document.createElement('table');
         mainTable.style.width = '750px';
@@ -4455,7 +4649,8 @@ function getTournamentType() {
         tournamentSelect.id = 'vs_tournament_type';
         tournamentSelect.innerHTML = `
             <option value="friendly">Товарищеский матч</option>
-            <option value="typeC">Тип C (кубок, мирокубок и тд)</option>
+            <option value="typeC">Тип C (кубок страны, кубок вызова)</option>
+            <option value="typeC_international">Международный кубок (C-формы, с бонусом дома)</option>
             <option value="typeB">Тип B (чемпионат, кубок межсезонья)</option>
             <option value="typeB_amateur">Конференция любительских клубов (тип B)</option>
             <option value="all">Все формы</option>
@@ -4656,12 +4851,9 @@ function getTournamentType() {
             saveAllStates();
         };
         container.appendChild(clearBtn);
-        const btn = document.createElement('button');
-        btn.textContent = 'Рассчитать силу';
-        btn.style.marginTop = '15px';
-        btn.className = 'butn-green';
-        btn.style.padding = '8px 16px';
-        btn.onclick = async () => {
+        
+        // Функция для пересчета силы команд
+        window.__vs_recalculateStrength = async () => {
             const wt = getCurrentWeatherFromUI();
             if (!wt) {
                 alert('Не найдены элементы UI погоды');
@@ -4678,7 +4870,7 @@ function getTournamentType() {
             const homeTeamStyleId = mapCustomStyleToStyleId(homeStyle.value);
             const awayTeamStyleId = mapCustomStyleToStyleId(awayStyle.value);
             async function computeTeamStrength(lineup, players, teamStyleId, sideLabel, opponentTeamStyleId,
-                homeBonusPercent = -1, userSynergy = 0) {
+                homeBonusPercent = -1, userSynergy = 0, atmosphereValue = 0) {
                 const teamRatings = parseTeamsRatingFromPage() || {
                     home: 0,
                     away: 0
@@ -4691,10 +4883,12 @@ function getTournamentType() {
                     sideLabel
                 });
 
-                // Бонус дома только для турниров типа B
+                // Бонус дома для турниров типа B и международных кубков
                 const tournamentType = getTournamentType();
-                const isTypeB = tournamentType === 'typeB' || tournamentType === 'typeB_amateur';
-                const homeBonusValue = isTypeB ? getHomeBonus(homeBonusPercent) : 0;
+                const hasHomeBonus = tournamentType === 'typeB' || 
+                                     tournamentType === 'typeB_amateur' || 
+                                     tournamentType === 'typeC_international';
+                const homeBonusValue = hasHomeBonus ? getHomeBonus(homeBonusPercent) : 0;
 
                 const myStyleId = teamStyleId || 'norm';
                 const oppStyleId = opponentTeamStyleId || 'norm';
@@ -4705,7 +4899,7 @@ function getTournamentType() {
                 const {
                     teamIBonusByPlayer,
                     teamIBonusTotal
-                } = getTeamIBonusForLineup(inLineupPlayers);
+                } = getTeamIBonusForLineup(inLineupPlayers, lineup);
                 const captainSelectEl = sideLabel === 'home' ? homeLineupBlock.captainSelect :
                     awayLineupBlock.captainSelect;
                 const {
@@ -4790,6 +4984,8 @@ function getTournamentType() {
                 let totalMoraleBonus = 0;
                 let totalSynergyBonus = 0;
                 let totalPositionBonus = 0;
+                let totalTeamIBonus = 0;
+                let totalAtmosphereBonus = 0;
                 const slotEntries = lineup.map((slot, idx) => {
                     const playerId = slot.getValue && slot.getValue();
                     const player = playerId ? players.find(p => String(p.id) === String(
@@ -4859,18 +5055,33 @@ function getTournamentType() {
                 const leadershipBonusByPlayerId = new Map();
                 ['DEF', 'MID', 'ATT'].forEach(line => {
                     const leaders = leadersByLine[line];
-                    if (!leaders || leaders.length !== 1) return;
+                    if (!leaders || leaders.length !== 1) {
+                        return;
+                    }
                     const leader = leaders[0];
-                    const leaderRealStr = Number(leader.entry.player.realStr) || 0;
+                    
+                    // Используем calculatedRealStr вместо realStr для корректного расчета
+                    const leaderSlot = leader.entry.slot;
+                    let leaderCalculatedStr = 0;
+                    if (leaderSlot && leaderSlot.posValue && leaderSlot.physicalFormValue) {
+                        leaderCalculatedStr = calculatePlayerStrengthGlobal(
+                            leader.entry.player,
+                            leaderSlot.posValue,
+                            leaderSlot.physicalFormValue
+                        );
+                    } else {
+                        leaderCalculatedStr = Number(leader.entry.player.realStr) || 0;
+                    }
+                    
                     const coeff = LEADERSHIP_LEVEL_COEFF[leader.level] || 0;
-                    const perPlayerBonus = leaderRealStr * coeff;
+                    const perPlayerBonus = leaderCalculatedStr * coeff;
                     slotEntries.forEach(entry => {
                         const l = getLineByMatchPos(entry.matchPos);
-                        if (l !== line) return;
-                        const prev = leadershipBonusByPlayerId.get(String(entry.player
-                            .id)) || 0;
-                        leadershipBonusByPlayerId.set(String(entry.player.id), prev +
-                            perPlayerBonus);
+                        if (l !== line) {
+                            return;
+                        }
+                        const prev = leadershipBonusByPlayerId.get(String(entry.player.id)) || 0;
+                        leadershipBonusByPlayerId.set(String(entry.player.id), prev + perPlayerBonus);
                     });
                 });
                 results.forEach(entry => {
@@ -4934,9 +5145,17 @@ function getTournamentType() {
                     const abilityBonusesDetailed = getAbilitiesBonusesDetailed(entry.player.abilities, myStyleId);
                     const abilitiesBonus = getAbilitiesBonusForStyleId(entry.player.abilities, myStyleId);
                     const favoriteStyleBonus = getFavoriteStyleBonus(myStyleId, entry.playerStyleId);
+                    
+                    // Вратарские способности (только для GK)
+                    let goalkeeperBonus = 0;
+                    if (playerMatchPos === 'GK') {
+                        const hasSW = slotEntries.some(e => e.matchPos === 'SW');
+                        goalkeeperBonus = getGoalkeeperAbilitiesBonus(entry.player.abilities, hasSW);
+                    }
 
                     const synergyBonus = getSynergyBonus(entry.player, inLineupPlayers, myStyleId, userSynergy);
                     const synergyBonusForPlayer = contribBase * synergyBonus;
+                    totalSynergyBonus += synergyBonusForPlayer;
 
                     const chemistryBonus = getChemistryBonus(entry.player, inLineupPlayers, myStyleId);
                     const chemistryBonusForPlayer = contribBase * chemistryBonus;
@@ -4948,9 +5167,13 @@ function getTournamentType() {
 
                     const moraleBonusForPlayer = getMoraleBonusForPlayer({
                         moraleMode,
-                        baseContrib: contribBase,
+                        contribBase,
                         bounds: moraleBounds
                     });
+                    totalMoraleBonus += moraleBonusForPlayer;
+
+                    const atmosphereBonusForPlayer = getAtmosphereBonus(contribBase, atmosphereValue);
+                    totalAtmosphereBonus += atmosphereBonusForPlayer;
 
                     const homeBonusForPlayer = contribBase * homeBonusValue;
                     totalHomeBonus += homeBonusForPlayer;
@@ -4963,7 +5186,7 @@ function getTournamentType() {
 
                     const defenceTypeBonusForPlayer = idx >= 0 ? (team.contribution[idx] || 0) : 0;
 
-                    const totalBonus = abilitiesBonus + favoriteStyleBonus;
+                    const totalBonus = abilitiesBonus + favoriteStyleBonus + goalkeeperBonus;
                     const contribWithIndividualBonuses = contribBase * (1 + totalBonus);
 
                     // Шаг 5: Бонусы от calculatedRealStr
@@ -5007,6 +5230,12 @@ function getTournamentType() {
                     const roughBonusForPlayer = getRoughBonusForPlayer(calculatedRealStr, roughMode);
 
                     const leadershipBonusForPlayer = leadershipBonusByPlayerId.get(String(entry.player.id)) || 0;
+                    totalLeadershipBonus += leadershipBonusForPlayer;
+                    
+                    // teamIBonus добавляется к каждому игроку
+                    const teamIBonusForPlayer = teamIBonusTotal;
+                    totalTeamIBonus += teamIBonusForPlayer;
+                    
                     const contribution = contribWithIndividualBonuses +
                         captainBonusForPlayer +
                         collisionWinBonusForPlayer +
@@ -5017,7 +5246,9 @@ function getTournamentType() {
                         roughBonusForPlayer +
                         defenceTypeBonusForPlayer +
                         positionBonusForPlayer +
-                        moraleBonusForPlayer;
+                        moraleBonusForPlayer +
+                        atmosphereBonusForPlayer +
+                        teamIBonusForPlayer;
                     total += contribution;
 
                     console.log('[Calc] Player contribution', {
@@ -5027,10 +5258,16 @@ function getTournamentType() {
                         weatherStr: ws,
                         calculatedRealStr,
                         contribBase,
+                        moraleMode,
+                        moraleBonusForPlayer: moraleBonusForPlayer.toFixed(2),
+                        moraleBounds: {
+                            super: moraleBounds.superBonus,
+                            rest: moraleBounds.restBonus
+                        },
                         contribution
                     });
                 });
-                total += teamIBonusTotal;
+                // teamIBonusTotal уже добавлен к каждому игроку, не добавляем отдельно
                 const nonCaptainCount = results.filter(entry => entry && entry.player && (!captainId ||
                     String(entry.player.id) !== String(captainId))).length;
                 const totalCaptainBonus = (Number(captainBonus) || 0) * nonCaptainCount;
@@ -5038,16 +5275,24 @@ function getTournamentType() {
                 console.log('[Calc] Team total', {
                     side: sideLabel,
                     total,
-                    teamIBonusTotal,
+                    moraleMode,
+                    moraleBounds: {
+                        super: moraleBounds.superBonus,
+                        rest: moraleBounds.restBonus
+                    },
+                    totalTeamIBonus,
                     totalCaptainBonus,
                     totalCollisionWinBonus,
+                    totalSynergyBonus,
                     totalChemistryBonus,
                     totalHomeBonus,
                     totalDefenceTypeBonus,
                     totalLeadershipBonus,
                     totalRoughBonus,
                     totalPositionBonus,
-                    totalMoraleBonus
+                    totalMoraleBonus,
+                    atmosphereValue,
+                    totalAtmosphereBonus
                 });
 
                 return total
@@ -5055,9 +5300,9 @@ function getTournamentType() {
             try {
                 const [homeStrength, awayStrength] = await Promise.all([
                     computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
-                        'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome),
+                        'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere),
                     computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
-                        'away', homeTeamStyleId, -1, userSynergyAway)
+                        'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere)
                 ]);
                 const oldResult = container.querySelector('.vsol-result');
                 if (oldResult) oldResult.remove();
@@ -5073,6 +5318,13 @@ function getTournamentType() {
                 alert('Ошибка при расчёте силы команд. Подробности в консоли.');
             }
         };
+        
+        const btn = document.createElement('button');
+        btn.textContent = 'Рассчитать силу';
+        btn.style.marginTop = '15px';
+        btn.className = 'butn-green';
+        btn.style.padding = '8px 16px';
+        btn.onclick = () => window.__vs_recalculateStrength();
         container.appendChild(btn);
         window.saveAllStates = saveAllStates;
 
@@ -5110,6 +5362,13 @@ function getTournamentType() {
             initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock, awayLineupBlock)
                 .catch(err => console.error('[Shirts] Failed to initialize:', err));
         }
+
+        // Первый автоматический расчет после загрузки
+        setTimeout(() => {
+            if (typeof window.__vs_recalculateStrength === 'function') {
+                window.__vs_recalculateStrength();
+            }
+        }, 1000);
 
         return container;
     }
