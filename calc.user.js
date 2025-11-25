@@ -12,6 +12,7 @@
 // @connect      virtualsoccer.ru
 // @connect      vfleague.com
 // @connect      vfliga.ru
+// @connect      vfliga.com
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue
