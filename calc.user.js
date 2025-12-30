@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Virtual Soccer Strength Analyzer
 // @namespace    http://tampermonkey.net/
-//@license MIT
-// @version      0.916
+// @license MIT
+// @version      0.923
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        *://*.virtualsoccer.ru/previewmatch.php*
@@ -16,6 +16,8 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue
+// @downloadURL https://update.greasyfork.org/scripts/555251/Virtual%20Soccer%20Strength%20Analyzer.user.js
+// @updateURL https://update.greasyfork.org/scripts/555251/Virtual%20Soccer%20Strength%20Analyzer.meta.js
 // ==/UserScript==
 
 /* ----------------------------- CONFIGURATION & CONSTANTS ----------------------------- */
