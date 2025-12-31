@@ -2,7 +2,7 @@
 // @name         Virtual Soccer Strength Analyzer
 // @namespace    http://tampermonkey.net/
 // @license MIT
-// @version      0.924
+// @version      0.926
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        *://*.virtualsoccer.ru/previewmatch.php*
@@ -20,9 +20,6 @@
 // @updateURL https://update.greasyfork.org/scripts/555251/Virtual%20Soccer%20Strength%20Analyzer.meta.js
 // ==/UserScript==
 
-/* ----------------------------- CONFIGURATION & CONSTANTS ----------------------------- */
-
-// Определяем базовый URL в зависимости от текущего домена
 const SITE_CONFIG = (() => {
     const hostname = window.location.hostname;
     let baseUrl = 'https://www.virtualsoccer.ru'; // default
@@ -38,7 +35,6 @@ const SITE_CONFIG = (() => {
     return { BASE_URL: baseUrl };
 })();
 
-// Centralized configuration object
 const CONFIG = {
     COLLISION: {
         NONE: 'none',
@@ -90,7 +86,6 @@ const CONFIG = {
             DEFAULT: 0.025
         },
         POSITION_BONUS_TABLE: {
-            // стиль команды: {позиция: коэффициент}
             bb: { ST: 0.11, CF: 0.06, LF: 0.00, RF: 0.00, AM: -0.05, CM: -0.05, DM: 0.00, LW: -0.05, LM: -0.05, LB: 0.11, LD: 0.00, RW: -0.05, RM: -0.05, RB: 0.11, RD: 0.00, CD: 0.06, SW: 0.00, FR: 0.00, GK: 0.00 },
             tiki: { ST: -0.05, CF: 0.00, LF: 0.00, RF: 0.00, AM: 0.04, CM: 0.08, DM: 0.00, LW: 0.04, LM: 0.04, LB: 0.00, LD: -0.05, RW: 0.04, RM: 0.04, RB: 0.00, RD: -0.00, CD: 0.00, SW: 0.05, FR: 0.00, GK: 0.00 },
             brit: { ST: 0.00, CF: -0.05, LF: 0.05, RF: 0.05, AM: -0.09, CM: -0.05, DM: -0.09, LW: 0.09, LM: 0.05, LB: 0.05, LD: 0.05, RW: 0.09, RM: 0.05, RB: 0.05, RD: 0.05, CD: 0.00, SW: -0.05, FR: 0.00, GK: 0.00 },
@@ -104,10 +99,7 @@ const CONFIG = {
         HOME: 'vs_calc_home',
         AWAY: 'vs_calc_away'
     },
-    // Бонусы и штрафы за позицию игрока
-    // Ключ: родная позиция игрока, значение: объект с позициями на поле и модификаторами
     POSITION_MODIFIERS: {
-        // Вратари
         'GK': {
             'GK': 1.0,
         },
@@ -144,7 +136,6 @@ const CONFIG = {
             'LW': 0.65, 'RW': 0.85,
             'CF': 0.7, 'ST': 0.7, 'LF': 0.7, 'RF': 0.7
         },
-        //полузащитники
         'CM': {
             'SW': 0.8,
             'CD': 0.8,
@@ -167,7 +158,6 @@ const CONFIG = {
             'RD': 0.9, 'RB': 0.95, 'RM': 1.0, 'RW': 0.95, 'RF': 0.9,
             'FR': 1.0
         },
-        // Нападающие
         'CF': {
             'SW': 0.7, 'CD': 0.7, 'DM': 0.75, 'CM': 0.8, 'AM': 0.9, 'CF': 1.0, 'ST': 1.0,
             'LD': 0.7, 'LB': 0.7, 'LM': 0.7, 'LW': 0.7, 'LF': 0.9,
@@ -188,9 +178,7 @@ const CONFIG = {
         }
     },
     PHYSICAL_FORM: {
-        // Типы физических форм с их параметрами
         FORMS: {
-            // Тип C (обычные турниры)
             'C_76_down': { percent: 76, trend: 'down', title: '76%, падает', bgPosition: '-18px -19px', modifier: 0.76, type: 'C' },
             'C_76_up': { percent: 76, trend: 'up', title: '76%, растёт', bgPosition: '0px -19px', modifier: 0.76, type: 'C' },
             'C_83_down': { percent: 83, trend: 'down', title: '83%, падает', bgPosition: '-18px -57px', modifier: 0.83, type: 'C' },
@@ -203,8 +191,6 @@ const CONFIG = {
             'C_117_up': { percent: 117, trend: 'up', title: '117%, растёт', bgPosition: '0px -171px', modifier: 1.17, type: 'C' },
             'C_124_down': { percent: 124, trend: 'down', title: '124%, падает', bgPosition: '-18px -209px', modifier: 1.24, type: 'C' },
             'C_124_up': { percent: 124, trend: 'up', title: '124%, растёт', bgPosition: '0px -209px', modifier: 1.24, type: 'C' },
-
-            // Тип B (чемпионат, кубок межсезонья)
             'B_75_up': { percent: 75, trend: 'up', title: '75%, растёт', bgPosition: '0px 0px', modifier: 0.75, type: 'B' },
             'B_79_down': { percent: 79, trend: 'down', title: '79%, падает', bgPosition: '-18px -38px', modifier: 0.79, type: 'B' },
             'B_88_down': { percent: 88, trend: 'down', title: '88%, падает', bgPosition: '-18px -76px', modifier: 0.88, type: 'B' },
@@ -216,14 +202,9 @@ const CONFIG = {
             'B_121_down': { percent: 121, trend: 'down', title: '121%, падает', bgPosition: '-18px -190px', modifier: 1.21, type: 'B' },
             'B_121_up': { percent: 121, trend: 'up', title: '121%, растёт', bgPosition: '0px -190px', modifier: 1.21, type: 'B' },
             'B_125_down': { percent: 125, trend: 'down', title: '125%, падает', bgPosition: '-18px -228px', modifier: 1.25, type: 'B' },
-
-            // Товарищеские матчи
             'FRIENDLY_100': { percent: 100, trend: 'stable', title: '100% (товарищеский)', bgPosition: '0px -114px', modifier: 1.0, type: 'FRIENDLY' },
-
-            // Неизвестная форма
             'UNKNOWN': { percent: 100, trend: 'unknown', title: 'Неизвестно', bgPosition: '0px -247px', modifier: 1.0, type: 'UNKNOWN' }
         },
-        // Типы турниров и доступные физ формы
         TOURNAMENT_TYPES: {
             'typeC': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'UNKNOWN'],
             'typeC_international': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'UNKNOWN'],
@@ -235,25 +216,20 @@ const CONFIG = {
     }
 };
 
-/* ----------------------------- SHIRTS SYSTEM CONSTANTS ----------------------------- */
-//TO DO разобраться с вертикальным размещением фланговых игроков
-//TO DO фланговые игроки не должны перемешиваться с центральными при переходе в другую линию
 function generateFieldPositions(formation, side) {
-    // Размеры контейнера с учётом отступов 34px со всех сторон
-    const fieldWidth = 332;  // 400 - 68
-    const fieldHeight = 498; // 566 - 68
+    const fieldWidth = 332;
+    const fieldHeight = 498;
     const isHome = side === 'home';
 
-    // Определяем зоны по высоте для каждой команды (относительно контейнера)
     const zones = isHome ? {
-        gk: 497,      // Вратарь (близко к нижнему краю)
+        gk: 497,
         def: 450,
         semidef: 400,
         mid: 355,
         semiatt: 310,
         att: 265
     } : {
-        gk: 1,       // Вратарь (близко к верхнему краю)
+        gk: 1,
         def: 50,
         semidef: 100,
         mid: 145,
@@ -263,7 +239,6 @@ function generateFieldPositions(formation, side) {
 
     const positions = [];
 
-    // Группируем позиции по линиям
     const lines = {
         gk: [],
         def: [],
@@ -289,9 +264,8 @@ function generateFieldPositions(formation, side) {
         }
     });
 
-    // Функция для распределения игроков по ширине поля
     function distributeHorizontally(count) {
-        const margin = 10; // Отступ от краёв 
+        const margin = 10; 
         const usableWidth = fieldWidth - 2 * margin;
 
         if (count === 1) {
@@ -308,7 +282,6 @@ function generateFieldPositions(formation, side) {
             return [margin, margin + usableWidth / 5, margin + 2 * usableWidth / 5, margin + 3 * usableWidth / 5, margin + 4 * usableWidth / 5, fieldWidth - margin];
         }
 
-        // Для большего количества игроков
         const positions = [];
         for (let i = 0; i < count; i++) {
             positions.push(margin + (usableWidth / (count - 1)) * i);
@@ -316,14 +289,12 @@ function generateFieldPositions(formation, side) {
         return positions;
     }
 
-    // Размещаем вратаря
     if (lines.gk.length > 0) {
         lines.gk.forEach(({ pos, idx }) => {
             positions[idx] = { position: pos, top: zones.gk, left: fieldWidth / 2 };
         });
     }
 
-    // Размещаем защитников
     if (lines.def.length > 0) {
         const xPositions = distributeHorizontally(lines.def.length);
         lines.def.forEach(({ pos, idx }, i) => {
@@ -332,7 +303,6 @@ function generateFieldPositions(formation, side) {
         });
     }
 
-    // Размещаем линию между защитой и полузащитой - DM, LB, RB
     if (lines.semidef.length > 0) {
         const xPositions = distributeHorizontally(lines.semidef.length);
         lines.semidef.forEach(({ pos, idx }, i) => {
@@ -341,7 +311,6 @@ function generateFieldPositions(formation, side) {
         });
     }
 
-    // Размещаем центральных полузащитников - LM, CM, RM
     if (lines.mid.length > 0) {
         const xPositions = distributeHorizontally(lines.mid.length);
         lines.mid.forEach(({ pos, idx }, i) => {
@@ -350,7 +319,6 @@ function generateFieldPositions(formation, side) {
         });
     }
 
-    // Размещаем атакующих полузащитников (между полузащитой и атакой) - AM, FR, RW, LW
     if (lines.semiatt.length > 0) {
         const xPositions = distributeHorizontally(lines.semiatt.length);
         lines.semiatt.forEach(({ pos, idx }, i) => {
@@ -359,7 +327,6 @@ function generateFieldPositions(formation, side) {
         });
     }
 
-    // Размещаем нападающих
     if (lines.att.length > 0) {
         const xPositions = distributeHorizontally(lines.att.length);
         lines.att.forEach(({ pos, idx }, i) => {
@@ -374,10 +341,6 @@ function generateFieldPositions(formation, side) {
 const DEFAULT_SHIRT = 'pics/shirts/sh_4_sm.png';
 const DEFAULT_GK_SHIRT = 'pics/shirts/sh_4_sm.png';
 
-/**
- * Отладочная функция для визуализации сетки координат на поле
- * Вызов из консоли: window.debugFieldGrid()
- */
 window.debugFieldGrid = function () {
     const fieldCol = document.querySelector('td[style*="field_01.webp"]');
     if (!fieldCol) {
@@ -385,7 +348,6 @@ window.debugFieldGrid = function () {
         return;
     }
 
-    // Удаляем старую сетку
     const oldGrid = fieldCol.querySelector('.debug-grid');
     if (oldGrid) {
         oldGrid.remove();
@@ -406,7 +368,6 @@ window.debugFieldGrid = function () {
         border: 2px solid rgba(255, 0, 0, 0.5);
     `;
 
-    // Горизонтальные линии зон (относительно контейнера с отступами)
     [1, 50, 100, 145, 190, 235, 265, 310, 355, 400, 450, 497].forEach(y => {
         const line = document.createElement('div');
         line.style.cssText = `
@@ -420,8 +381,7 @@ window.debugFieldGrid = function () {
         grid.appendChild(line);
     });
 
-    // Вертикальные линии (центр и края с отступами)
-    const centerX = 332 / 2; // 166px
+    const centerX = 332 / 2;
     [10, centerX, 322].forEach(x => {
         const line = document.createElement('div');
         line.style.cssText = `
@@ -439,7 +399,6 @@ window.debugFieldGrid = function () {
     console.log('Debug grid added. Red lines = zones, Blue lines = horizontal distribution. Call window.debugFieldGrid() again to remove.');
 };
 
-// Legacy constants for backward compatibility
 const COLLISION_NONE = CONFIG.COLLISION.NONE;
 const COLLISION_WIN = CONFIG.COLLISION.WIN;
 const COLLISION_LOSE = CONFIG.COLLISION.LOSE;
@@ -463,8 +422,7 @@ function VSStorage() {
                 if (hasGMSet) return GM_setValue(key, value);
                 localStorage.setItem(key, value);
             } catch (e) {
-                /* ignore */
-}
+            }
         }
     };
 }
@@ -1144,8 +1102,7 @@ function getWeatherStrengthValueCached(styleId, temperature, weather, strength, 
                 }
             });
         } catch (e) {
-            /* перекачаем */
-}
+        }
     }
     const url = `${SITE_CONFIG.BASE_URL}/weather.php?step=1&style=${encodeURIComponent(styleId)}`;
     GM_xmlhttpRequest({
@@ -1203,8 +1160,7 @@ function getWeatherStrengthValueCached(styleId, temperature, weather, strength, 
                 try {
                     vsStorage.set(cacheKey, JSON.stringify(result));
                 } catch (e) {
-                    /* ignore */
-}
+                }
 
                 // Используем интерполяцию
                 getWeatherStrengthWithInterpolation(result, temperature, weather, strength, (interpolationResult) => {
@@ -1507,8 +1463,6 @@ function parseNumericWeatherStr(value) {
     const n = Number(s);
     return Number.isFinite(n) ? n : null;
 }
-
-/* ----------------------------- BONUS CALCULATION UTILITIES ----------------------------- */
 class BonusCalculator {
     static getHomeBonus(percent) {
         if (percent === 100) return CONFIG.BONUSES.HOME[100];
@@ -1600,7 +1554,6 @@ function buildCaptainContext(lineup, players, captainSelectEl) {
         dummyEntries
     };
 }
-/* ----------------------------- GLOBAL STATE MANAGER ----------------------------- */
 class GameState {
     constructor() {
         this.teams = {
@@ -1716,7 +1669,7 @@ function clampSynergyInput(inputEl) {
     if (clamped !== n) inputEl.value = String(clamped);
 }
 
-/* ----------------------------- IMPROVED STATE MANAGEMENT ----------------------------- */
+
 class StateManager {
     static saveAllStates() {
         // Use the centralized game state
@@ -1790,7 +1743,7 @@ function clearTeamState(storageKey) {
     }
 }
 
-/* ----------------------------- SHIRTS CACHE FUNCTIONS ----------------------------- */
+
 function getShirtsCacheKey(teamId) {
     return `vs_shirts_${teamId}`;
 }
@@ -1927,7 +1880,7 @@ function calculatePlayerStrengthGlobal(player, matchPosition, physicalFormId) {
     return Math.round(calculatedStr);
 }
 
-/* ----------------------------- REUSABLE UI FACTORY ----------------------------- */
+
 class UIFactory {
     static createSelect(options, selectedValue = null) {
         const select = document.createElement('select');
@@ -2036,12 +1989,10 @@ function createDummySelect() {
       width: 80px; height: 20px; line-height: 18px; font-size: 11px; padding: 1px 4px; box-sizing: border-box;
     }
     
-    /* Настройки команд */
     #vs-home-settings-table, #vs-away-settings-table { width: 175px; }
     #vs-home-settings-table { margin-left: 0; }
     #vs-away-settings-table { margin-right: 0; }
 
-    /* Таблица составов — фикс строк и выравнивание */
     #vsol-calculator-ui .orders-table { width: 350px; border-collapse: separate; table-layout: fixed; margin: 0 auto; }
     #vsol-calculator-ui #orders-table-home { margin-left: 25px; }
     #vsol-calculator-ui #orders-table-away { margin-right: 25px; }
@@ -2055,7 +2006,6 @@ function createDummySelect() {
     #vsol-calculator-ui td.style-cell { width: 40px; }
     #vsol-calculator-ui td.form-cell { width: 60px; }
 
-    /* Псевдо-select2 для игрока */
     #vsol-calculator-ui .select2 { display: inline-block; position: relative; vertical-align: top; }
     #vsol-calculator-ui .select2-container--orders { width: 215px; }
 
@@ -2084,10 +2034,8 @@ function createDummySelect() {
     #vsol-calculator-ui .orders-option.disabled { color: #bbb; cursor: default; }
     #vsol-calculator-ui .orders-placeholder { color: rgb(163,163,163); }
 
-    /* Мини-селектор позиции */
     #vsol-calculator-ui .mini-pos-cell .select2-selection { height: 20px; min-height: 20px; line-height: 18px; }
 
-    /* Селектор стиля игрока */
     #vsol-calculator-ui .custom-style-select { position: relative; width: 100%; user-select: none; display: block; }
     #vsol-calculator-ui .custom-style-select .selected {
       border: 1px solid #aaa; padding: 2px 4px 2px 4px; background: #fff;
@@ -2117,7 +2065,6 @@ function createDummySelect() {
     }
     #vsol-calculator-ui .custom-style-select .options li:hover { background: #f0f0f0; }
     
-    /* Селектор физической формы */
     #vsol-calculator-ui .physical-form-select { position: relative; width: 100%; user-select: none; display: block; }
     #vsol-calculator-ui .physical-form-select .selected {
       border: 1px solid #aaa; padding: 2px 20px 2px 4px; background: #fff;
@@ -2146,7 +2093,6 @@ function createDummySelect() {
     }
     #vsol-calculator-ui .physical-form-select .options li:hover { background: #f0f0f0; }
     
-    /* Селектор капитана */
     #vsol-calculator-ui .vs-captain-row { margin-top: 4px; }
     #vsol-calculator-ui .vs-captain-table { width: 350px; border-collapse: separate; table-layout: fixed; margin: 0 auto; }
     #orders-table-home + .vs-captain-row .vs-captain-table { margin-left: 25px; }
@@ -2163,12 +2109,10 @@ function createDummySelect() {
       color: rgb(163,163,163);
     }
     
-    /* Стили для контейнера футболок */
     .shirts-container {
       pointer-events: none;
     }
     
-    /* Индикатор загрузки футболок */
     .shirts-loading {
       animation: pulse 1.5s ease-in-out infinite;
     }
@@ -3763,66 +3707,195 @@ function getTournamentType() {
 
     // Функция для получения order_day из URL страницы
     function getOrderDayFromCurrentPage() {
+        console.log('🔍 [OrderDay] Извлечение order_day из URL');
+        console.log('🌐 Текущий URL:', window.location.href);
+        
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('preview') || urlParams.get('order_day');
+        
+        // Проверяем различные возможные параметры
+        const day = urlParams.get('day');           // основной параметр в previewmatch.php
+        const preview = urlParams.get('preview');   // альтернативный параметр
+        const orderDay = urlParams.get('order_day'); // прямой параметр
+        const matchId = urlParams.get('match_id');   // для контекста
+        
+        console.log('📋 URL параметры:', {
+            day: day || 'не найден',
+            preview: preview || 'не найден', 
+            order_day: orderDay || 'не найден',
+            match_id: matchId || 'не найден'
+        });
+        
+        // Приоритет: day > preview > order_day
+        const result = day || preview || orderDay;
+        
+        console.log('📅 Итоговый Order Day:', result || 'НЕ ОПРЕДЕЛЕН');
+        console.log('🔍 Источник значения:', 
+            day ? 'параметр day' : 
+            preview ? 'параметр preview' : 
+            orderDay ? 'параметр order_day' : 
+            'не найден'
+        );
+        
+        return result;
     }
 
     // Функция для проверки наличия состава в форме отправки
     async function checkLineupExists(orderDay) {
-        if (!orderDay) return false;
+        console.group('🔍 [LineupCheck] Проверка наличия состава');
+        console.log('📅 Order Day:', orderDay);
+        
+        if (!orderDay) {
+            console.warn('❌ Order Day не указан');
+            console.groupEnd();
+            return false;
+        }
         
         try {
+            const url = `${SITE_CONFIG.BASE_URL}/mng_order.php?order_day=${orderDay}`;
+            console.log('🌐 Запрос к URL:', url);
+            
             const response = await new Promise((resolve, reject) => {
                 GM_xmlhttpRequest({
                     method: 'GET',
-                    url: `${SITE_CONFIG.BASE_URL}/mng_order.php?order_day=${orderDay}`,
+                    url: url,
                     onload: resolve,
                     onerror: reject,
                     ontimeout: reject
                 });
             });
 
-            if (response.status !== 200) return false;
+            console.log('📡 Статус ответа:', response.status);
+            if (response.status !== 200) {
+                console.warn('❌ Неуспешный статус ответа');
+                console.groupEnd();
+                return false;
+            }
 
             // Проверяем наличие заполненного состава в HTML
             const parser = new DOMParser();
             const doc = parser.parseFromString(response.responseText, 'text/html');
             
-            // Ищем селекты с выбранными игроками (не пустые опции)
+            // Улучшенная логика проверки состава
             const playerSelects = doc.querySelectorAll('select[name^="plr["]');
-            let hasPlayers = false;
+            console.log('🎯 Найдено селектов игроков:', playerSelects.length);
             
-            for (const select of playerSelects) {
-                const selectedOption = select.querySelector('option:checked, option[selected]');
-                if (selectedOption && selectedOption.value && selectedOption.value !== '-1') {
-                    hasPlayers = true;
-                    break;
-                }
+            if (playerSelects.length === 0) {
+                console.warn('❌ Селекты игроков не найдены в HTML');
+                console.log('📄 HTML содержит:', response.responseText.substring(0, 500) + '...');
+                console.groupEnd();
+                return false;
             }
             
-            return hasPlayers;
+            let playersCount = 0;
+            let validPlayers = 0;
+            const playerDetails = [];
+            
+            for (const select of playerSelects) {
+                playersCount++;
+                const selectName = select.name;
+                let playerFound = false;
+                let method = '';
+                let playerInfo = null;
+                
+                // Проверяем selected атрибут в HTML
+                const selectedOption = select.querySelector('option[selected]');
+                if (selectedOption && selectedOption.value && selectedOption.value !== '-1' && selectedOption.value !== '') {
+                    validPlayers++;
+                    playerFound = true;
+                    method = 'HTML selected';
+                    playerInfo = {
+                        id: selectedOption.value,
+                        name: selectedOption.textContent.trim()
+                    };
+                } else if (select.selectedIndex > 0) {
+                    // Проверяем выбранную опцию через selectedIndex
+                    const option = select.options[select.selectedIndex];
+                    if (option && option.value && option.value !== '-1' && option.value !== '') {
+                        validPlayers++;
+                        playerFound = true;
+                        method = 'selectedIndex';
+                        playerInfo = {
+                            id: option.value,
+                            name: option.textContent.trim()
+                        };
+                    }
+                } else if (select.value && select.value !== '-1' && select.value !== '') {
+                    // Проверяем через value селекта
+                    const option = select.querySelector(`option[value="${select.value}"]`);
+                    validPlayers++;
+                    playerFound = true;
+                    method = 'select.value';
+                    playerInfo = {
+                        id: select.value,
+                        name: option ? option.textContent.trim() : 'Unknown'
+                    };
+                }
+                
+                playerDetails.push({
+                    select: selectName,
+                    found: playerFound,
+                    method: method,
+                    player: playerInfo
+                });
+            }
+            
+            console.log('👥 Детали по игрокам:');
+            playerDetails.forEach((detail, index) => {
+                if (detail.found) {
+                    console.log(`  ✅ ${detail.select}: ${detail.player.name} (ID: ${detail.player.id}) [${detail.method}]`);
+                } else {
+                    console.log(`  ❌ ${detail.select}: не выбран`);
+                }
+            });
+            
+            const hasLineup = validPlayers > 0;
+            console.log('📊 Итоговая статистика:', {
+                'Всего селектов': playersCount,
+                'Выбрано игроков': validPlayers,
+                'Есть состав': hasLineup ? '✅ ДА' : '❌ НЕТ'
+            });
+            
+            console.groupEnd();
+            return hasLineup;
+            
         } catch (error) {
-            console.error('[LineupCheck] Error checking lineup:', error);
+            console.error('💥 [LineupCheck] Ошибка при проверке состава:', error);
+            console.groupEnd();
             return false;
         }
     }
 
     // Функция для загрузки состава из формы отправки
     async function loadLineupFromOrder(orderDay) {
-        if (!orderDay) return null;
+        console.group('📥 [LineupLoad] Загрузка состава из формы');
+        console.log('📅 Order Day:', orderDay);
+        
+        if (!orderDay) {
+            console.warn('❌ Order Day не указан');
+            console.groupEnd();
+            return null;
+        }
         
         try {
+            const url = `${SITE_CONFIG.BASE_URL}/mng_order.php?order_day=${orderDay}`;
+            console.log('🌐 Запрос к URL:', url);
+            
             const response = await new Promise((resolve, reject) => {
                 GM_xmlhttpRequest({
                     method: 'GET',
-                    url: `${SITE_CONFIG.BASE_URL}/mng_order.php?order_day=${orderDay}`,
+                    url: url,
                     onload: resolve,
                     onerror: reject,
                     ontimeout: reject
                 });
             });
 
-            if (response.status !== 200) return null;
+            console.log('📡 Статус ответа:', response.status);
+            if (response.status !== 200) {
+                console.warn('❌ Неуспешный статус ответа');
+                console.groupEnd();
+                return null;
+            }
 
             const parser = new DOMParser();
             const doc = parser.parseFromString(response.responseText, 'text/html');
@@ -3830,64 +3903,193 @@ function getTournamentType() {
             // Извлекаем данные состава
             const lineup = {};
             
-            // Получаем игроков по позициям
+            // Улучшенное получение игроков по позициям
             const playerSelects = doc.querySelectorAll('select[name^="plr["]');
+            console.log('🎯 Найдено селектов игроков:', playerSelects.length);
+            
+            const playerDetails = [];
             playerSelects.forEach(select => {
                 const match = select.name.match(/plr\[(\d+)\]/);
                 if (match) {
                     const posIndex = parseInt(match[1]);
-                    const selectedOption = select.querySelector('option:checked, option[selected]');
-                    if (selectedOption && selectedOption.value && selectedOption.value !== '-1') {
-                        lineup[posIndex] = {
+                    let method = '';
+                    let playerInfo = null;
+                    
+                    // Проверяем несколько способов получения выбранной опции
+                    let selectedOption = select.querySelector('option[selected]');
+                    if (selectedOption && selectedOption.value && selectedOption.value !== '-1' && selectedOption.value !== '') {
+                        method = 'HTML selected';
+                        playerInfo = {
                             playerId: selectedOption.value,
                             playerName: selectedOption.textContent.trim()
                         };
+                    } else if (select.selectedIndex > 0) {
+                        selectedOption = select.options[select.selectedIndex];
+                        if (selectedOption && selectedOption.value && selectedOption.value !== '-1' && selectedOption.value !== '') {
+                            method = 'selectedIndex';
+                            playerInfo = {
+                                playerId: selectedOption.value,
+                                playerName: selectedOption.textContent.trim()
+                            };
+                        }
+                    } else if (select.value && select.value !== '-1') {
+                        selectedOption = select.querySelector(`option[value="${select.value}"]`);
+                        if (selectedOption) {
+                            method = 'select.value';
+                            playerInfo = {
+                                playerId: selectedOption.value,
+                                playerName: selectedOption.textContent.trim()
+                            };
+                        }
+                    }
+                    
+                    if (playerInfo) {
+                        lineup[posIndex] = playerInfo;
+                        playerDetails.push({
+                            position: posIndex,
+                            method: method,
+                            player: playerInfo
+                        });
                     }
                 }
             });
 
-            // Получаем позиции
+            console.log('👥 Загруженные игроки:');
+            playerDetails.forEach(detail => {
+                console.log(`  ✅ Позиция ${detail.position}: ${detail.player.playerName} (ID: ${detail.player.playerId}) [${detail.method}]`);
+            });
+
+            // Улучшенное получение позиций
             const positionSelects = doc.querySelectorAll('select[name^="pos["]');
+            console.log('📍 Найдено селектов позиций:', positionSelects.length);
+            
+            const positionDetails = [];
             positionSelects.forEach(select => {
                 const match = select.name.match(/pos\[(\d+)\]/);
                 if (match) {
                     const posIndex = parseInt(match[1]);
-                    const selectedOption = select.querySelector('option:checked, option[selected]');
-                    if (selectedOption && lineup[posIndex]) {
-                        lineup[posIndex].position = selectedOption.value;
+                    
+                    if (lineup[posIndex]) {
+                        let selectedOption = select.querySelector('option[selected]');
+                        let method = '';
+                        
+                        if (selectedOption && selectedOption.value) {
+                            method = 'HTML selected';
+                        } else if (select.selectedIndex >= 0) {
+                            selectedOption = select.options[select.selectedIndex];
+                            method = 'selectedIndex';
+                        } else if (select.value) {
+                            selectedOption = select.querySelector(`option[value="${select.value}"]`);
+                            method = 'select.value';
+                        }
+                        
+                        if (selectedOption && selectedOption.value) {
+                            lineup[posIndex].position = selectedOption.value;
+                            positionDetails.push({
+                                position: posIndex,
+                                positionValue: selectedOption.value,
+                                method: method
+                            });
+                        }
                     }
                 }
             });
 
-            // Получаем капитана
+            console.log('📍 Позиции игроков:');
+            positionDetails.forEach(detail => {
+                console.log(`  ✅ Позиция ${detail.position}: ${detail.positionValue} [${detail.method}]`);
+            });
+
+            // Улучшенное получение капитана
             const captainSelect = doc.querySelector('select[name="captain"]');
             let captain = null;
+            let captainMethod = '';
+            
             if (captainSelect) {
-                const selectedOption = captainSelect.querySelector('option:checked, option[selected]');
-                if (selectedOption && selectedOption.value && selectedOption.value !== '-1') {
+                let selectedOption = captainSelect.querySelector('option[selected]');
+                
+                if (selectedOption && selectedOption.value && selectedOption.value !== '-1' && selectedOption.value !== '') {
                     captain = selectedOption.value;
+                    captainMethod = 'HTML selected';
+                } else if (captainSelect.selectedIndex > 0) {
+                    selectedOption = captainSelect.options[captainSelect.selectedIndex];
+                    if (selectedOption && selectedOption.value && selectedOption.value !== '-1' && selectedOption.value !== '') {
+                        captain = selectedOption.value;
+                        captainMethod = 'selectedIndex';
+                    }
+                } else if (captainSelect.value && captainSelect.value !== '-1') {
+                    selectedOption = captainSelect.querySelector(`option[value="${captainSelect.value}"]`);
+                    if (selectedOption) {
+                        captain = captainSelect.value;
+                        captainMethod = 'select.value';
+                    }
                 }
+                
+                if (captain) {
+                    const captainName = selectedOption ? selectedOption.textContent.trim() : 'Unknown';
+                    console.log(`👑 Капитан: ${captainName} (ID: ${captain}) [${captainMethod}]`);
+                } else {
+                    console.log('👑 Капитан: не выбран');
+                }
+            } else {
+                console.log('👑 Селект капитана не найден');
             }
 
-            // Получаем стиль игры (если есть)
+            // Получаем стиль игры (если есть селект для стиля)
             let gameStyle = 'norm';
-            // Здесь можно добавить логику извлечения стиля, если он сохраняется в форме
+            let styleMethod = '';
+            const styleSelect = doc.querySelector('select[name="style"], select[name="game_style"]');
+            
+            if (styleSelect) {
+                let selectedOption = styleSelect.querySelector('option[selected]');
+                
+                if (selectedOption && selectedOption.value) {
+                    gameStyle = selectedOption.value;
+                    styleMethod = 'HTML selected';
+                } else if (styleSelect.selectedIndex >= 0) {
+                    selectedOption = styleSelect.options[styleSelect.selectedIndex];
+                    if (selectedOption && selectedOption.value) {
+                        gameStyle = selectedOption.value;
+                        styleMethod = 'selectedIndex';
+                    }
+                }
+                
+                console.log(`⚽ Стиль игры: ${gameStyle} [${styleMethod || 'default'}]`);
+            } else {
+                console.log('⚽ Селект стиля игры не найден, используется default: norm');
+            }
 
-            return {
+            const result = {
                 lineup,
                 captain,
                 gameStyle,
                 orderDay
             };
+
+            console.log('📊 Итоговая статистика загрузки:', {
+                'Загружено игроков': Object.keys(lineup).length,
+                'Капитан': captain ? `ID: ${captain}` : 'не выбран',
+                'Стиль игры': gameStyle,
+                'Order Day': orderDay
+            });
+
+            console.log('📋 Полный объект состава:', result);
+            console.groupEnd();
+
+            return result;
         } catch (error) {
-            console.error('[LineupLoad] Error loading lineup:', error);
+            console.error('💥 [LineupLoad] Ошибка при загрузке состава:', error);
+            console.groupEnd();
             return null;
         }
     }
 
     // Создание кнопки для открытия калькулятора в новой вкладке
     function createCalculatorButton() {
+        console.group('🔘 [ButtonCreate] Создание кнопок интерфейса');
+        
         const orderDay = getOrderDayFromCurrentPage();
+        console.log('📅 Определен Order Day:', orderDay || 'не найден');
         
         const buttonContainer = document.createElement('div');
         buttonContainer.style.cssText = `
@@ -3914,6 +4116,7 @@ function getTournamentType() {
         `;
         
         calcButton.onclick = () => {
+            console.log('🖱️ Нажата кнопка "Открыть калькулятор силы"');
             // Устанавливаем режим калькулятора
             localStorage.setItem('vs_calculator_mode', 'true');
             // Перезагружаем страницу с хешем
@@ -3934,37 +4137,56 @@ function getTournamentType() {
             color: #666;
         `;
         
+        console.log('🔄 Начинаем проверку наличия состава...');
+        
         // Проверяем наличие состава и обновляем кнопку
         if (orderDay) {
             checkLineupExists(orderDay).then(hasLineup => {
+                console.log('✅ Результат проверки состава:', hasLineup ? 'НАЙДЕН' : 'НЕ НАЙДЕН');
+                
                 if (hasLineup) {
+                    console.log('🔵 Активируем кнопку "Загрузить состав" (синяя)');
                     loadLineupButton.style.background = '#2196F3';
                     loadLineupButton.style.color = 'white';
                     loadLineupButton.style.cursor = 'pointer';
                     loadLineupButton.disabled = false;
                     
                     loadLineupButton.onclick = async () => {
+                        console.log('🖱️ Нажата кнопка "Загрузить состав"');
+                        console.log('📥 Начинаем загрузку состава...');
+                        
                         const lineup = await loadLineupFromOrder(orderDay);
                         if (lineup) {
+                            console.log('✅ Состав успешно загружен, сохраняем в localStorage');
                             // Сохраняем состав в localStorage для передачи в калькулятор
                             localStorage.setItem('vs_loaded_lineup', JSON.stringify(lineup));
                             alert('Состав загружен! Откройте калькулятор для применения.');
                         } else {
+                            console.error('❌ Не удалось загрузить состав');
                             alert('Не удалось загрузить состав');
                         }
                     };
                 } else {
+                    console.log('⚪ Оставляем кнопку "Загрузить состав" неактивной (серая)');
                     loadLineupButton.disabled = true;
                     loadLineupButton.title = 'Состав не найден в форме отправки';
                 }
+            }).catch(error => {
+                console.error('💥 Ошибка при проверке состава:', error);
+                loadLineupButton.disabled = true;
+                loadLineupButton.title = 'Ошибка при проверке состава';
             });
         } else {
+            console.warn('❌ Order Day не определен, кнопка будет неактивной');
             loadLineupButton.disabled = true;
             loadLineupButton.title = 'Не удалось определить день матча';
         }
 
         buttonContainer.appendChild(calcButton);
         buttonContainer.appendChild(loadLineupButton);
+
+        console.log('✅ Кнопки созданы и добавлены в контейнер');
+        console.groupEnd();
 
         return buttonContainer;
     }
@@ -4017,43 +4239,86 @@ function getTournamentType() {
     }
 
     async function init() {
+        console.group('🚀 [INIT] Инициализация VF Liga Calculator');
+        console.log('🔄 Замена иконок команд...');
         replaceTeamIcons();
         
         // Проверяем, находимся ли мы в режиме калькулятора
-        const isCalculatorMode = document.body.getAttribute('data-calculator-mode') === 'true' || 
-                                 window.location.hash === '#calculator' ||
-                                 localStorage.getItem('vs_calculator_mode') === 'true';
+        const bodyMode = document.body.getAttribute('data-calculator-mode') === 'true';
+        const hashMode = window.location.hash === '#calculator';
+        const storageMode = localStorage.getItem('vs_calculator_mode') === 'true';
+        const isCalculatorMode = bodyMode || hashMode || storageMode;
+        
+        console.log('🔍 Проверка режима работы:', {
+            'Body attribute': bodyMode,
+            'URL hash': hashMode,
+            'LocalStorage': storageMode,
+            'Итоговый режим': isCalculatorMode ? 'КАЛЬКУЛЯТОР' : 'ПРЕВЬЮ'
+        });
 
         if (!isCalculatorMode) {
+            console.log('📋 Режим превью - создаем только кнопки');
             // Если не в режиме калькулятора, показываем только кнопки
             const buttonContainer = createCalculatorButton();
             const comparisonTable = document.querySelector('table.tobl');
             if (comparisonTable && comparisonTable.parentNode) {
                 comparisonTable.parentNode.insertBefore(buttonContainer, comparisonTable.nextSibling);
+                console.log('✅ Кнопки добавлены на страницу превью');
+            } else {
+                console.warn('❌ Не найдена таблица для вставки кнопок');
             }
+            console.groupEnd();
             return;
         }
 
+        console.log('🧮 Режим калькулятора - инициализируем полный интерфейс');
+        
         // Режим калькулятора - показываем полный интерфейс
         const teamLinks = document.querySelectorAll('table.tobl a[href^="roster.php?num="]');
-        if (teamLinks.length < 2) return;
-        const homeTeamId = new URL(teamLinks[0].href).searchParams.get('num');
-        const awayTeamId = new URL(teamLinks[1].href).searchParams.get('num');
-        if (!homeTeamId || !awayTeamId) return;
-        let tournamentType;
-        try {
-            const info = parseMatchInfo(document.body.innerHTML);
-            tournamentType = info.tournamentType;
-        } catch (e) {
-            alert(e.message);
+        console.log('🔗 Найдено ссылок на команды:', teamLinks.length);
+        
+        if (teamLinks.length < 2) {
+            console.error('❌ Недостаточно ссылок на команды для инициализации калькулятора');
+            console.groupEnd();
             return;
         }
+        
+        const homeTeamId = new URL(teamLinks[0].href).searchParams.get('num');
+        const awayTeamId = new URL(teamLinks[1].href).searchParams.get('num');
+        console.log('🏠 ID команды хозяев:', homeTeamId);
+        console.log('✈️ ID команды гостей:', awayTeamId);
+        
+        if (!homeTeamId || !awayTeamId) {
+            console.error('❌ Не удалось извлечь ID команд');
+            console.groupEnd();
+            return;
+        }
+        
+        let tournamentType;
+        try {
+            console.log('🏆 Определение типа турнира...');
+            const info = parseMatchInfo(document.body.innerHTML);
+            tournamentType = info.tournamentType;
+            console.log('🏆 Тип турнира:', tournamentType);
+        } catch (e) {
+            console.error('❌ Ошибка при определении типа турнира:', e.message);
+            alert(e.message);
+            console.groupEnd();
+            return;
+        }
+        
+        console.log('📥 Загрузка данных команд...');
         const [homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere] = await Promise.all([
             loadTeamRoster(homeTeamId, tournamentType),
             loadTeamRoster(awayTeamId, tournamentType),
             loadTeamAtmosphere(homeTeamId),
             loadTeamAtmosphere(awayTeamId)
         ]);
+        
+        console.log('👥 Загружено игроков хозяев:', homePlayers.length);
+        console.log('👥 Загружено игроков гостей:', awayPlayers.length);
+        console.log('🏟️ Атмосфера хозяев:', homeAtmosphere);
+        console.log('🏟️ Атмосфера гостей:', awayAtmosphere);
         const oldUI = document.getElementById('vsol-calculator-ui');
         if (oldUI) oldUI.remove();
         const ui = createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere);
@@ -4084,17 +4349,34 @@ function getTournamentType() {
         }
 
         // Проверяем, есть ли загруженный состав для применения
+        console.log('🔍 Проверка наличия загруженного состава в localStorage...');
         const loadedLineup = localStorage.getItem('vs_loaded_lineup');
+        
         if (loadedLineup) {
+            console.log('📋 Найден загруженный состав, применяем...');
             try {
                 const lineup = JSON.parse(loadedLineup);
+                console.log('📊 Данные загруженного состава:', {
+                    'Игроков': Object.keys(lineup.lineup || {}).length,
+                    'Капитан': lineup.captain || 'не указан',
+                    'Стиль': lineup.gameStyle || 'не указан',
+                    'Order Day': lineup.orderDay || 'не указан'
+                });
+                
                 // Применяем загруженный состав
                 applyLoadedLineup(lineup, homePlayers);
                 localStorage.removeItem('vs_loaded_lineup');
+                console.log('✅ Состав успешно применен и удален из localStorage');
             } catch (error) {
-                console.error('[LineupApply] Error applying loaded lineup:', error);
+                console.error('💥 [LineupApply] Ошибка при применении загруженного состава:', error);
+                localStorage.removeItem('vs_loaded_lineup'); // Очищаем поврежденные данные
             }
+        } else {
+            console.log('ℹ️ Загруженный состав не найден');
         }
+        
+        console.log('🎉 Инициализация калькулятора завершена');
+        console.groupEnd();
     }
 
 
@@ -4318,7 +4600,7 @@ function getTournamentType() {
         });
     }
 
-    /* ----------------------------- SHIRTS DATA FUNCTIONS ----------------------------- */
+
     function getLastMatchForTeam(teamId) {
         return new Promise((resolve, reject) => {
             const url = `${SITE_CONFIG.BASE_URL}/roster_m.php?num=${teamId}`;
@@ -4567,7 +4849,7 @@ function getTournamentType() {
         }
     }
 
-    /* ----------------------------- SHIRTS DISPLAY FUNCTIONS ----------------------------- */
+
     function createShirtElement(position, shirtUrl, top, left, playerName = null) {
         const div = document.createElement('div');
         div.style.cssText = `
