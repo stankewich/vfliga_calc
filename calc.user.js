@@ -2,7 +2,7 @@
 // @name         Virtual Soccer Strength Analyzer
 // @namespace    http://tampermonkey.net/
 // @license MIT
-// @version      0.926
+// @version      0.949
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        *://*.virtualsoccer.ru/previewmatch.php*
@@ -1650,12 +1650,20 @@ function getSynergyPercentAway() {
 
 function setSynergyPercentHome(v) {
     const el = document.getElementById('vs_synergy_home');
-    if (el) el.value = String(v != null ? Math.min(100, Math.max(0, v)) : 0);
+    if (el) {
+        // Значение уже в процентах и округлено, просто ограничиваем диапазон
+        const clampedValue = Math.min(100, Math.max(0, v || 0));
+        el.value = String(clampedValue);
+    }
 }
 
 function setSynergyPercentAway(v) {
     const el = document.getElementById('vs_synergy_away');
-    if (el) el.value = String(v != null ? Math.min(100, Math.max(0, v)) : 0);
+    if (el) {
+        // Значение уже в процентах и округлено, просто ограничиваем диапазон
+        const clampedValue = Math.min(100, Math.max(0, v || 0));
+        el.value = String(clampedValue);
+    }
 }
 
 function clampSynergyInput(inputEl) {
@@ -3222,6 +3230,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             setOptions: (opts) => orders.setOptions(opts),
             setPlaceholder: (ph) => orders.setPlaceholder(ph),
             customStyleValue: 'norm',
+            styleSelect: styleSelect,  // Добавляем ссылку на селект стиля
             physicalFormValue: null,  // Будет установлено при выборе игрока
             modifiedRealStr: null,
             miniPositionSelect: mini,
@@ -3739,6 +3748,9 @@ function getTournamentType() {
         return result;
     }
 
+    // Алиас для обратной совместимости (если где-то еще используется старое имя)
+    const getOrderDay = getOrderDayFromCurrentPage;
+
     // Функция для проверки наличия состава в форме отправки
     async function checkLineupExists(orderDay) {
         console.group('🔍 [LineupCheck] Проверка наличия состава');
@@ -3865,9 +3877,1098 @@ function getTournamentType() {
         }
     }
 
-    // Функция для загрузки состава из формы отправки
+    async function loadTeamPlayersData(teamId, tournamentType = 'championship', orderDay = null) {
+        console.group('👥 [PlayersData] Загрузка данных игроков команды');
+        console.log('🆔 ID команды:', teamId);
+        console.log('🏆 Тип турнира:', tournamentType);
+        
+        try {
+            let players = await loadTeamRoster(teamId, tournamentType);
+            console.log('✅ Загружено игроков для турнира', tournamentType + ':', players.length);
+            
+            if (players.length === 0 && tournamentType !== 'championship') {
+                console.log('⚠️ Игроки не найдены, пробуем championship...');
+                players = await loadTeamRoster(teamId, 'championship');
+                console.log('✅ Загружено игроков для championship:', players.length);
+            }
+            
+            if (players.length === 0) {
+                console.log('⚠️ Игроки не найдены, пробуем friendly...');
+                players = await loadTeamRoster(teamId, 'friendly');
+                console.log('✅ Загружено игроков для friendly:', players.length);
+            }
+            
+            const playersMap = {};
+            players.forEach(player => {
+                playersMap[player.id] = player;
+            });
+            
+            console.log('📊 Создана карта игроков:', Object.keys(playersMap).length);
+            console.log('🔍 ID игроков в карте:', Object.keys(playersMap).slice(0, 10), '...');
+            
+            // Извлекаем данные сыгранности для этой команды
+            await extractSynergyDataForTeam(teamId, playersMap, orderDay);
+            
+            console.groupEnd();
+            return playersMap;
+            
+        } catch (error) {
+            console.error('💥 [PlayersData] Ошибка загрузки данных игроков:', error);
+            console.groupEnd();
+            return {};
+        }
+    }
+
+    // ===== ENHANCED SYNERGY SYSTEM =====
+    
+    // Функция для загрузки данных игрока с его страницы
+    async function loadPlayerMatchHistory(playerId) {
+        console.log(`🔍 [PlayerHistory] Загрузка истории матчей игрока ${playerId}`);
+        
+        try {
+            const url = `https://www.virtualsoccer.ru/player.php?num=${playerId}`;
+            const response = await fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+            
+            if (!response.ok) {
+                console.log(`❌ [PlayerHistory] HTTP ошибка ${response.status} для игрока ${playerId}`);
+                return null;
+            }
+            
+            const htmlText = await response.text();
+            console.log(`📄 [PlayerHistory] Загружено ${htmlText.length} символов для игрока ${playerId}`);
+            
+            // Парсим HTML для извлечения истории матчей
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            
+            // Ищем таблицу с матчами (обычно содержит информацию о последних играх)
+            const matchRows = doc.querySelectorAll('table tr');
+            const matches = [];
+            
+            matchRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 3) {
+                    // Ищем ячейки с датами матчей и типами турниров
+                    const dateCell = cells[0]?.textContent?.trim();
+                    const tournamentCell = cells[1]?.textContent?.trim();
+                    
+                    if (dateCell && tournamentCell && dateCell.match(/\d+/)) {
+                        matches.push({
+                            day: parseInt(dateCell.match(/\d+/)[0]),
+                            tournament: tournamentCell,
+                            played: true // если строка есть, значит игрок участвовал
+                        });
+                    }
+                }
+            });
+            
+            console.log(`✅ [PlayerHistory] Найдено ${matches.length} матчей для игрока ${playerId}`);
+            return matches;
+            
+        } catch (error) {
+            console.error(`💥 [PlayerHistory] Ошибка загрузки данных игрока ${playerId}:`, error);
+            return null;
+        }
+    }
+    
+    // Функция для построения матрицы сыгранности из данных игроков
+    async function buildSynergyMatrixFromPlayers(playerIds, maxMatches = 25) {
+        console.group('🏗️ [SynergyMatrix] Построение матрицы сыгранности');
+        console.log('👥 Игроки:', playerIds);
+        console.log('📊 Максимум матчей:', maxMatches);
+        
+        try {
+            // Загружаем историю матчей для всех игроков
+            const playerHistories = {};
+            const loadPromises = playerIds.map(async (playerId) => {
+                const history = await loadPlayerMatchHistory(playerId);
+                if (history) {
+                    playerHistories[playerId] = history;
+                }
+            });
+            
+            await Promise.all(loadPromises);
+            
+            console.log(`📥 [SynergyMatrix] Загружено историй: ${Object.keys(playerHistories).length}/${playerIds.length}`);
+            
+            // Собираем все уникальные дни матчей
+            const allMatchDays = new Set();
+            Object.values(playerHistories).forEach(history => {
+                history.forEach(match => {
+                    // Исключаем товарищеские матчи
+                    if (!match.tournament.toLowerCase().includes('товарищеский')) {
+                        allMatchDays.add(match.day);
+                    }
+                });
+            });
+            
+            // Сортируем дни по убыванию (от новых к старым)
+            const sortedDays = Array.from(allMatchDays).sort((a, b) => b - a);
+            const recentDays = sortedDays.slice(0, maxMatches);
+            
+            console.log(`📅 [SynergyMatrix] Найдено дней матчей: ${sortedDays.length}, используем: ${recentDays.length}`);
+            console.log(`📅 [SynergyMatrix] Дни матчей:`, recentDays);
+            
+            // Строим матрицу участия
+            const participationMatrix = [];
+            playerIds.forEach(playerId => {
+                const playerRow = [];
+                recentDays.forEach(day => {
+                    const playerHistory = playerHistories[playerId] || [];
+                    const playedInMatch = playerHistory.some(match => 
+                        match.day === day && !match.tournament.toLowerCase().includes('товарищеский')
+                    );
+                    playerRow.push(playedInMatch ? 1 : 0);
+                });
+                participationMatrix.push(playerRow);
+            });
+            
+            const synergyData = {
+                d_sygran: recentDays,
+                plr_sygran: participationMatrix,
+                plr_id: playerIds,
+                orders: [playerIds.slice(0, 11)], // Первые 11 как основной состав
+                extractedAt: Date.now(),
+                orderDay: getOrderDayFromCurrentPage(),
+                source: 'построено из данных игроков'
+            };
+            
+            console.log('✅ [SynergyMatrix] Матрица построена:');
+            console.log(`  Матчей: ${synergyData.d_sygran.length}`);
+            console.log(`  Игроков: ${synergyData.plr_id.length}`);
+            console.log(`  Размер матрицы: ${participationMatrix.length}x${participationMatrix[0]?.length || 0}`);
+            
+            console.groupEnd();
+            return synergyData;
+            
+        } catch (error) {
+            console.error('💥 [SynergyMatrix] Ошибка построения матрицы:', error);
+            console.groupEnd();
+            return null;
+        }
+    }
+    
+    // Функция для расчета сыгранности из матрицы данных
+    function calculateSynergyFromMatrix(synergyData, lineupPlayerIds = null) {
+        console.group('🧮 [SynergyCalc] Расчет сыгранности из матрицы');
+        
+        try {
+            if (!synergyData || !synergyData.d_sygran || !synergyData.plr_sygran || !synergyData.plr_id) {
+                console.log('❌ [SynergyCalc] Некорректные данные сыгранности');
+                console.groupEnd();
+                return null;
+            }
+            
+            // Используем переданный состав или первый из orders
+            const currentLineup = lineupPlayerIds || synergyData.orders?.[0]?.slice(0, 11) || [];
+            
+            if (currentLineup.length === 0) {
+                console.log('❌ [SynergyCalc] Состав не найден');
+                console.log('🔍 [SynergyCalc] Доступные данные:', {
+                    'Передан состав': !!lineupPlayerIds,
+                    'Длина переданного состава': lineupPlayerIds ? lineupPlayerIds.length : 0,
+                    'Есть orders в данных': !!synergyData.orders,
+                    'Количество orders': synergyData.orders ? synergyData.orders.length : 0
+                });
+                console.groupEnd();
+                return null;
+            }
+            
+            console.log('👥 [SynergyCalc] Состав для расчета:', currentLineup);
+            console.log('📊 [SynergyCalc] Данные:', {
+                матчей: synergyData.d_sygran.length,
+                игроков: synergyData.plr_id.length,
+                источник: synergyData.source || 'неизвестно'
+            });
+            
+            // Создаем карту индексов игроков
+            const playerIndexMap = {};
+            synergyData.plr_id.forEach((playerId, index) => {
+                playerIndexMap[playerId] = index;
+            });
+            
+            // Таблица бонусов сыгранности
+            const synergyBonuses = {
+                6: 0.10,   // 6 игроков = +0.10%
+                7: 0.25,   // 7 игроков = +0.25%
+                8: 0.50,   // 8 игроков = +0.50%
+                9: 0.75,   // 9 игроков = +0.75%
+                10: 1.00,  // 10 игроков = +1.00%
+                11: 1.25   // 11 игроков = +1.25%
+            };
+            
+            let totalSynergyBonus = 0;
+            let consideredMatches = 0;
+            let matchDetails = [];
+            
+            // Проходим по матчам от самого недавнего к более старым
+            for (let matchIndex = 0; matchIndex < synergyData.d_sygran.length; matchIndex++) {
+                const matchDay = synergyData.d_sygran[matchIndex];
+                
+                // Считаем сколько игроков из текущего состава играло в этом матче
+                let playersInMatch = 0;
+                const playersWhoPlayed = [];
+                
+                for (const playerId of currentLineup) {
+                    const playerIndex = playerIndexMap[playerId];
+                    if (playerIndex !== undefined && synergyData.plr_sygran[playerIndex][matchIndex] === 1) {
+                        playersInMatch++;
+                        playersWhoPlayed.push(playerId);
+                    }
+                }
+                
+                console.log(`🔍 [SynergyCalc] Матч ${matchIndex + 1} (день ${matchDay}): ${playersInMatch} игроков из состава`);
+                
+                // Если менее 4 игроков из текущего состава, прекращаем анализ
+                if (playersInMatch < 4) {
+                    console.log(`⏹️ [SynergyCalc] Остановка анализа: менее 4 игроков (${playersInMatch}) в матче ${matchIndex + 1}`);
+                    break;
+                }
+                
+                // Добавляем бонус если есть соответствующее количество игроков
+                if (synergyBonuses[playersInMatch]) {
+                    const bonus = synergyBonuses[playersInMatch];
+                    totalSynergyBonus += bonus;
+                    consideredMatches++;
+                    matchDetails.push({
+                        matchIndex: matchIndex + 1,
+                        matchDay,
+                        playersCount: playersInMatch,
+                        bonus,
+                        playersWhoPlayed
+                    });
+                    console.log(`✅ [SynergyCalc] Матч ${matchIndex + 1}: ${playersInMatch} игроков = +${bonus}% бонуса (накопленный: ${totalSynergyBonus.toFixed(2)}%)`);
+                }
+            }
+            
+            const result = {
+                value: totalSynergyBonus,
+                method: 'расчет из матрицы данных',
+                details: {
+                    consideredMatches,
+                    totalMatches: synergyData.d_sygran.length,
+                    matchDetails,
+                    currentLineup,
+                    source: synergyData.source
+                }
+            };
+            
+            console.log(`🎯 [SynergyCalc] Итоговая сыгранность: ${totalSynergyBonus.toFixed(2)}% (рассмотрено матчей: ${consideredMatches})`);
+            console.groupEnd();
+            return result;
+            
+        } catch (error) {
+            console.error('💥 [SynergyCalc] Ошибка расчета сыгранности:', error);
+            console.groupEnd();
+            return null;
+        }
+    }
+    
+    // Функция для конвертации числовых стилей из sending form в строковые идентификаторы калькулятора
+    function convertPlayerStyleToCalcFormat(numericStyle) {
+        const styleMapping = {
+            0: 'norm',    // нормальный
+            1: 'sp',      // спартаковский  
+            2: 'bb',      // бей-беги
+            3: 'brazil',  // бразильский
+            4: 'tiki',    // тики-така
+            5: 'kat',     // катеначчо
+            6: 'brit'     // британский
+        };
+        
+        return styleMapping[numericStyle] || 'norm';
+    }
+    
+    // Функция для получения данных сыгранности для обеих команд
+    async function loadBothTeamsSynergyData(homeTeamId, awayTeamId, orderDay) {
+        console.group('⚖️ [BothTeams] Загрузка данных сыгранности обеих команд');
+        console.log('🏠 Команда хозяев:', homeTeamId);
+        console.log('✈️ Команда гостей:', awayTeamId);
+        
+        try {
+            const results = {};
+            
+            // Загружаем данные для команды хозяев
+            if (homeTeamId) {
+                console.log('🏠 [BothTeams] Загрузка данных команды хозяев...');
+                const homePlayersData = await loadTeamPlayersData(homeTeamId, 'championship', orderDay);
+                const homeSynergyData = window.teamSynergyData?.[homeTeamId];
+                
+                results.home = {
+                    teamId: homeTeamId,
+                    playersData: homePlayersData,
+                    synergyData: homeSynergyData,
+                    playersCount: Object.keys(homePlayersData).length
+                };
+                
+                console.log(`✅ [BothTeams] Команда хозяев: ${results.home.playersCount} игроков`);
+            }
+            
+            // Загружаем данные для команды гостей
+            if (awayTeamId && awayTeamId !== homeTeamId) {
+                console.log('✈️ [BothTeams] Загрузка данных команды гостей...');
+                const awayPlayersData = await loadTeamPlayersData(awayTeamId, 'championship', orderDay);
+                const awaySynergyData = window.teamSynergyData?.[awayTeamId];
+                
+                results.away = {
+                    teamId: awayTeamId,
+                    playersData: awayPlayersData,
+                    synergyData: awaySynergyData,
+                    playersCount: Object.keys(awayPlayersData).length
+                };
+                
+                console.log(`✅ [BothTeams] Команда гостей: ${results.away.playersCount} игроков`);
+            }
+            
+            console.log('📊 [BothTeams] Итоговые данные:', {
+                'Команда хозяев': results.home ? `${results.home.playersCount} игроков` : 'не загружена',
+                'Команда гостей': results.away ? `${results.away.playersCount} игроков` : 'не загружена'
+            });
+            
+            console.groupEnd();
+            return results;
+            
+        } catch (error) {
+            console.error('💥 [BothTeams] Ошибка загрузки данных команд:', error);
+            console.groupEnd();
+            return {};
+        }
+    }
+    
+    // Функция для пересчета сыгранности (вызывается по кнопке)
+    function recalculateSynergy() {
+        console.group('🔄 [Recalculate] Пересчет сыгранности');
+        
+        try {
+            // Получаем текущий состав из слотов калькулятора
+            const currentLineup = [];
+            
+            // Проверяем наличие слотов команды хозяев
+            if (window.homeLineupBlock && window.homeLineupBlock.lineup) {
+                console.log('🔍 [Recalculate] Извлекаем состав из слотов команды хозяев');
+                for (let i = 0; i < 11; i++) {
+                    const slot = window.homeLineupBlock.lineup[i];
+                    if (slot && slot.getValue && slot.getValue()) {
+                        const playerId = parseInt(slot.getValue());
+                        if (!isNaN(playerId)) {
+                            currentLineup.push(playerId);
+                        }
+                    }
+                }
+                console.log('📊 [Recalculate] Слоты команды хозяев:', {
+                    'Всего слотов': window.homeLineupBlock.lineup.length,
+                    'Найдено игроков': currentLineup.length
+                });
+            } else {
+                console.log('⚠️ [Recalculate] Слоты команды хозяев не инициализированы');
+            }
+            
+            // Если состав хозяев пустой, пробуем команду гостей
+            if (currentLineup.length === 0 && window.awayLineupBlock && window.awayLineupBlock.lineup) {
+                console.log('🔍 [Recalculate] Извлекаем состав из слотов команды гостей');
+                for (let i = 0; i < 11; i++) {
+                    const slot = window.awayLineupBlock.lineup[i];
+                    if (slot && slot.getValue && slot.getValue()) {
+                        const playerId = parseInt(slot.getValue());
+                        if (!isNaN(playerId)) {
+                            currentLineup.push(playerId);
+                        }
+                    }
+                }
+                console.log('📊 [Recalculate] Слоты команды гостей:', {
+                    'Всего слотов': window.awayLineupBlock.lineup.length,
+                    'Найдено игроков': currentLineup.length
+                });
+            } else if (currentLineup.length === 0) {
+                console.log('⚠️ [Recalculate] Слоты команды гостей не инициализированы или пусты');
+            }
+            
+            // Если все еще пустой, пробуем извлечь из данных сыгранности
+            if (currentLineup.length === 0 && window.teamSynergyData) {
+                console.log('🔍 [Recalculate] Пробуем извлечь состав из данных сыгранности');
+                const teamIds = Object.keys(window.teamSynergyData);
+                for (const teamId of teamIds) {
+                    const synergyData = window.teamSynergyData[teamId];
+                    if (synergyData && synergyData.orders && synergyData.orders[0]) {
+                        const lineup = synergyData.orders[0].slice(0, 11);
+                        if (lineup.length > 0) {
+                            currentLineup.push(...lineup);
+                            console.log(`📊 [Recalculate] Извлечен состав из данных команды ${teamId}:`, lineup);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Если все еще пустой, пробуем HTML селекты (для страницы mng_order.php)
+            if (currentLineup.length === 0) {
+                console.log('🔍 [Recalculate] Пробуем извлечь из HTML селектов');
+                for (let i = 0; i < 11; i++) {
+                    const select = document.querySelector(`select[name="plr[${i}]"]`);
+                    if (select && select.value && select.value !== '-1') {
+                        currentLineup.push(parseInt(select.value));
+                    }
+                }
+            }
+            
+            console.log('👥 [Recalculate] Текущий состав:', currentLineup);
+            console.log('📊 [Recalculate] Найдено игроков в составе:', currentLineup.length);
+            
+            if (currentLineup.length < 11) {
+                console.log('⚠️ [Recalculate] Неполный состав, используем доступные данные');
+            }
+            
+            // Ищем доступные данные сыгранности
+            let synergyData = null;
+            let teamId = null;
+            let actualTeamUsed = null; // Отслеживаем, какая команда фактически используется
+            
+            // Проверяем кэшированные данные команд
+            if (window.teamSynergyData) {
+                const teamIds = Object.keys(window.teamSynergyData);
+                if (teamIds.length > 0) {
+                    teamId = teamIds[0]; // Берем первую доступную команду
+                    actualTeamUsed = teamId; // Запоминаем, какую команду используем
+                    synergyData = window.teamSynergyData[teamId];
+                    console.log(`📊 [Recalculate] Используем данные команды ${teamId}`);
+                }
+            }
+            
+            // Если нет кэшированных данных, пытаемся извлечь из текущей страницы
+            if (!synergyData) {
+                console.log('🔍 [Recalculate] Пытаемся извлечь данные из текущей страницы...');
+                
+                // Ищем переменные на странице
+                const scripts = document.querySelectorAll('script');
+                let htmlText = '';
+                scripts.forEach(script => {
+                    if (script.textContent.includes('d_sygran') || script.textContent.includes('plr_sygran')) {
+                        htmlText += script.textContent;
+                    }
+                });
+                
+                if (htmlText) {
+                    const d_sygranMatch = htmlText.match(/var d_sygran\s*=\s*(\[[^\]]+\])/);
+                    const plr_sygranMatch = htmlText.match(/var plr_sygran\s*=\s*(\[[\s\S]*?\])\s*var/);
+                    const plr_idMatch = htmlText.match(/var plr_id\s*=\s*(\[[^\]]+\])/);
+                    
+                    if (d_sygranMatch && plr_sygranMatch && plr_idMatch) {
+                        synergyData = {
+                            d_sygran: JSON.parse(d_sygranMatch[1]),
+                            plr_sygran: JSON.parse(plr_sygranMatch[1]),
+                            plr_id: JSON.parse(plr_idMatch[1]),
+                            orders: [currentLineup],
+                            extractedAt: Date.now(),
+                            orderDay: getOrderDayFromCurrentPage(),
+                            source: 'извлечено из текущей страницы'
+                        };
+                        console.log('✅ [Recalculate] Данные извлечены из страницы');
+                    }
+                }
+            }
+            
+            if (!synergyData) {
+                console.log('❌ [Recalculate] Данные сыгранности не найдены');
+                alert('Данные сыгранности не найдены. Загрузите состав сначала.');
+                console.groupEnd();
+                return null;
+            }
+            
+            // Рассчитываем сыгранность
+            const result = calculateSynergyFromMatrix(synergyData, currentLineup);
+            
+            if (result) {
+                // Округляем значение для устранения погрешности вычислений
+                const roundedValue = Math.round(result.value * 100) / 100;
+                
+                console.log(`🎯 [Recalculate] Пересчитанная сыгранность: ${roundedValue}%`);
+                
+                // Обновляем поля ввода сыгранности
+                const homeTeamId = getHomeTeamId();
+                const awayTeamId = getAwayTeamId();
+                
+                // Определяем, для какой команды был рассчитан состав
+                // Используем фактически используемую команду, а не просто проверяем наличие
+                const isHomeTeam = actualTeamUsed && String(actualTeamUsed) === String(homeTeamId);
+                const isAwayTeam = actualTeamUsed && String(actualTeamUsed) === String(awayTeamId);
+                
+                console.log(`🎯 [Recalculate] Команда для расчета: ${actualTeamUsed}`);
+                console.log(`🏠 [Recalculate] ID хозяев: ${homeTeamId}, совпадает: ${isHomeTeam}`);
+                console.log(`✈️ [Recalculate] ID гостей: ${awayTeamId}, совпадает: ${isAwayTeam}`);
+                
+                // Обновляем соответствующее поле
+                if (isHomeTeam) {
+                    setSynergyPercentHome(roundedValue);
+                    console.log(`✅ [Recalculate] Обновлена сыгранность команды хозяев: ${roundedValue}%`);
+                } else if (isAwayTeam) {
+                    setSynergyPercentAway(roundedValue);
+                    console.log(`✅ [Recalculate] Обновлена сыгранность команды гостей: ${roundedValue}%`);
+                } else {
+                    // Если не можем определить команду, показываем предупреждение
+                    console.log(`⚠️ [Recalculate] Не удалось определить команду для обновления (используемая: ${actualTeamUsed})`);
+                    alert(`Внимание: Рассчитана сыгранность для команды ${actualTeamUsed}, но не удалось определить, хозяева это или гости.`);
+                }
+                
+                // Показываем результат пользователю
+                const message = `Сыгранность состава: ${roundedValue}%\n` +
+                              `Рассмотрено матчей: ${result.details.consideredMatches}\n` +
+                              `Источник: ${result.details.source || result.method}`;
+                
+                alert(message);
+                
+                // Обновляем отображение если есть элемент
+                const synergyDisplay = document.querySelector('#synergy-display');
+                if (synergyDisplay) {
+                    synergyDisplay.textContent = `${roundedValue}%`;
+                }
+                
+                console.log('📊 [Recalculate] Детали расчета:', {
+                    'Рассмотрено матчей': result.details.consideredMatches,
+                    'Метод': result.method,
+                    'Источник данных': result.details.source || 'матрица сыгранности'
+                });
+                
+            } else {
+                console.log('❌ [Recalculate] Ошибка расчета сыгранности');
+                alert('Ошибка при расчете сыгранности');
+            }
+            
+            console.groupEnd();
+            return result;
+            
+        } catch (error) {
+            console.error('💥 [Recalculate] Ошибка пересчета:', error);
+            alert('Ошибка при пересчете сыгранности: ' + error.message);
+            console.groupEnd();
+            return null;
+        }
+    }
+    
+    // Функция для добавления кнопки пересчета сыгранности
+    function addRecalculateSynergyButton() {
+        console.log('🔘 [UI] Добавление кнопки пересчета сыгранности');
+        
+        try {
+            // Ищем подходящее место для кнопки
+            const targetElement = document.querySelector('form[name="order_form"]') || 
+                                 document.querySelector('table.wst') ||
+                                 document.querySelector('.tmain');
+            
+            if (!targetElement) {
+                console.log('⚠️ [UI] Не найдено место для размещения кнопки');
+                return;
+            }
+            
+            // Создаем кнопку
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = '🔄 Пересчитать сыгранность';
+            button.style.cssText = `
+                margin: 10px 5px;
+                padding: 8px 15px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: bold;
+            `;
+            
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                recalculateSynergy();
+            });
+            
+            // Добавляем кнопку
+            if (targetElement.tagName === 'FORM') {
+                targetElement.appendChild(button);
+            } else {
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.cssText = 'text-align: center; margin: 10px 0;';
+                buttonContainer.appendChild(button);
+                targetElement.appendChild(buttonContainer);
+            }
+            
+            console.log('✅ [UI] Кнопка пересчета сыгранности добавлена');
+            
+        } catch (error) {
+            console.error('💥 [UI] Ошибка добавления кнопки:', error);
+        }
+    }
+
+    // Вспомогательные функции для получения ID команд
+    function getHomeTeamId() {
+        // Пытаемся найти ID команды хозяев из различных источников
+        if (window.homeTeamId) return window.homeTeamId;
+        
+        const homeLink = document.querySelector('a[href*="roster.php"]:first-of-type');
+        if (homeLink) {
+            const match = homeLink.href.match(/num=(\d+)/);
+            if (match) return parseInt(match[1]);
+        }
+        
+        return null;
+    }
+    
+    function getAwayTeamId() {
+        // Пытаемся найти ID команды гостей из различных источников
+        if (window.awayTeamId) return window.awayTeamId;
+        
+        const awayLink = document.querySelector('a[href*="roster.php"]:last-of-type');
+        if (awayLink) {
+            const match = awayLink.href.match(/num=(\d+)/);
+            if (match) return parseInt(match[1]);
+        }
+        
+        return null;
+    }
+
+    // ===== END ENHANCED SYNERGY SYSTEM =====
+    async function extractSynergyDataForTeam(teamId, playersMap, orderDay = null) {
+        console.group('🔍 [SynergyData] Извлечение данных сыгранности команды');
+        console.log('🆔 ID команды:', teamId);
+        
+        try {
+            // Получаем order_day для запроса
+            if (!orderDay) {
+                orderDay = getOrderDayFromCurrentPage();
+            }
+            
+            if (!orderDay) {
+                console.warn('❌ Не удалось определить order_day');
+                console.groupEnd();
+                return null;
+            }
+            
+            const url = `https://www.virtualsoccer.ru/mng_order.php?order_day=${orderDay}`;
+            console.log('🌐 Запрос к URL:', url);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+            
+            if (!response.ok) {
+                console.log('❌ Ошибка HTTP:', response.status);
+                console.groupEnd();
+                return null;
+            }
+            
+            const htmlText = await response.text();
+            console.log('📄 Размер HTML:', htmlText.length, 'символов');
+            
+            // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Определяем, какой команде принадлежит эта страница
+            const pageOwnerTeamId = detectTeamFromHTML(htmlText);
+            console.log('🏷️ [TeamDetect] Страница принадлежит команде ID:', pageOwnerTeamId);
+            console.log('🎯 [TeamDetect] Запрашиваемая команда ID:', teamId);
+            
+            // Извлекаем данные сыгранности ТОЛЬКО если страница принадлежит запрашиваемой команде
+            if (pageOwnerTeamId && pageOwnerTeamId.toString() === teamId.toString()) {
+                console.log('✅ [TeamDetect] Страница принадлежит запрашиваемой команде - извлекаем данные');
+                const synergyData = extractSynergyVariablesFromHTML(htmlText, teamId, orderDay);
+                
+                if (synergyData) {
+                    // Сохраняем данные сыгранности в глобальном хранилище
+                    if (!window.teamSynergyData) {
+                        window.teamSynergyData = {};
+                    }
+                    window.teamSynergyData[teamId] = synergyData;
+                    
+                    console.log('✅ Данные сыгранности сохранены для команды', teamId);
+                    console.log('🔍 Матчей в данных:', synergyData.d_sygran.length);
+                    console.log('🔍 Игроков в данных:', synergyData.plr_id.length);
+                } else {
+                    console.log('⚠️ Не удалось извлечь данные из HTML своей команды');
+                }
+            } else {
+                console.log('🚫 [TeamDetect] Страница принадлежит другой команде - строим матрицу из данных игроков');
+                
+                // Если страница принадлежит другой команде, строим матрицу из данных игроков
+                const playerIds = Object.keys(playersMap).map(id => parseInt(id));
+                if (playerIds.length > 0) {
+                    const builtSynergyData = await buildSynergyMatrixFromPlayers(playerIds);
+                    
+                    if (builtSynergyData) {
+                        // Сохраняем построенные данные
+                        if (!window.teamSynergyData) {
+                            window.teamSynergyData = {};
+                        }
+                        window.teamSynergyData[teamId] = builtSynergyData;
+                        
+                        console.log('✅ Матрица сыгранности построена для команды', teamId);
+                        console.groupEnd();
+                        return builtSynergyData;
+                    }
+                }
+                
+                console.log('❌ Не удалось получить данные сыгранности для другой команды');
+                console.groupEnd();
+                return null;
+            }
+            
+            console.groupEnd();
+            return window.teamSynergyData[teamId] || null;
+            
+        } catch (error) {
+            console.error('💥 [SynergyData] Ошибка извлечения данных сыгранности:', error);
+            console.groupEnd();
+            return null;
+        }
+    }
+
+    // Функция для извлечения переменных сыгранности из HTML
+    function extractSynergyVariablesFromHTML(htmlText, teamId, orderDay = null) {
+        console.log('🔍 [SynergyExtract] Извлечение переменных из HTML...');
+        
+        try {
+            // Извлекаем все необходимые переменные
+            const d_sygranMatch = htmlText.match(/var d_sygran\s*=\s*(\[[^\]]+\])/);
+            const plr_sygranMatch = htmlText.match(/var plr_sygran\s*=\s*(\[[\s\S]*?\])\s*var/);
+            const plr_idMatch = htmlText.match(/var plr_id\s*=\s*(\[[^\]]+\])/);
+            const ordersMatch = htmlText.match(/var orders\s*=\s*(\[[\s\S]*?\])\s*var/);
+            
+            console.log('🔍 [SynergyExtract] Результаты поиска:');
+            console.log('  d_sygran:', !!d_sygranMatch);
+            console.log('  plr_sygran:', !!plr_sygranMatch);
+            console.log('  plr_id:', !!plr_idMatch);
+            console.log('  orders:', !!ordersMatch);
+            
+            if (!d_sygranMatch || !plr_sygranMatch || !plr_idMatch || !ordersMatch) {
+                console.log('❌ [SynergyExtract] Не все переменные найдены');
+                return null;
+            }
+            
+            // Безопасное получение orderDay
+            let finalOrderDay = orderDay;
+            if (!finalOrderDay) {
+                try {
+                    finalOrderDay = getOrderDayFromCurrentPage();
+                } catch (error) {
+                    console.warn('⚠️ [SynergyExtract] Не удалось получить orderDay:', error);
+                    finalOrderDay = null;
+                }
+            }
+            
+            const synergyData = {
+                d_sygran: JSON.parse(d_sygranMatch[1]),
+                plr_sygran: JSON.parse(plr_sygranMatch[1]),
+                plr_id: JSON.parse(plr_idMatch[1]),
+                orders: JSON.parse(ordersMatch[1]),
+                teamId: teamId,
+                extractedAt: Date.now(),
+                orderDay: finalOrderDay
+            };
+            
+            console.log('✅ [SynergyExtract] Данные успешно извлечены:');
+            console.log('  Матчей:', synergyData.d_sygran.length);
+            console.log('  Игроков:', synergyData.plr_id.length);
+            console.log('  Составов:', synergyData.orders.length);
+            console.log('  Дни матчей:', synergyData.d_sygran);
+            
+            return synergyData;
+            
+        } catch (error) {
+            console.error('💥 [SynergyExtract] Ошибка парсинга данных:', error);
+            return null;
+        }
+    }
+
+    function calculateLineupChemistry(lineup, playersData) {
+        console.group('🧪 [Chemistry] Расчет сыгранности состава');
+        
+        const players = Object.values(lineup).map(pos => playersData[pos.playerId]).filter(Boolean);
+        console.log('👥 Игроков для анализа:', players.length);
+        
+        if (players.length < 2) {
+            console.log('⚠️ Недостаточно игроков для расчета сыгранности');
+            console.groupEnd();
+            return 0;
+        }
+        
+        let totalChemistry = 0;
+        let comparisons = 0;
+        
+        for (let i = 0; i < players.length; i++) {
+            for (let j = i + 1; j < players.length; j++) {
+                const player1 = players[i];
+                const player2 = players[j];
+                
+                let chemistry = 0.5;
+                
+                const ageDiff = Math.abs(player1.age - player2.age);
+                if (ageDiff <= 3) chemistry += 0.1;
+                else if (ageDiff <= 6) chemistry += 0.05;
+                else chemistry -= 0.05;
+                
+                const strengthDiff = Math.abs(player1.realStr - player2.realStr);
+                if (strengthDiff <= 50) chemistry += 0.1;
+                else if (strengthDiff <= 100) chemistry += 0.05;
+                
+                if (player1.mainPos === player2.mainPos || 
+                    player1.mainPos === player2.secondPos || 
+                    player1.secondPos === player2.mainPos) {
+                    chemistry += 0.1;
+                }
+                
+                totalChemistry += Math.max(0, Math.min(1, chemistry));
+                comparisons++;
+            }
+        }
+        
+        const averageChemistry = comparisons > 0 ? totalChemistry / comparisons : 0;
+        console.log('📊 Результат сыгранности:', {
+            'Сравнений': comparisons,
+            'Средняя сыгранность': averageChemistry.toFixed(3),
+            'Процент': (averageChemistry * 100).toFixed(1) + '%'
+        });
+        
+        console.groupEnd();
+        return averageChemistry;
+    }
+
+    function analyzeLineupStats(lineup, playersData) {
+        console.group('📊 [Stats] Анализ статистики состава');
+        
+        const players = Object.values(lineup).map(pos => playersData[pos.playerId]).filter(Boolean);
+        console.log('👥 Игроков для анализа:', players.length);
+        
+        if (players.length === 0) {
+            console.log('⚠️ Нет данных игроков для анализа');
+            console.groupEnd();
+            return {
+                playersCount: 0,
+                averageAge: 0,
+                totalStrength: 0,
+                averageFatigue: 0,
+                averageForm: 0,
+                fatigueLevel: 'unknown',
+                formLevel: 'unknown'
+            };
+        }
+        
+        const totalAge = players.reduce((sum, p) => sum + p.age, 0);
+        const totalStrength = players.reduce((sum, p) => sum + p.realStr, 0);
+        const totalFatigue = players.reduce((sum, p) => sum + p.fatigue, 0);
+        const totalForm = players.reduce((sum, p) => sum + p.form, 0);
+        
+        const averageAge = totalAge / players.length;
+        const averageFatigue = totalFatigue / players.length;
+        const averageForm = totalForm / players.length;
+        
+        let fatigueLevel = 'low';
+        if (averageFatigue > 70) fatigueLevel = 'high';
+        else if (averageFatigue > 40) fatigueLevel = 'medium';
+        
+        let formLevel = 'poor';
+        if (averageForm > 80) formLevel = 'excellent';
+        else if (averageForm > 60) formLevel = 'good';
+        
+        const stats = {
+            playersCount: players.length,
+            averageAge: Math.round(averageAge * 10) / 10,
+            totalStrength: totalStrength,
+            averageStrength: Math.round(totalStrength / players.length),
+            averageFatigue: Math.round(averageFatigue),
+            averageForm: Math.round(averageForm),
+            fatigueLevel: fatigueLevel,
+            formLevel: formLevel
+        };
+        
+        console.log('📈 Статистика состава:', stats);
+        console.groupEnd();
+        return stats;
+    }
+
+    function getTeamIdFromOrderUrl() {
+        const teamLinks = document.querySelectorAll('table.tobl a[href^="roster.php?num="]');
+        if (teamLinks.length >= 2) {
+            const homeTeamId = new URL(teamLinks[0].href, SITE_CONFIG.BASE_URL).searchParams.get('num');
+            const awayTeamId = new URL(teamLinks[1].href, SITE_CONFIG.BASE_URL).searchParams.get('num');
+            
+            console.log('🏠 ID команды хозяев:', homeTeamId);
+            console.log('✈️ ID команды гостей:', awayTeamId);
+            
+            return { homeTeamId, awayTeamId };
+        } else if (teamLinks.length >= 1) {
+            const homeTeamId = new URL(teamLinks[0].href, SITE_CONFIG.BASE_URL).searchParams.get('num');
+            console.log('🏠 Определен ID команды хозяев:', homeTeamId);
+            return { homeTeamId, awayTeamId: null };
+        }
+        
+        console.warn('⚠️ Не удалось определить ID команд');
+        return null;
+    }
+
+    // Функция для определения команды по HTML странице
+    function detectTeamFromHTML(htmlText) {
+        console.log('🔍 [TeamDetect] Определение команды из HTML...');
+        
+        try {
+            // Метод 1: Ищем span с id="team_name"
+            const teamNameMatch = htmlText.match(/<span[^>]*id=["']team_name["'][^>]*>([^<]+)<\/span>/i);
+            if (teamNameMatch) {
+                const teamName = teamNameMatch[1].trim();
+                console.log('🏷️ [TeamDetect] Найдено название команды в span#team_name:', teamName);
+                
+                // Извлекаем ID команды из названия или других данных
+                // Пытаемся найти ID команды в переменных JavaScript
+                const teamIdMatch = htmlText.match(/curr\s*=\s*(\d+)/);
+                if (teamIdMatch) {
+                    const teamId = parseInt(teamIdMatch[1]);
+                    console.log('✅ [TeamDetect] Найден ID команды из переменной curr:', teamId);
+                    return teamId;
+                }
+            }
+            
+            // Метод 2: Ищем выбранную опцию в селекте команды
+            const selectedTeamMatch = htmlText.match(/<option[^>]*value=["'](\d+)["'][^>]*selected[^>]*>([^<]+)<\/option>/i);
+            if (selectedTeamMatch) {
+                const teamSelectValue = parseInt(selectedTeamMatch[1]);
+                const teamName = selectedTeamMatch[2].trim();
+                console.log('🏷️ [TeamDetect] Найдена выбранная команда в селекте:', teamName, 'value:', teamSelectValue);
+                
+                // Но это не ID команды в игре, а ID в селекте пользователя
+                // Нужно найти реальный ID команды
+            }
+            
+            // Метод 3: Ищем ID команды в переменной curr (основной метод)
+            const currMatch = htmlText.match(/var\s+curr\s*=\s*(\d+)/);
+            if (currMatch) {
+                const teamId = parseInt(currMatch[1]);
+                console.log('✅ [TeamDetect] Найден ID команды из переменной curr:', teamId);
+                return teamId;
+            }
+            
+            // Метод 4: Ищем в URL или других местах
+            const urlMatch = htmlText.match(/team[_\-]?id["\s]*[:=]["\s]*(\d+)/i);
+            if (urlMatch) {
+                const teamId = parseInt(urlMatch[1]);
+                console.log('✅ [TeamDetect] Найден ID команды из URL/данных:', teamId);
+                return teamId;
+            }
+            
+            console.warn('⚠️ [TeamDetect] Не удалось определить ID команды из HTML');
+            return null;
+            
+        } catch (error) {
+            console.error('💥 [TeamDetect] Ошибка при определении команды из HTML:', error);
+            return null;
+        }
+    }
+
+    async function detectUserTeamFromLineup(orderDay, homeTeamId, awayTeamId) {
+        console.group('🔍 [TeamDetect] Определение команды пользователя');
+        console.log('📅 Order Day:', orderDay);
+        console.log('🏠 Home Team ID:', homeTeamId);
+        console.log('✈️ Away Team ID:', awayTeamId);
+        
+        if (!awayTeamId) {
+            console.log('✅ Только одна команда найдена, используем её');
+            console.groupEnd();
+            return { teamId: homeTeamId, isHome: true };
+        }
+        
+        try {
+            const url = `${SITE_CONFIG.BASE_URL}/mng_order.php?order_day=${orderDay}`;
+            console.log('🌐 Запрос к URL:', url);
+            
+            const response = await new Promise((resolve, reject) => {
+                GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: url,
+                    onload: resolve,
+                    onerror: reject,
+                    ontimeout: reject
+                });
+            });
+
+            if (response.status !== 200) {
+                console.warn('❌ Неуспешный статус ответа');
+                console.groupEnd();
+                return { teamId: homeTeamId, isHome: true };
+            }
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(response.responseText, 'text/html');
+            
+            const playerSelects = doc.querySelectorAll('select[name^="plr["]');
+            console.log('🎯 Найдено селектов игроков:', playerSelects.length);
+            
+            if (playerSelects.length === 0) {
+                console.warn('❌ Селекты игроков не найдены');
+                console.groupEnd();
+                return { teamId: homeTeamId, isHome: true };
+            }
+            
+            const firstPlayerSelect = playerSelects[0];
+            let selectedOption = firstPlayerSelect.querySelector('option[selected]');
+            if (!selectedOption && firstPlayerSelect.selectedIndex > 0) {
+                selectedOption = firstPlayerSelect.options[firstPlayerSelect.selectedIndex];
+            }
+            if (!selectedOption && firstPlayerSelect.value && firstPlayerSelect.value !== '-1') {
+                selectedOption = firstPlayerSelect.querySelector(`option[value="${firstPlayerSelect.value}"]`);
+            }
+            
+            if (!selectedOption || !selectedOption.value || selectedOption.value === '-1') {
+                console.warn('❌ Не найден выбранный игрок для определения команды');
+                console.groupEnd();
+                return { teamId: homeTeamId, isHome: true };
+            }
+            
+            const selectedPlayerId = selectedOption.value;
+            console.log('🎯 Найден выбранный игрок ID:', selectedPlayerId);
+            
+            console.log('🔍 Проверяем принадлежность к командам...');
+            
+            const homePlayersData = await loadTeamPlayersData(homeTeamId, 'championship', orderDay);
+            const awayPlayersData = await loadTeamPlayersData(awayTeamId, 'championship', orderDay);
+            
+            const isInHomeTeam = homePlayersData[selectedPlayerId];
+            const isInAwayTeam = awayPlayersData[selectedPlayerId];
+            
+            console.log('🏠 Игрок в команде хозяев:', !!isInHomeTeam);
+            console.log('✈️ Игрок в команде гостей:', !!isInAwayTeam);
+            
+            if (isInHomeTeam && !isInAwayTeam) {
+                console.log('✅ Определена команда: ХОЗЯЕВА');
+                console.groupEnd();
+                return { teamId: homeTeamId, isHome: true };
+            } else if (isInAwayTeam && !isInHomeTeam) {
+                console.log('✅ Определена команда: ГОСТИ');
+                console.groupEnd();
+                return { teamId: awayTeamId, isHome: false };
+            } else {
+                console.warn('⚠️ Игрок найден в обеих командах или не найден, используем хозяев');
+                console.groupEnd();
+                return { teamId: homeTeamId, isHome: true };
+            }
+            
+        } catch (error) {
+            console.error('💥 [TeamDetect] Ошибка при определении команды:', error);
+            console.groupEnd();
+            return { teamId: homeTeamId, isHome: true };
+        }
+    }
+
     async function loadLineupFromOrder(orderDay) {
-        console.group('📥 [LineupLoad] Загрузка состава из формы');
+        console.error('� [SYNERpGY DEBUG] ФУНКЦИЯ loadLineupFromOrder ВЫЗВАНА!');
+        console.group('� [Lineup:Load] Загрузка состава из формы');
         console.log('📅 Order Day:', orderDay);
         
         if (!orderDay) {
@@ -3899,6 +5000,11 @@ function getTournamentType() {
 
             const parser = new DOMParser();
             const doc = parser.parseFromString(response.responseText, 'text/html');
+            
+            // Проверяем, что получили правильную страницу
+            console.log('🔍 [SYNERGY DEBUG] Заголовок страницы:', doc.title);
+            console.log('🔍 [SYNERGY DEBUG] URL страницы:', url);
+            console.log('🔍 [SYNERGY DEBUG] Размер HTML:', response.responseText.length, 'символов');
             
             // Извлекаем данные состава
             const lineup = {};
@@ -4038,31 +5144,624 @@ function getTournamentType() {
             // Получаем стиль игры (если есть селект для стиля)
             let gameStyle = 'norm';
             let styleMethod = '';
-            const styleSelect = doc.querySelector('select[name="style"], select[name="game_style"]');
+            const styleSelect = doc.querySelector('select[name="playstyle"]');
+            
+            console.log('🔍 [GameStyle] Поиск стиля команды...');
+            console.log('🔍 [GameStyle] Найден селект gamestyle:', !!styleSelect);
             
             if (styleSelect) {
-                let selectedOption = styleSelect.querySelector('option[selected]');
+                console.log('🔍 [GameStyle] Опции селекта:', Array.from(styleSelect.options).map(opt => ({
+                    value: opt.value,
+                    text: opt.textContent,
+                    selected: opt.selected
+                })));
                 
-                if (selectedOption && selectedOption.value) {
-                    gameStyle = selectedOption.value;
-                    styleMethod = 'HTML selected';
-                } else if (styleSelect.selectedIndex >= 0) {
-                    selectedOption = styleSelect.options[styleSelect.selectedIndex];
+                // Проверяем, не использует ли селект Select2
+                const select2Container = doc.querySelector('.select2-container[data-select2-id]');
+                if (select2Container) {
+                    console.log('🔍 [GameStyle] Обнаружен Select2, ищем выбранное значение...');
+                    const selectedSpan = doc.querySelector('#select2-gamestyle-container');
+                    if (selectedSpan) {
+                        const selectedText = selectedSpan.textContent.trim();
+                        console.log(`🔍 [GameStyle] Select2 выбранный текст: "${selectedText}"`);
+                        
+                        // Маппинг текста в значения для стилей игры
+                        const textToValue = {
+                            'нормальный': 'norm',
+                            'британский': 'brit',
+                            'бразильский': 'brazil',
+                            'тики-така': 'tiki',
+                            'бей-беги': 'bb',
+                            'катеначчо': 'kat',
+                            'спартаковский': 'sp'
+                        };
+                        
+                        if (textToValue[selectedText]) {
+                            gameStyle = textToValue[selectedText];
+                            styleMethod = 'Select2 text mapping';
+                            console.log(`✅ [GameStyle] Найден стиль через Select2: ${selectedText} → ${gameStyle}`);
+                        }
+                    }
+                }
+                
+                // Если не нашли через Select2, пробуем стандартные методы
+                if (gameStyle === 'norm') {
+                    let selectedOption = styleSelect.querySelector('option[selected]');
+                    
                     if (selectedOption && selectedOption.value) {
-                        gameStyle = selectedOption.value;
-                        styleMethod = 'selectedIndex';
+                        const rawValue = selectedOption.value;
+                        // Маппинг текстовых значений из sending form в стили калькулятора
+                        const styleMapping = {
+                            'нормальный': 'norm',
+                            'британский': 'brit',
+                            'бразильский': 'brazil',
+                            'тики-така': 'tiki',
+                            'бей-беги': 'bb',
+                            'катеначчо': 'kat',
+                            'спартаковский': 'sp'
+                        };
+                        gameStyle = styleMapping[rawValue] || rawValue;
+                        styleMethod = 'HTML selected';
+                        console.log(`✅ [GameStyle] Найден selected option: ${rawValue} → ${gameStyle}`);
+                    } else if (styleSelect.selectedIndex >= 0) {
+                        selectedOption = styleSelect.options[styleSelect.selectedIndex];
+                        if (selectedOption && selectedOption.value) {
+                            const rawValue = selectedOption.value;
+                            // Маппинг текстовых значений из sending form в стили калькулятора
+                            const styleMapping = {
+                                'нормальный': 'norm',
+                                'британский': 'brit',
+                                'бразильский': 'brazil',
+                                'тики-така': 'tiki',
+                                'бей-беги': 'bb',
+                                'катеначчо': 'kat',
+                                'спартаковский': 'sp'
+                            };
+                            gameStyle = styleMapping[rawValue] || rawValue;
+                            styleMethod = 'selectedIndex';
+                            console.log(`✅ [GameStyle] Найден через selectedIndex: ${rawValue} → ${gameStyle}`);
+                        }
+                    } else {
+                        console.log('⚠️ [GameStyle] Не найдено выбранной опции в селекте');
                     }
                 }
                 
                 console.log(`⚽ Стиль игры: ${gameStyle} [${styleMethod || 'default'}]`);
             } else {
-                console.log('⚽ Селект стиля игры не найден, используется default: norm');
+                // Пробуем извлечь из переменной v_gamestyle
+                console.log('🔍 [GameStyle] Селект не найден, ищем переменную v_gamestyle...');
+                const gamestyleMatch = response.responseText.match(/var v_gamestyle\s*=\s*"([^"]+)"/);
+                if (gamestyleMatch) {
+                    gameStyle = gamestyleMatch[1];
+                    styleMethod = 'JavaScript variable';
+                    console.log(`✅ [GameStyle] Стиль игры из переменной: ${gameStyle} [${styleMethod}]`);
+                } else {
+                    console.log('⚠️ [GameStyle] Переменная v_gamestyle не найдена, используется default: norm');
+                }
             }
+
+            // Извлекаем грубость команды
+            let roughness = 'clean'; // по умолчанию аккуратная
+            const roughnessSelect = doc.querySelector('select[name="gamestyle"]');
+            if (roughnessSelect) {
+                const selectedRoughOption = roughnessSelect.querySelector('option[selected]') || 
+                                          roughnessSelect.options[roughnessSelect.selectedIndex];
+                if (selectedRoughOption) {
+                    roughness = selectedRoughOption.value === '1' ? 'rough' : 'clean';
+                    console.log(`⚔️ Грубость команды: ${roughness} (значение: ${selectedRoughOption.value})`);
+                }
+            }
+
+            // Извлекаем вид защиты
+            let defenseType = 'zonal'; // по умолчанию зональная
+            const defenseSelect = doc.querySelector('select[name="defence"]');
+            if (defenseSelect) {
+                const selectedDefenseOption = defenseSelect.querySelector('option[selected]') || 
+                                            defenseSelect.options[defenseSelect.selectedIndex];
+                if (selectedDefenseOption) {
+                    defenseType = selectedDefenseOption.value === '2' ? 'man' : 'zonal';
+                    console.log(`🛡️ Вид защиты: ${defenseType} (значение: ${selectedDefenseOption.value})`);
+                }
+            }
+
+            // Извлекаем формацию команды
+            let formation = null;
+            const formationMatch = response.responseText.match(/var v_formation\s*=\s*"([^"]+)"/);
+            if (formationMatch) {
+                formation = formationMatch[1];
+                console.log(`🏗️ Формация команды: ${formation}`);
+            } else {
+                console.log('🏗️ Формация не найдена в HTML');
+            }
+
+            // Извлекаем стили игроков
+            let playerStyles = [];
+            const stylesMatch = response.responseText.match(/var plr_styles\s*=\s*(\[[^\]]+\])/);
+            if (stylesMatch) {
+                try {
+                    playerStyles = JSON.parse(stylesMatch[1]);
+                    console.log(`🎨 Стили игроков извлечены: ${playerStyles.length} значений`);
+                } catch (e) {
+                    console.warn('⚠️ Ошибка парсинга стилей игроков:', e);
+                }
+            } else {
+                console.log('🎨 Стили игроков не найдены в HTML');
+            }
+
+            // Извлекаем позиции игроков
+            let playerPositions = [];
+            const positionsMatch = response.responseText.match(/var plr_pos\s*=\s*(\[[\s\S]*?\])/);
+            if (positionsMatch) {
+                try {
+                    playerPositions = JSON.parse(positionsMatch[1]);
+                    console.log(`📍 Позиции игроков извлечены: ${playerPositions.length} значений`);
+                } catch (e) {
+                    console.warn('⚠️ Ошибка парсинга позиций игроков:', e);
+                }
+            } else {
+                console.log('📍 Позиции игроков не найдены в HTML');
+            }
+
+            // Обогащаем данные игроков стилями и позициями из переменных
+            if (playerStyles.length > 0) {
+                console.log('🔄 Обогащение данных игроков стилями...');
+                
+                // Создаем карту ID игроков к их индексам в plr_styles
+                const playerIdToStyleIndex = {};
+                const lineupPlayerIds = Object.values(lineup).map(lineupData => lineupData.playerId);
+                if (lineupPlayerIds.length > 0) {
+                    lineupPlayerIds.forEach((playerId, index) => {
+                        if (index < playerStyles.length) {
+                            playerIdToStyleIndex[playerId] = index;
+                        }
+                    });
+                    console.log('🔍 [StyleMapping] Создана карта ID → индекс стиля:', Object.keys(playerIdToStyleIndex).length, 'записей');
+                }
+                
+                Object.keys(lineup).forEach(posIndex => {
+                    const lineupData = lineup[posIndex];
+                    const playerId = lineupData.playerId;
+                    
+                    // Ищем стиль по ID игрока
+                    if (playerIdToStyleIndex[playerId] !== undefined) {
+                        const styleIndex = playerIdToStyleIndex[playerId];
+                        const numericStyle = playerStyles[styleIndex];
+                        const calcStyle = convertPlayerStyleToCalcFormat(numericStyle);
+                        lineup[posIndex].playerStyle = calcStyle;
+                        console.log(`  🎨 Игрок ${playerId}: стиль ${numericStyle} → ${calcStyle} (индекс ${styleIndex})`);
+                    } else {
+                        console.log(`  ⚠️ Игрок ${playerId}: стиль не найден в данных`);
+                    }
+                });
+            }
+
+            // Позиции игроков уже извлечены из HTML селектов выше, не перезаписываем их
+
+            let teamChemistry = 0;
+            let chemistryMethod = '';
+            
+            // Рассчитываем сыгранность алгоритмически на основе извлеченных данных
+            console.log('🧪 [SYNERGY] Расчет сыгранности команды...');
+            
+            try {
+                const htmlText = response.responseText;
+                
+                // Извлекаем все необходимые переменные для расчета сыгранности
+                const d_sygranMatch = htmlText.match(/var d_sygran\s*=\s*(\[[^\]]+\])/);
+                const plr_sygranMatch = htmlText.match(/var plr_sygran\s*=\s*(\[[\s\S]*?\])\s*var/);
+                const plr_idMatch = htmlText.match(/var plr_id\s*=\s*(\[[^\]]+\])/);
+                const ordersMatch = htmlText.match(/var orders\s*=\s*(\[[\s\S]*?\])\s*var/);
+                
+                if (d_sygranMatch && plr_sygranMatch && plr_idMatch && ordersMatch) {
+                    const d_sygran = JSON.parse(d_sygranMatch[1]);
+                    const plr_sygran = JSON.parse(plr_sygranMatch[1]);
+                    const plr_id = JSON.parse(plr_idMatch[1]);
+                    const orders = JSON.parse(ordersMatch[1]);
+                    
+                    console.log('✅ [SYNERGY] Данные для расчета найдены:');
+                    console.log(`  Матчей: ${d_sygran.length}`);
+                    console.log(`  Игроков: ${plr_id.length}`);
+                    console.log(`  Составов: ${orders.length}`);
+                    
+                    if (orders.length > 0) {
+                        const currentLineup = orders[0].slice(0, 11); // Первые 11 игроков основного состава
+                        
+                        // Создаем карту индексов игроков
+                        const playerIndexMap = {};
+                        plr_id.forEach((playerId, index) => {
+                            playerIndexMap[playerId] = index;
+                        });
+                        
+                        // Таблица бонусов сыгранности
+                        const synergyBonuses = {
+                            6: 0.10,   // 6 игроков = +0.10%
+                            7: 0.25,   // 7 игроков = +0.25%
+                            8: 0.50,   // 8 игроков = +0.50%
+                            9: 0.75,   // 9 игроков = +0.75%
+                            10: 1.00,  // 10 игроков = +1.00%
+                            11: 1.25   // 11 игроков = +1.25%
+                        };
+                        
+                        let totalSynergyBonus = 0;
+                        let consideredMatches = 0;
+                        
+                        // Проходим по матчам от самого недавнего к более старым
+                        for (let matchIndex = 0; matchIndex < d_sygran.length; matchIndex++) {
+                            const matchDay = d_sygran[matchIndex];
+                            
+                            // Считаем сколько игроков из текущего состава играло в этом матче
+                            let playersInMatch = 0;
+                            
+                            for (const playerId of currentLineup) {
+                                const playerIndex = playerIndexMap[playerId];
+                                if (playerIndex !== undefined && plr_sygran[playerIndex][matchIndex] === 1) {
+                                    playersInMatch++;
+                                }
+                            }
+                            
+                            console.log(`🔍 [SYNERGY] Матч ${matchIndex + 1} (день ${matchDay}): ${playersInMatch} игроков из состава`);
+                            
+                            // Если менее 4 игроков из текущего состава, прекращаем анализ
+                            if (playersInMatch < 4) {
+                                console.log(`⏹️ [SYNERGY] Остановка анализа: менее 4 игроков (${playersInMatch}) в матче ${matchIndex + 1}`);
+                                break;
+                            }
+                            
+                            // Добавляем бонус если есть соответствующее количество игроков
+                            if (synergyBonuses[playersInMatch]) {
+                                const bonus = synergyBonuses[playersInMatch];
+                                totalSynergyBonus += bonus;
+                                consideredMatches++;
+                                console.log(`✅ [SYNERGY] Матч ${matchIndex + 1}: ${playersInMatch} игроков = +${bonus}% бонуса (накопленный: ${totalSynergyBonus.toFixed(2)}%)`);
+                            }
+                        }
+                        
+                        // Округляем до 2 знаков после запятой для устранения погрешности вычислений
+                        teamChemistry = Math.round(totalSynergyBonus * 100) / 100;
+                        chemistryMethod = 'алгоритмический расчет';
+                        
+                        console.log(`🎯 [SYNERGY] Итоговая сыгранность: ${teamChemistry}% (рассмотрено матчей: ${consideredMatches})`);
+                        
+                        // Сохраняем данные для будущего использования
+                        if (typeof window !== 'undefined') {
+                            window.extractedSynergyData = {
+                                d_sygran,
+                                plr_sygran,
+                                plr_id,
+                                orders,
+                                extractedAt: Date.now(),
+                                orderDay: orderDay
+                            };
+                        }
+                    } else {
+                        console.log('⚠️ [SYNERGY] Составы не найдены');
+                    }
+                } else {
+                    console.log('❌ [SYNERGY] Не удалось найти данные для расчета сыгранности');
+                }
+            } catch (error) {
+                console.error('💥 [SYNERGY] Ошибка при расчете сыгранности:', error);
+            }
+            
+            // Функция для расчета сыгранности на основе JavaScript переменных
+            const calculateSynergyFromVariables = () => {
+                console.log('🔍 [SYNERGY DEBUG] Пытаемся рассчитать сыгранность из JavaScript переменных...');
+                
+                try {
+                    // Проверяем наличие необходимых переменных в window или в загруженном HTML
+                    let d_sygran, plr_sygran, plr_id, orders;
+                    
+                    // Сначала пробуем получить из window (если мы на странице)
+                    if (window.location.href.includes('mng_order.php')) {
+                        d_sygran = window.d_sygran;
+                        plr_sygran = window.plr_sygran;
+                        plr_id = window.plr_id;
+                        orders = window.orders;
+                        console.log('🔍 [SYNERGY DEBUG] Получаем переменные из window');
+                    }
+                    
+                    // Если не нашли в window, пытаемся извлечь из HTML
+                    if (!d_sygran || !plr_sygran || !plr_id) {
+                        console.log('🔍 [SYNERGY DEBUG] Извлекаем переменные из HTML...');
+                        const htmlText = doc.documentElement.outerHTML;
+                        console.log(`🔍 [SYNERGY DEBUG] Размер HTML для анализа: ${htmlText.length} символов`);
+                        
+                        // Извлекаем d_sygran
+                        const d_sygranMatch = htmlText.match(/var d_sygran\s*=\s*(\[[^\]]+\])/);
+                        if (d_sygranMatch) {
+                            d_sygran = JSON.parse(d_sygranMatch[1]);
+                            console.log('✅ [SYNERGY DEBUG] d_sygran найден:', d_sygran);
+                            console.log(`🔍 [SYNERGY DEBUG] Количество матчей в d_sygran: ${d_sygran.length}`);
+                        } else {
+                            console.log('❌ [SYNERGY DEBUG] d_sygran не найден в HTML');
+                        }
+                        
+                        // Извлекаем plr_sygran
+                        const plr_sygranMatch = htmlText.match(/var plr_sygran\s*=\s*(\[[\s\S]*?\])\s*var/);
+                        if (plr_sygranMatch) {
+                            plr_sygran = JSON.parse(plr_sygranMatch[1]);
+                            console.log(`✅ [SYNERGY DEBUG] plr_sygran найден, размер: ${plr_sygran.length} игроков`);
+                            console.log(`🔍 [SYNERGY DEBUG] Размер матрицы: ${plr_sygran.length}x${plr_sygran[0]?.length || 0}`);
+                        } else {
+                            console.log('❌ [SYNERGY DEBUG] plr_sygran не найден в HTML');
+                        }
+                        
+                        // Извлекаем plr_id
+                        const plr_idMatch = htmlText.match(/var plr_id\s*=\s*(\[[^\]]+\])/);
+                        if (plr_idMatch) {
+                            plr_id = JSON.parse(plr_idMatch[1]);
+                            console.log(`✅ [SYNERGY DEBUG] plr_id найден, размер: ${plr_id.length} игроков`);
+                            console.log(`🔍 [SYNERGY DEBUG] Первые 5 ID игроков: [${plr_id.slice(0, 5).join(', ')}...]`);
+                        } else {
+                            console.log('❌ [SYNERGY DEBUG] plr_id не найден в HTML');
+                        }
+                        
+                        // Извлекаем orders (текущий состав)
+                        const ordersMatch = htmlText.match(/var orders\s*=\s*(\[[\s\S]*?\])\s*var/);
+                        if (ordersMatch) {
+                            orders = JSON.parse(ordersMatch[1]);
+                            console.log('✅ [SYNERGY DEBUG] orders найден:', orders);
+                            console.log(`🔍 [SYNERGY DEBUG] Количество составов: ${orders.length}`);
+                            if (orders[0]) {
+                                console.log(`🔍 [SYNERGY DEBUG] Первый состав: ${orders[0].length} игроков`);
+                            }
+                        } else {
+                            console.log('❌ [SYNERGY DEBUG] orders не найден в HTML');
+                        }
+                    } else {
+                        console.log('✅ [SYNERGY DEBUG] Переменные получены из window');
+                        console.log(`🔍 [SYNERGY DEBUG] d_sygran: ${d_sygran?.length || 0} матчей`);
+                        console.log(`🔍 [SYNERGY DEBUG] plr_sygran: ${plr_sygran?.length || 0} игроков`);
+                        console.log(`🔍 [SYNERGY DEBUG] plr_id: ${plr_id?.length || 0} игроков`);
+                        console.log(`🔍 [SYNERGY DEBUG] orders: ${orders?.length || 0} составов`);
+                    }
+                    
+                    if (!d_sygran || !plr_sygran || !plr_id || !orders) {
+                        console.log('❌ [SYNERGY DEBUG] Не удалось найти необходимые переменные для расчета сыгранности');
+                        return null;
+                    }
+                    
+                    console.log('✅ [SYNERGY DEBUG] Все переменные найдены, начинаем расчет...');
+                    console.log('🔍 [SYNERGY DEBUG] Дни с сыгранностью:', d_sygran);
+                    console.log('🔍 [SYNERGY DEBUG] Количество игроков:', plr_id.length);
+                    console.log('🔍 [SYNERGY DEBUG] Количество матчей для анализа:', d_sygran.length);
+                    console.log('🔍 [SYNERGY DEBUG] Текущий состав:', orders[0]);
+                    
+                    // Получаем текущий состав (первые 11 игроков)
+                    const currentLineup = orders[0].slice(0, 11);
+                    console.log('🔍 [SYNERGY DEBUG] Состав для расчета (11 игроков):');
+                    currentLineup.forEach((playerId, index) => {
+                        console.log(`  ${index + 1}. ID: ${playerId}`);
+                    });
+                    
+                    // Создаем карту индексов игроков
+                    const playerIndexMap = {};
+                    plr_id.forEach((id, index) => {
+                        playerIndexMap[id] = index;
+                    });
+                    
+                    console.log('🔍 [SYNERGY DEBUG] Проверяем соответствие игроков состава с данными сыгранности:');
+                    let playersFoundInData = 0;
+                    currentLineup.forEach((playerId, lineupIndex) => {
+                        const dataIndex = playerIndexMap[playerId];
+                        if (dataIndex !== undefined) {
+                            playersFoundInData++;
+                            console.log(`  ✅ Игрок ${lineupIndex + 1} (ID: ${playerId}) найден в данных (индекс: ${dataIndex})`);
+                        } else {
+                            console.log(`  ❌ Игрок ${lineupIndex + 1} (ID: ${playerId}) НЕ найден в данных сыгранности`);
+                        }
+                    });
+                    console.log(`🔍 [SYNERGY DEBUG] Игроков найдено в данных: ${playersFoundInData}/${currentLineup.length}`);
+                    
+                    if (playersFoundInData === 0) {
+                        console.log('❌ [SYNERGY DEBUG] Ни один игрок из состава не найден в данных сыгранности');
+                        return null;
+                    }
+                    
+                    // Таблица бонусов сыгранности
+                    const synergyBonuses = {
+                        0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0,  // менее 6 игроков = 0%
+                        6: 0.10,   // 6 игроков = +0.10%
+                        7: 0.25,   // 7 игроков = +0.25%
+                        8: 0.50,   // 8 игроков = +0.50%
+                        9: 0.75,   // 9 игроков = +0.75%
+                        10: 1.00,  // 10 игроков = +1.00%
+                        11: 1.25   // 11 игроков = +1.25%
+                    };
+                    
+                    let totalSynergyBonus = 0;
+                    let consideredMatches = 0;
+                    let matchDetails = [];
+                    
+                    // Проходим по матчам от самого недавнего к более старым
+                    for (let matchIndex = 0; matchIndex < d_sygran.length; matchIndex++) {
+                        const matchDay = d_sygran[matchIndex];
+                        
+                        // Считаем сколько игроков из текущего состава играло в этом матче
+                        let playersInMatch = 0;
+                        const playersWhoPlayed = [];
+                        
+                        for (const playerId of currentLineup) {
+                            const playerIndex = playerIndexMap[playerId];
+                            if (playerIndex !== undefined && plr_sygran[playerIndex][matchIndex] === 1) {
+                                playersInMatch++;
+                                playersWhoPlayed.push(playerId);
+                            }
+                        }
+                        
+                        console.log(`🔍 [SYNERGY DEBUG] Матч ${matchIndex + 1} (день ${matchDay}): ${playersInMatch} игроков из состава`);
+                        console.log(`🔍 [SYNERGY DEBUG] Игроки в матче: [${playersWhoPlayed.join(', ')}]`);
+                        
+                        // Показываем каких игроков не было
+                        const playersNotInMatch = currentLineup.filter(playerId => {
+                            const playerIndex = playerIndexMap[playerId];
+                            return playerIndex === undefined || plr_sygran[playerIndex][matchIndex] !== 1;
+                        });
+                        if (playersNotInMatch.length > 0) {
+                            console.log(`🔍 [SYNERGY DEBUG] Игроки НЕ в матче: [${playersNotInMatch.join(', ')}]`);
+                        }
+                        
+                        // Если менее 4 игроков - прекращаем анализ более ранних матчей
+                        if (playersInMatch < 4) {
+                            console.log(`❌ [SYNERGY DEBUG] Матч ${matchIndex + 1}: менее 4 игроков (${playersInMatch}), прекращаем анализ`);
+                            console.log(`🔍 [SYNERGY DEBUG] Правило: матчи с менее чем 4 игроками из текущего состава не учитываются`);
+                            break;
+                        }
+                        
+                        // Получаем бонус для этого количества игроков
+                        const matchBonus = synergyBonuses[playersInMatch] || 0;
+                        totalSynergyBonus += matchBonus;
+                        consideredMatches++;
+                        
+                        matchDetails.push({
+                            matchIndex: matchIndex + 1,
+                            matchDay: matchDay,
+                            playersCount: playersInMatch,
+                            bonus: matchBonus,
+                            playersInMatch: playersWhoPlayed,
+                            playersNotInMatch: playersNotInMatch
+                        });
+                        
+                        console.log(`✅ [SYNERGY DEBUG] Матч ${matchIndex + 1}: ${playersInMatch} игроков = +${matchBonus}% бонуса (накопленный бонус: ${totalSynergyBonus.toFixed(2)}%)`);
+                        console.log(`🔍 [SYNERGY DEBUG] Бонусная таблица: 6=${synergyBonuses[6]}%, 7=${synergyBonuses[7]}%, 8=${synergyBonuses[8]}%, 9=${synergyBonuses[9]}%, 10=${synergyBonuses[10]}%, 11=${synergyBonuses[11]}%`);
+                    }
+                    
+                    console.log('');
+                    console.log('🎯 [SYNERGY DEBUG] ===== ИТОГОВЫЙ РЕЗУЛЬТАТ РАСЧЕТА СЫГРАННОСТИ =====');
+                    console.log(`🔍 [SYNERGY DEBUG] Всего матчей в данных: ${d_sygran.length}`);
+                    console.log(`🔍 [SYNERGY DEBUG] Рассмотрено матчей: ${consideredMatches}`);
+                    console.log(`🔍 [SYNERGY DEBUG] Общий бонус сыгранности: ${totalSynergyBonus.toFixed(2)}%`);
+                    console.log(`🔍 [SYNERGY DEBUG] Текущий состав (11 игроков): [${currentLineup.join(', ')}]`);
+                    console.log('🔍 [SYNERGY DEBUG] Детальная разбивка по матчам:');
+                    matchDetails.forEach((match, index) => {
+                        console.log(`  Матч ${match.matchIndex}: день ${match.matchDay}, ${match.playersCount} игроков, +${match.bonus}% бонуса`);
+                    });
+                    console.log('🎯 [SYNERGY DEBUG] ================================================');
+                    console.log('');
+                    
+                    return {
+                        value: parseFloat(totalSynergyBonus.toFixed(2)),
+                        method: 'расчет по правилам сыгранности',
+                        details: {
+                            consideredMatches: consideredMatches,
+                            totalMatches: d_sygran.length,
+                            matchDetails: matchDetails,
+                            currentLineup: currentLineup
+                        }
+                    };
+                    
+                } catch (error) {
+                    console.error('🚨 [SYNERGY DEBUG] Ошибка при расчете сыгранности:', error);
+                    return null;
+                }
+            };
+            
+            // Функция для расчета сыгранности из уже извлеченных данных
+            const calculateSynergyFromExtractedData = (synergyData) => {
+                console.log('🔍 [SYNERGY DEBUG] Рассчитываем сыгранность из извлеченных данных...');
+                
+                try {
+                    const { d_sygran, plr_sygran, plr_id, orders } = synergyData;
+                    
+                    // Получаем текущий состав (первые 11 игроков)
+                    const currentLineup = orders[0].slice(0, 11);
+                    console.log('🔍 [SYNERGY DEBUG] Состав для расчета (11 игроков):');
+                    currentLineup.forEach((playerId, index) => {
+                        console.log(`  ${index + 1}. ID: ${playerId}`);
+                    });
+                    
+                    // Создаем карту индексов игроков
+                    const playerIndexMap = {};
+                    plr_id.forEach((id, index) => {
+                        playerIndexMap[id] = index;
+                    });
+                    
+                    // Таблица бонусов сыгранности
+                    const synergyBonuses = {
+                        0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0,  // менее 6 игроков = 0%
+                        6: 0.10,   // 6 игроков = +0.10%
+                        7: 0.25,   // 7 игроков = +0.25%
+                        8: 0.50,   // 8 игроков = +0.50%
+                        9: 0.75,   // 9 игроков = +0.75%
+                        10: 1.00,  // 10 игроков = +1.00%
+                        11: 1.25   // 11 игроков = +1.25%
+                    };
+                    
+                    let totalSynergyBonus = 0;
+                    let consideredMatches = 0;
+                    let matchDetails = [];
+                    
+                    // Проходим по матчам от самого недавнего к более старым
+                    for (let matchIndex = 0; matchIndex < d_sygran.length; matchIndex++) {
+                        const matchDay = d_sygran[matchIndex];
+                        
+                        // Считаем сколько игроков из текущего состава играло в этом матче
+                        let playersInMatch = 0;
+                        const playersWhoPlayed = [];
+                        
+                        for (const playerId of currentLineup) {
+                            const playerIndex = playerIndexMap[playerId];
+                            if (playerIndex !== undefined && plr_sygran[playerIndex][matchIndex] === 1) {
+                                playersInMatch++;
+                                playersWhoPlayed.push(playerId);
+                            }
+                        }
+                        
+                        console.log(`🔍 [SYNERGY DEBUG] Матч ${matchIndex + 1} (день ${matchDay}): ${playersInMatch} игроков из состава`);
+                        
+                        // Если менее 4 игроков - прекращаем анализ более ранних матчей
+                        if (playersInMatch < 4) {
+                            console.log(`❌ [SYNERGY DEBUG] Матч ${matchIndex + 1}: менее 4 игроков (${playersInMatch}), прекращаем анализ`);
+                            break;
+                        }
+                        
+                        // Получаем бонус для этого количества игроков
+                        const matchBonus = synergyBonuses[playersInMatch] || 0;
+                        totalSynergyBonus += matchBonus;
+                        consideredMatches++;
+                        
+                        matchDetails.push({
+                            matchIndex: matchIndex + 1,
+                            matchDay: matchDay,
+                            playersCount: playersInMatch,
+                            bonus: matchBonus
+                        });
+                        
+                        console.log(`✅ [SYNERGY DEBUG] Матч ${matchIndex + 1}: ${playersInMatch} игроков = +${matchBonus}% бонуса`);
+                    }
+                    
+                    console.log('🎯 [SYNERGY DEBUG] ===== РЕЗУЛЬТАТ ИЗ ИЗВЛЕЧЕННЫХ ДАННЫХ =====');
+                    console.log(`🔍 [SYNERGY DEBUG] Рассмотрено матчей: ${consideredMatches}`);
+                    console.log(`🔍 [SYNERGY DEBUG] Общий бонус сыгранности: ${totalSynergyBonus.toFixed(2)}%`);
+                    console.log('🎯 [SYNERGY DEBUG] ===============================================');
+                    
+                    return {
+                        value: parseFloat(totalSynergyBonus.toFixed(2)),
+                        method: 'расчет из извлеченных данных HTML',
+                        details: {
+                            consideredMatches: consideredMatches,
+                            totalMatches: d_sygran.length,
+                            matchDetails: matchDetails,
+                            currentLineup: currentLineup
+                        }
+                    };
+                    
+                } catch (error) {
+                    console.error('🚨 [SYNERGY DEBUG] Ошибка при расчете сыгранности из извлеченных данных:', error);
+                    return null;
+                }
+            };
+            
+            console.log(`🔍 [SYNERGY] Итоговое значение teamChemistry: ${teamChemistry}`);
 
             const result = {
                 lineup,
                 captain,
                 gameStyle,
+                roughness,
+                defenseType,
+                formation,
+                teamChemistry,
                 orderDay
             };
 
@@ -4070,10 +5769,15 @@ function getTournamentType() {
                 'Загружено игроков': Object.keys(lineup).length,
                 'Капитан': captain ? `ID: ${captain}` : 'не выбран',
                 'Стиль игры': gameStyle,
+                'Грубость': roughness,
+                'Вид защиты': defenseType,
+                'Формация': formation || 'не найдена',
+                'Сыгранность': teamChemistry !== null ? `${teamChemistry}%` : 'не указана',
                 'Order Day': orderDay
             });
 
             console.log('📋 Полный объект состава:', result);
+            console.error('🚨 [SYNERGY DEBUG] ФУНКЦИЯ loadLineupFromOrder ЗАВЕРШАЕТСЯ, teamChemistry:', result.teamChemistry);
             console.groupEnd();
 
             return result;
@@ -4084,7 +5788,469 @@ function getTournamentType() {
         }
     }
 
-    // Создание кнопки для открытия калькулятора в новой вкладке
+    // Функция для создания кнопки загрузки состава
+    async function createLoadLineupButton(orderDay, homePlayers, awayPlayers) {
+        console.log('🔘 [LoadButton] Создание кнопки загрузки состава для калькулятора');
+        
+        const loadLineupButton = document.createElement('button');
+        loadLineupButton.textContent = 'Загрузить состав';
+        loadLineupButton.style.cssText = `
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #ccc;
+            color: #666;
+        `;
+        
+        if (orderDay) {
+            try {
+                const hasLineup = await checkLineupExists(orderDay);
+                console.log('✅ [LoadButton] Результат проверки состава:', hasLineup ? 'НАЙДЕН' : 'НЕ НАЙДЕН');
+                
+                if (hasLineup) {
+                    console.log('🔵 [LoadButton] Активируем кнопку "Загрузить состав" (синяя)');
+                    loadLineupButton.style.background = '#2196F3';
+                    loadLineupButton.style.color = 'white';
+                    loadLineupButton.style.cursor = 'pointer';
+                    loadLineupButton.disabled = false;
+                    loadLineupButton.title = 'Загрузить состав из формы отправки';
+                    
+                    loadLineupButton.onclick = async () => {
+                        console.log('🖱️ [LoadButton] Нажата кнопка "Загрузить состав" в калькуляторе');
+                        console.log('📥 [LoadButton] Начинаем загрузку расширенного состава...');
+                        
+                        // Показываем индикатор загрузки
+                        const originalText = loadLineupButton.textContent;
+                        loadLineupButton.textContent = 'Загрузка...';
+                        loadLineupButton.disabled = true;
+                        
+                        try {
+                            const lineup = await loadEnhancedLineupFromOrder(orderDay);
+                            if (lineup) {
+                                console.log('✅ [LoadButton] Расширенный состав успешно загружен, применяем напрямую');
+                                
+                                // Применяем состав напрямую в калькуляторе
+                                applyLoadedLineup(lineup, homePlayers, awayPlayers);
+                                
+                                const stats = lineup.lineupStats;
+                                const teamData = lineup.teamData;
+                                
+                                const message = `Состав загружен и применен!\n\n` +
+                                    `👥 Игроков: ${stats.playersCount}\n` +
+                                    `🧪 Сыгранность: ${lineup.teamChemistry > 0 ? lineup.teamChemistry + '%' : 'не указана'}\n` +
+                                    `🏟️ Атмосфера: ${teamData.atmosphere > 0 ? '+' : ''}${(teamData.atmosphere * 100).toFixed(1)}%\n` +
+                                    `👴 Средний возраст: ${stats.averageAge}\n` +
+                                    `😴 Усталость: ${stats.averageFatigue}% (${stats.fatigueLevel})\n` +
+                                    `💪 Форма: ${stats.averageForm}% (${stats.formLevel})`;
+                                
+                                alert(message);
+                            } else {
+                                console.error('❌ [LoadButton] Не удалось загрузить состав');
+                                alert('Не удалось загрузить состав');
+                            }
+                        } catch (error) {
+                            console.error('💥 [LoadButton] Ошибка при загрузке состава:', error);
+                            alert('Ошибка при загрузке состава: ' + error.message);
+                        } finally {
+                            // Восстанавливаем кнопку
+                            loadLineupButton.textContent = originalText;
+                            loadLineupButton.disabled = false;
+                        }
+                    };
+                } else {
+                    console.log('⚪ [LoadButton] Оставляем кнопку "Загрузить состав" неактивной (серая)');
+                    loadLineupButton.disabled = true;
+                    loadLineupButton.title = 'Состав не найден в форме отправки';
+                }
+            } catch (error) {
+                console.error('💥 [LoadButton] Ошибка при проверке состава:', error);
+                loadLineupButton.disabled = true;
+                loadLineupButton.title = 'Ошибка при проверке состава';
+            }
+        } else {
+            console.warn('❌ [LoadButton] Order Day не определен, кнопка будет неактивной');
+            loadLineupButton.disabled = true;
+            loadLineupButton.title = 'Order Day не определен';
+        }
+        
+        return loadLineupButton;
+    }
+
+    async function loadEnhancedLineupFromOrder(orderDay, teamId = null) {
+        console.error('� [SnYNERGY DEBUG] ФУНКЦИЯ loadEnhancedLineupFromOrder ВЫЗВАНА!');
+        console.group('🚀 [EnhancedLineup] Загрузка расширенного состава');
+        console.log('📅 Order Day:', orderDay);
+        console.log('🆔 Team ID (переданный):', teamId);
+        
+        if (!orderDay) {
+            console.warn('❌ Order Day не указан');
+            console.groupEnd();
+            return null;
+        }
+        
+        try {
+            let userTeamInfo = null;
+            
+            if (!teamId) {
+                const teamsInfo = getTeamIdFromOrderUrl();
+                if (!teamsInfo) {
+                    console.warn('❌ Не удалось определить ID команд');
+                    console.groupEnd();
+                    return null;
+                }
+                
+                userTeamInfo = await detectUserTeamFromLineup(orderDay, teamsInfo.homeTeamId, teamsInfo.awayTeamId);
+                teamId = userTeamInfo.teamId;
+            }
+            
+            console.log('🎯 Итоговый Team ID:', teamId);
+            console.log('🏠 Команда хозяев:', userTeamInfo ? userTeamInfo.isHome : 'неизвестно');
+            
+            console.log('📥 Загрузка базового состава...');
+            console.error('🚨 [SYNERGY DEBUG] ВЫЗЫВАЕМ loadLineupFromOrder с orderDay:', orderDay);
+            const basicLineup = await loadLineupFromOrder(orderDay);
+            console.error('🚨 [SYNERGY DEBUG] РЕЗУЛЬТАТ loadLineupFromOrder:', basicLineup ? 'получен' : 'null', basicLineup?.teamChemistry);
+            
+            // Извлекаем и сохраняем данные сыгранности для будущего использования
+            console.log('💾 [SYNERGY DEBUG] Проверяем наличие извлеченных данных сыгранности...');
+            if (typeof window !== 'undefined' && window.extractedSynergyData) {
+                const dataAge = Date.now() - window.extractedSynergyData.extractedAt;
+                const dataAgeMinutes = Math.floor(dataAge / (1000 * 60));
+                console.log(`✅ [SYNERGY DEBUG] Найдены кэшированные данные сыгранности (возраст: ${dataAgeMinutes} мин)`);
+                console.log(`🔍 [SYNERGY DEBUG] Данные для дня: ${window.extractedSynergyData.orderDay}, текущий день: ${orderDay}`);
+                
+                // Если данные старые или для другого дня, пытаемся обновить
+                if (dataAgeMinutes > 30 || window.extractedSynergyData.orderDay !== orderDay) {
+                    console.log('🔄 [SYNERGY DEBUG] Данные устарели, попытка обновления...');
+                    // Данные будут обновлены в loadLineupFromOrder если потребуется
+                }
+            } else {
+                console.log('❌ [SYNERGY DEBUG] Кэшированные данные сыгранности не найдены');
+            }
+            
+            if (!basicLineup || !basicLineup.lineup) {
+                console.warn('❌ Не удалось загрузить базовый состав');
+                console.groupEnd();
+                return null;
+            }
+            
+            console.log('👥 Загрузка данных игроков команды...');
+            const playersData = await loadTeamPlayersData(teamId, 'championship', orderDay);
+            
+            console.log('🏟️ Загрузка атмосферы команды...');
+            const atmosphere = await loadTeamAtmosphere(teamId);
+            
+            console.log('🔄 Обогащение данных состава...');
+            const enhancedLineup = { ...basicLineup };
+            
+            let playersWithData = 0;
+            let playersWithoutData = 0;
+            
+            Object.keys(enhancedLineup.lineup).forEach(posIndex => {
+                const lineupPlayer = enhancedLineup.lineup[posIndex];
+                const playerData = playersData[lineupPlayer.playerId];
+                
+                if (playerData) {
+                    lineupPlayer.playerData = {
+                        mainPos: playerData.mainPos,
+                        secondPos: playerData.secondPos,
+                        age: playerData.age,
+                        baseStrength: playerData.baseStrength,
+                        fatigue: playerData.fatigue,
+                        form: playerData.form,
+                        form_mod: playerData.form_mod,
+                        realStr: playerData.realStr,
+                        abilities: playerData.abilities,
+                        training: playerData.training
+                    };
+                    
+                    playersWithData++;
+                    console.log(`  ✅ ${lineupPlayer.playerName}: возраст ${playerData.age}, сила ${playerData.realStr}, усталость ${playerData.fatigue}%, форма ${playerData.form}%`);
+                } else {
+                    playersWithoutData++;
+                    console.warn(`  ❌ Данные игрока не найдены: ${lineupPlayer.playerName} (ID: ${lineupPlayer.playerId})`);
+                }
+            });
+            
+            console.log('🧪 Расчет сыгранности состава...');
+            console.log(`🔍 [SYNERGY DEBUG] basicLineup.teamChemistry: ${basicLineup.teamChemistry}`);
+            
+            let chemistry;
+            if (basicLineup.teamChemistry > 0) {
+                chemistry = basicLineup.teamChemistry / 100;
+                console.log(`✅ [SYNERGY DEBUG] Используется сыгранность из формы: ${basicLineup.teamChemistry}% (chemistry = ${chemistry})`);
+            } else {
+                chemistry = 0;
+                console.log(`🔍 [SYNERGY DEBUG] Сыгранность не найдена в форме, используется 0%`);
+            }
+            
+            console.log('📊 Анализ статистики состава...');
+            const lineupStats = analyzeLineupStats(enhancedLineup.lineup, playersData);
+            
+            enhancedLineup.teamData = {
+                teamId: teamId,
+                atmosphere: atmosphere,
+                chemistry: chemistry,
+                isHome: userTeamInfo ? userTeamInfo.isHome : null
+            };
+            
+            enhancedLineup.lineupStats = lineupStats;
+            
+            console.log('🎯 Итоговые данные расширенного состава:', {
+                'Команда': userTeamInfo ? (userTeamInfo.isHome ? 'ХОЗЯЕВА' : 'ГОСТИ') : 'неизвестно',
+                'ID команды': teamId,
+                'Игроков с данными': playersWithData,
+                'Игроков без данных': playersWithoutData,
+                'Сыгранность': basicLineup.teamChemistry > 0 ? `${basicLineup.teamChemistry}%` : 'не указана',
+                'Атмосфера': atmosphere > 0 ? `+${(atmosphere * 100).toFixed(1)}%` : `${(atmosphere * 100).toFixed(1)}%`,
+                'Средний возраст': lineupStats.averageAge,
+                'Средняя усталость': lineupStats.averageFatigue + '%',
+                'Средняя форма': lineupStats.averageForm + '%'
+            });
+            
+            // Дополнительная диагностика для teamData
+            console.log('🔍 [TeamData] Диагностика teamData:', {
+                'userTeamInfo существует': !!userTeamInfo,
+                'userTeamInfo.isHome': userTeamInfo ? userTeamInfo.isHome : 'undefined',
+                'teamData.isHome': enhancedLineup.teamData.isHome,
+                'gameStyle': enhancedLineup.gameStyle,
+                'formation': enhancedLineup.formation
+            });
+            
+            console.groupEnd();
+            return enhancedLineup;
+            
+        } catch (error) {
+            console.error('💥 [EnhancedLineup] Ошибка при загрузке расширенного состава:', error);
+            console.groupEnd();
+            return null;
+        }
+    }
+
+    // Перехватчик AJAX запросов для поиска сыгранности
+    function interceptAjaxRequests() {
+        console.log('🔍 [AJAX INTERCEPT] Установка перехватчиков AJAX запросов...');
+        
+        // Перехват XMLHttpRequest
+        const originalXHROpen = XMLHttpRequest.prototype.open;
+        const originalXHRSend = XMLHttpRequest.prototype.send;
+        
+        XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+            this._method = method;
+            this._url = url;
+            console.log(`🌐 [AJAX INTERCEPT] XHR Open: ${method} ${url}`);
+            return originalXHROpen.apply(this, arguments);
+        };
+        
+        XMLHttpRequest.prototype.send = function(data) {
+            const xhr = this;
+            const originalOnReadyStateChange = xhr.onreadystatechange;
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    const url = xhr._url || 'unknown';
+                    const response = xhr.responseText;
+                    
+                    // Специальная проверка для calc-related запросов
+                    if (url.includes('calc_tired') || url.includes('mng_order')) {
+                        console.log(`🎯 [AJAX INTERCEPT] Calc-related запрос:`, {
+                            url: url,
+                            method: xhr._method,
+                            responseLength: response.length,
+                            responsePreview: response.substring(0, 500)
+                        });
+                        
+                        // Calc запрос выполнен
+                        console.log('🎯 [AJAX INTERCEPT] Calc запрос выполнен');
+                    }
+                    
+                    // Проверяем, содержит ли ответ сыгранность
+                    if (response && (
+                        response.includes('synergy') || 
+                        response.includes('chemistry') || 
+                        /[0-9]+\.[0-9]+/.test(response)
+                    )) {
+                        console.log(`🔍 [AJAX INTERCEPT] Потенциальный ответ с сыгранностью:`, {
+                            url: url,
+                            method: xhr._method,
+                            responseLength: response.length,
+                            responsePreview: response.substring(0, 200)
+                        });
+                    }
+                }
+                
+                if (originalOnReadyStateChange) {
+                    return originalOnReadyStateChange.apply(this, arguments);
+                }
+            };
+            
+            return originalXHRSend.apply(this, arguments);
+        };
+        
+        // Перехват fetch API
+        if (window.fetch) {
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options) {
+                console.log(`🌐 [AJAX INTERCEPT] Fetch: ${url}`);
+                
+                return originalFetch.apply(this, arguments).then(response => {
+                    if (response.ok) {
+                        const clonedResponse = response.clone();
+                        clonedResponse.text().then(text => {
+                            // Специальная проверка для calc-related запросов
+                            if (url.includes('calc_tired') || url.includes('mng_order')) {
+                                console.log(`🎯 [AJAX INTERCEPT] Calc-related fetch:`, {
+                                    url: url,
+                                    responseLength: text.length,
+                                    responsePreview: text.substring(0, 500)
+                                });
+                            }
+                            
+                            if (text && (
+                                text.includes('synergy') || 
+                                text.includes('chemistry') || 
+                                /[0-9]+\.[0-9]+/.test(text)
+                            )) {
+                                console.log(`🔍 [AJAX INTERCEPT] Fetch ответ с сыгранностью:`, {
+                                    url: url,
+                                    responseLength: text.length,
+                                    responsePreview: text.substring(0, 200)
+                                });
+                            }
+                        }).catch(() => {});
+                    }
+                    return response;
+                });
+            };
+        }
+        
+        // Перехват jQuery AJAX (если есть)
+        if (window.$ && window.$.ajax) {
+            const originalAjax = window.$.ajax;
+            window.$.ajax = function(options) {
+                const url = options.url || 'unknown';
+                console.log(`🌐 [AJAX INTERCEPT] jQuery AJAX: ${url}`);
+                
+                const originalSuccess = options.success;
+                options.success = function(data, textStatus, jqXHR) {
+                    // Специальная проверка для calc-related запросов
+                    if (url.includes('calc_tired') || url.includes('mng_order')) {
+                        console.log(`🎯 [AJAX INTERCEPT] Calc-related jQuery:`, {
+                            url: url,
+                            data: data
+                        });
+                    }
+                    
+                    if (data && (
+                        JSON.stringify(data).includes('synergy') || 
+                        JSON.stringify(data).includes('chemistry')
+                    )) {
+                        console.log(`🔍 [AJAX INTERCEPT] jQuery ответ с сыгранностью:`, {
+                            url: url,
+                            data: data
+                        });
+                    }
+                    
+                    if (originalSuccess) {
+                        return originalSuccess.apply(this, arguments);
+                    }
+                };
+                
+                return originalAjax.apply(this, arguments);
+            };
+        }
+        
+        // Перехват форм отправки составов
+        if (window.location.href.includes('mng_order.php')) {
+            console.log('🔍 [AJAX INTERCEPT] Устанавливаем перехватчики форм...');
+            
+            // Перехватываем функцию FormaSubmit если она есть
+            if (typeof window.FormaSubmit === 'function') {
+                const originalFormaSubmit = window.FormaSubmit;
+                window.FormaSubmit = function(...args) {
+                    console.log('🎯 [AJAX INTERCEPT] FormaSubmit вызвана с аргументами:', args);
+                    
+                    // FormaSubmit вызвана
+                    console.log('🎯 [AJAX INTERCEPT] FormaSubmit выполнена');
+                    
+                    return result;
+                };
+                console.log('✅ [AJAX INTERCEPT] FormaSubmit перехвачена');
+            }
+            
+            // Перехватываем функцию Calc_Tired если она есть
+            if (typeof window.Calc_Tired === 'function') {
+                const originalCalcTired = window.Calc_Tired;
+                window.Calc_Tired = function(...args) {
+                    console.log('🎯 [AJAX INTERCEPT] Calc_Tired вызвана с аргументами:', args);
+                    
+                    const result = originalCalcTired.apply(this, args);
+                    
+                    // Calc_Tired выполнена
+                    console.log('🎯 [AJAX INTERCEPT] Calc_Tired выполнена');
+                    
+                    return result;
+                };
+                console.log('✅ [AJAX INTERCEPT] Calc_Tired перехвачена');
+            }
+        }
+        
+        console.log('✅ [AJAX INTERCEPT] Перехватчики установлены');
+    }
+
+    // Функция для получения данных сыгранности
+    function getSynergyData() {
+        if (typeof window !== 'undefined' && window.extractedSynergyData) {
+            const dataAge = Date.now() - window.extractedSynergyData.extractedAt;
+            const dataAgeMinutes = Math.floor(dataAge / (1000 * 60));
+            
+            console.log(`🔍 [SYNERGY API] Запрос данных сыгранности (возраст: ${dataAgeMinutes} мин)`);
+            
+            if (dataAgeMinutes < 60) { // Данные актуальны в течение часа
+                return {
+                    ...window.extractedSynergyData,
+                    isValid: true,
+                    ageMinutes: dataAgeMinutes
+                };
+            } else {
+                console.log('⚠️ [SYNERGY API] Данные сыгранности устарели');
+                return {
+                    isValid: false,
+                    ageMinutes: dataAgeMinutes,
+                    message: 'Данные устарели, требуется обновление'
+                };
+            }
+        }
+        
+        console.log('❌ [SYNERGY API] Данные сыгранности не найдены');
+        return {
+            isValid: false,
+            message: 'Данные сыгранности не извлечены'
+        };
+    }
+
+    // Функция для расчета сыгранности для произвольного состава
+    function calculateSynergyForLineup(playerIds) {
+        console.log('🔍 [SYNERGY API] Расчет сыгранности для состава:', playerIds);
+        
+        const synergyData = getSynergyData();
+        if (!synergyData.isValid) {
+            console.log('❌ [SYNERGY API] Нет актуальных данных для расчета');
+            return null;
+        }
+        
+        // Создаем временный объект данных для расчета
+        const tempSynergyData = {
+            ...synergyData,
+            orders: [playerIds] // Подставляем переданный состав
+        };
+        
+        return calculateSynergyFromExtractedData(tempSynergyData);
+    }
+
     function createCalculatorButton() {
         console.group('🔘 [ButtonCreate] Создание кнопок интерфейса');
         
@@ -4124,124 +6290,399 @@ function getTournamentType() {
             window.location.reload();
         };
 
-        const loadLineupButton = document.createElement('button');
-        loadLineupButton.textContent = 'Загрузить состав';
-        loadLineupButton.style.cssText = `
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: bold;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            background: #ccc;
-            color: #666;
-        `;
-        
-        console.log('🔄 Начинаем проверку наличия состава...');
-        
-        // Проверяем наличие состава и обновляем кнопку
-        if (orderDay) {
-            checkLineupExists(orderDay).then(hasLineup => {
-                console.log('✅ Результат проверки состава:', hasLineup ? 'НАЙДЕН' : 'НЕ НАЙДЕН');
-                
-                if (hasLineup) {
-                    console.log('🔵 Активируем кнопку "Загрузить состав" (синяя)');
-                    loadLineupButton.style.background = '#2196F3';
-                    loadLineupButton.style.color = 'white';
-                    loadLineupButton.style.cursor = 'pointer';
-                    loadLineupButton.disabled = false;
-                    
-                    loadLineupButton.onclick = async () => {
-                        console.log('🖱️ Нажата кнопка "Загрузить состав"');
-                        console.log('📥 Начинаем загрузку состава...');
-                        
-                        const lineup = await loadLineupFromOrder(orderDay);
-                        if (lineup) {
-                            console.log('✅ Состав успешно загружен, сохраняем в localStorage');
-                            // Сохраняем состав в localStorage для передачи в калькулятор
-                            localStorage.setItem('vs_loaded_lineup', JSON.stringify(lineup));
-                            alert('Состав загружен! Откройте калькулятор для применения.');
-                        } else {
-                            console.error('❌ Не удалось загрузить состав');
-                            alert('Не удалось загрузить состав');
-                        }
-                    };
-                } else {
-                    console.log('⚪ Оставляем кнопку "Загрузить состав" неактивной (серая)');
-                    loadLineupButton.disabled = true;
-                    loadLineupButton.title = 'Состав не найден в форме отправки';
-                }
-            }).catch(error => {
-                console.error('💥 Ошибка при проверке состава:', error);
-                loadLineupButton.disabled = true;
-                loadLineupButton.title = 'Ошибка при проверке состава';
-            });
-        } else {
-            console.warn('❌ Order Day не определен, кнопка будет неактивной');
-            loadLineupButton.disabled = true;
-            loadLineupButton.title = 'Не удалось определить день матча';
-        }
-
         buttonContainer.appendChild(calcButton);
-        buttonContainer.appendChild(loadLineupButton);
+        // Кнопка "Загрузить состав" теперь доступна только в калькуляторе
 
-        console.log('✅ Кнопки созданы и добавлены в контейнер');
+        console.log('✅ Кнопка "Открыть калькулятор силы" создана');
         console.groupEnd();
 
         return buttonContainer;
     }
 
     // Функция для применения загруженного состава
-    function applyLoadedLineup(loadedLineup, homePlayers) {
-        if (!loadedLineup || !window.homeLineupBlock) return;
+    function applyLoadedLineup(loadedLineup, homePlayers, awayPlayers = null) {
+        console.group('🔄 [LineupApply] Применение загруженного состава');
+        
+        if (!loadedLineup) {
+            console.warn('❌ Недостаточно данных для применения состава');
+            console.groupEnd();
+            return;
+        }
+
+        // Определяем, к какой команде применять состав
+        let targetLineupBlock = null;
+        let targetPlayers = null;
+        let teamLabel = '';
+        
+        if (loadedLineup.teamData && loadedLineup.teamData.isHome === false) {
+            // Состав принадлежит команде гостей
+            targetLineupBlock = window.awayLineupBlock;
+            targetPlayers = awayPlayers || [];
+            teamLabel = 'ГОСТЕЙ';
+            console.log('🎯 [LineupApply] Применяем состав к команде ГОСТЕЙ');
+        } else {
+            // Состав принадлежит команде хозяев (по умолчанию)
+            targetLineupBlock = window.homeLineupBlock;
+            targetPlayers = homePlayers;
+            teamLabel = 'ХОЗЯЕВ';
+            console.log('🎯 [LineupApply] Применяем состав к команде ХОЗЯЕВ');
+        }
+        
+        if (!targetLineupBlock) {
+            console.warn(`❌ Блок состава команды ${teamLabel} не инициализирован`);
+            console.groupEnd();
+            return;
+        }
+
+        console.log('📊 Входные данные:', {
+            'Игроков в составе': Object.keys(loadedLineup.lineup || {}).length,
+            'Капитан': loadedLineup.captain || 'не указан',
+            'Стиль игры': loadedLineup.gameStyle || 'не указан',
+            'Доступно игроков': targetPlayers.length,
+            'Команда': teamLabel,
+            'Есть расширенные данные': !!loadedLineup.teamData
+        });
+
+        console.log('🔍 Отладка ID игроков:');
+        console.log('📋 ID игроков в составе:', Object.values(loadedLineup.lineup).map(p => p.playerId));
+        console.log('👥 ID доступных игроков:', targetPlayers.map(p => p.id));
 
         try {
-            // Применяем игроков по позициям
+            let appliedPlayers = 0;
+            let appliedPositions = 0;
+            const failedPlayers = [];
+            const foundPlayers = [];
+            
             Object.keys(loadedLineup.lineup).forEach(posIndex => {
                 const lineupData = loadedLineup.lineup[posIndex];
-                const slot = window.homeLineupBlock.lineup[parseInt(posIndex)];
+                const slot = targetLineupBlock.lineup[parseInt(posIndex)];
                 
                 if (slot && lineupData.playerId) {
-                    // Находим игрока в списке
-                    const player = homePlayers.find(p => String(p.id) === String(lineupData.playerId));
+                    let player = targetPlayers.find(p => String(p.id) === String(lineupData.playerId));
+                    
+                    if (!player && lineupData.playerName) {
+                        console.log(`🔍 Поиск по имени для ID ${lineupData.playerId}: "${lineupData.playerName}"`);
+                        player = targetPlayers.find(p => {
+                            const nameMatch = p.name.toLowerCase().includes(lineupData.playerName.toLowerCase()) ||
+                                            lineupData.playerName.toLowerCase().includes(p.name.toLowerCase());
+                            if (nameMatch) {
+                                console.log(`  ✅ Найдено совпадение по имени: "${p.name}" (ID: ${p.id})`);
+                            }
+                            return nameMatch;
+                        });
+                    }
+                    
                     if (player) {
-                        slot.setValue(lineupData.playerId, player.name);
+                        slot.setValue(player.id, player.name);
+                        
+                        // Устанавливаем форму игрока, если есть данные
+                        if (lineupData.playerData && lineupData.playerData.form && slot.physicalFormSelect) {
+                            const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
+                            const formId = getPhysicalFormIdFromData(
+                                lineupData.playerData.form, 
+                                lineupData.playerData.form_mod, 
+                                tournamentType
+                            );
+                            slot.physicalFormSelect.setValue(formId);
+                            slot.physicalFormValue = formId;
+                            console.log(`    💪 Установлена форма: ${lineupData.playerData.form}% (${formId})`);
+                        } else if (lineupData.playerData) {
+                            console.log(`    ⚠️ Данные игрока есть, но форма не установлена:`, {
+                                hasForm: !!lineupData.playerData.form,
+                                hasPhysicalFormSelect: !!slot.physicalFormSelect,
+                                form: lineupData.playerData.form
+                            });
+                        }
+
+                        // Устанавливаем стиль игрока, если есть данные
+                        if (lineupData.playerStyle !== undefined && slot.styleSelect) {
+                            slot.styleSelect.setValue(lineupData.playerStyle);
+                            slot.customStyleValue = lineupData.playerStyle;
+                            console.log(`    🎨 Установлен стиль игрока: ${lineupData.playerStyle}`);
+                        } else if (lineupData.playerStyle !== undefined) {
+                            console.log(`    ⚠️ Стиль игрока есть (${lineupData.playerStyle}), но styleSelect не найден`);
+                        }
+                        
+                        appliedPlayers++;
+                        foundPlayers.push({
+                            originalId: lineupData.playerId,
+                            foundId: player.id,
+                            name: player.name,
+                            method: player.id === lineupData.playerId ? 'exact_id' : 'name_match'
+                        });
+                        
+                        const playerInfo = lineupData.playerData ? 
+                            `${player.name} (возраст: ${lineupData.playerData.age}, сила: ${lineupData.playerData.realStr}, усталость: ${lineupData.playerData.fatigue}%)` :
+                            player.name;
+                        console.log(`  ✅ Позиция ${posIndex}: ${playerInfo}`);
+                        
                         if (lineupData.position) {
                             slot.posValue = lineupData.position;
-                            if (slot.positionSelect) {
-                                slot.positionSelect.value = lineupData.position;
+                            if (slot.miniPositionSelect) {
+                                slot.miniPositionSelect.setValue(lineupData.position);
+                                appliedPositions++;
+                                console.log(`    📍 Установлена позиция: ${lineupData.position}`);
+                            } else {
+                                console.log(`    ⚠️ Позиция есть (${lineupData.position}), но miniPositionSelect не найден`);
                             }
                         }
+                    } else {
+                        failedPlayers.push({ 
+                            posIndex, 
+                            playerId: lineupData.playerId, 
+                            playerName: lineupData.playerName 
+                        });
+                        console.warn(`  ❌ Игрок не найден: позиция ${posIndex}, ID ${lineupData.playerId}, имя "${lineupData.playerName}"`);
                     }
                 }
             });
 
-            // Применяем капитана
-            if (loadedLineup.captain && window.homeLineupBlock.captainSelect) {
-                window.homeLineupBlock.captainSelect.value = loadedLineup.captain;
+            console.log('🔍 Результаты сопоставления игроков:');
+            foundPlayers.forEach(fp => {
+                if (fp.method === 'name_match') {
+                    console.log(`  🔄 ${fp.name}: ${fp.originalId} → ${fp.foundId} (по имени)`);
+                } else {
+                    console.log(`  ✅ ${fp.name}: ${fp.foundId} (точное совпадение)`);
+                }
+            });
+
+            let captainApplied = false;
+            if (loadedLineup.captain && targetLineupBlock.captainSelect) {
+                let captainPlayer = targetPlayers.find(p => String(p.id) === String(loadedLineup.captain));
+                
+                if (!captainPlayer) {
+                    const captainFromFound = foundPlayers.find(fp => fp.originalId === loadedLineup.captain);
+                    if (captainFromFound) {
+                        captainPlayer = targetPlayers.find(p => String(p.id) === String(captainFromFound.foundId));
+                        console.log(`🔄 Капитан найден через сопоставление: ${captainFromFound.originalId} → ${captainFromFound.foundId}`);
+                    }
+                }
+                
+                if (captainPlayer) {
+                    targetLineupBlock.captainSelect.value = captainPlayer.id;
+                    captainApplied = true;
+                    console.log(`👑 Установлен капитан: ${captainPlayer.name} (ID: ${captainPlayer.id})`);
+                } else {
+                    console.warn(`👑 Капитан не найден: ID ${loadedLineup.captain}`);
+                }
             }
 
-            // Применяем стиль игры
-            if (loadedLineup.gameStyle && window.homeStyle) {
-                window.homeStyle.value = loadedLineup.gameStyle;
+            let styleApplied = false;
+            if (loadedLineup.gameStyle) {
+                // Определяем к какой команде применять стиль
+                const isHomeTeam = loadedLineup.teamData && loadedLineup.teamData.isHome === true;
+                const targetStyleSelector = isHomeTeam ? window.homeStyle : window.awayStyle;
+                const teamName = isHomeTeam ? 'хозяев' : 'гостей';
+                
+                if (targetStyleSelector) {
+                    // Стиль игры уже в формате калькулятора (norm, brit, brazil, etc.)
+                    let calculatorStyleValue = loadedLineup.gameStyle;
+                    
+                    console.log(`⚽ Попытка установить стиль игры для ${teamName}: ${loadedLineup.gameStyle} → ${calculatorStyleValue}`);
+                    
+                    // Проверяем, что стиль существует в калькуляторе
+                    const availableStyles = CONFIG.STYLES.ORDER;
+                    if (availableStyles.includes(calculatorStyleValue)) {
+                        targetStyleSelector.value = calculatorStyleValue;
+                        styleApplied = true;
+                        console.log(`✅ Установлен стиль игры для ${teamName}: ${loadedLineup.gameStyle} → ${calculatorStyleValue}`);
+                    } else {
+                        console.warn(`⚠️ Стиль ${calculatorStyleValue} не найден в доступных стилях:`, availableStyles);
+                        // Устанавливаем по умолчанию
+                        targetStyleSelector.value = 'norm';
+                        styleApplied = true;
+                        console.log(`⚽ Установлен стиль по умолчанию для ${teamName}: norm`);
+                    }
+                } else {
+                    console.warn(`⚽ Стиль игры есть в данных, но селектор стиля для ${teamName} не найден:`, loadedLineup.gameStyle);
+                }
             }
 
-            // Обновляем интерфейс
+            // Применяем грубость
+            let roughnessApplied = false;
+            if (loadedLineup.roughness) {
+                const isHomeTeam = loadedLineup.teamData && loadedLineup.teamData.isHome === true;
+                const targetRoughnessSelector = isHomeTeam ? window.homeRoughSelect : window.awayRoughSelect;
+                const teamName = isHomeTeam ? 'хозяев' : 'гостей';
+                
+                console.log(`🔍 [Debug] Грубость: ${loadedLineup.roughness}, команда: ${teamName}, селектор найден: ${!!targetRoughnessSelector}`);
+                
+                if (targetRoughnessSelector) {
+                    targetRoughnessSelector.value = loadedLineup.roughness;
+                    roughnessApplied = true;
+                    console.log(`⚔️ Установлена грубость для ${teamName}: ${loadedLineup.roughness}`);
+                } else {
+                    console.warn(`⚔️ Грубость есть в данных, но селектор грубости для ${teamName} не найден:`, loadedLineup.roughness);
+                }
+            }
+
+            // Применяем вид защиты
+            let defenseApplied = false;
+            if (loadedLineup.defenseType) {
+                const isHomeTeam = loadedLineup.teamData && loadedLineup.teamData.isHome === true;
+                const targetDefenseSelector = isHomeTeam ? window.homeDefenceTypeSelect : window.awayDefenceTypeSelect;
+                const teamName = isHomeTeam ? 'хозяев' : 'гостей';
+                
+                console.log(`🔍 [Debug] Защита: ${loadedLineup.defenseType}, команда: ${teamName}, селектор найден: ${!!targetDefenseSelector}`);
+                
+                if (targetDefenseSelector) {
+                    targetDefenseSelector.value = loadedLineup.defenseType;
+                    defenseApplied = true;
+                    console.log(`🛡️ Установлен вид защиты для ${teamName}: ${loadedLineup.defenseType}`);
+                } else {
+                    console.warn(`🛡️ Вид защиты есть в данных, но селектор защиты для ${teamName} не найден:`, loadedLineup.defenseType);
+                }
+            }
+
+            // Применяем формацию
+            let formationApplied = false;
+            if (loadedLineup.formation) {
+                // Преобразуем формацию из формата "1-5-3-2" в "5-3-2"
+                const formationValue = loadedLineup.formation.startsWith('1-') ? 
+                    loadedLineup.formation.substring(2) : loadedLineup.formation;
+                
+                // Определяем к какой команде применять формацию
+                const formationSelect = loadedLineup.teamData && loadedLineup.teamData.isHome === false ? 
+                    window.awayFormationSelect : window.homeFormationSelect;
+                
+                if (formationSelect) {
+                    // Ищем опцию с нужным значением
+                    const formationOption = Array.from(formationSelect.options)
+                        .find(option => option.value === loadedLineup.formation || option.textContent.trim() === formationValue);
+                    
+                    if (formationOption) {
+                        formationSelect.value = formationOption.value;
+                        
+                        // Применяем формацию к блоку
+                        if (targetLineupBlock.applyFormation) {
+                            targetLineupBlock.applyFormation(formationOption.value);
+                        }
+                        
+                        // Вызываем событие change для обновления интерфейса
+                        const changeEvent = new Event('change', { bubbles: true });
+                        formationSelect.dispatchEvent(changeEvent);
+                        
+                        formationApplied = true;
+                        console.log(`🏗️ Установлена формация: ${formationValue} (${formationOption.value})`);
+                    } else {
+                        console.warn(`🏗️ Формация не найдена в селекте: ${loadedLineup.formation} (${formationValue})`);
+                        console.log('🏗️ Доступные формации:', Array.from(formationSelect.options).map(o => `${o.value}: ${o.textContent.trim()}`));
+                    }
+                } else {
+                    console.warn('🏗️ Селект формации не найден');
+                }
+            }
+
+            let synergyApplied = false;
+            if (loadedLineup.teamChemistry > 0) {
+                if (loadedLineup.teamData && loadedLineup.teamData.isHome !== null) {
+                    if (loadedLineup.teamData.isHome) {
+                        if (typeof setSynergyPercentHome === 'function') {
+                            setSynergyPercentHome(loadedLineup.teamChemistry);
+                            synergyApplied = true;
+                            console.log(`🧪 Установлена сыгранность хозяев: ${loadedLineup.teamChemistry}%`);
+                        }
+                    } else {
+                        if (typeof setSynergyPercentAway === 'function') {
+                            setSynergyPercentAway(loadedLineup.teamChemistry);
+                            synergyApplied = true;
+                            console.log(`🧪 Установлена сыгранность гостей: ${loadedLineup.teamChemistry}%`);
+                        }
+                    }
+                } else {
+                    if (typeof setSynergyPercentHome === 'function') {
+                        setSynergyPercentHome(loadedLineup.teamChemistry);
+                        synergyApplied = true;
+                        console.log(`🧪 Установлена сыгранность хозяев (по умолчанию): ${loadedLineup.teamChemistry}%`);
+                    }
+                }
+            } else {
+                console.log(`🧪 Сыгранность не установлена: teamChemistry = ${loadedLineup.teamChemistry}`);
+            }
+
+            console.log('📊 Результат применения:', {
+                'Применено игроков': appliedPlayers,
+                'Неудачных попыток': failedPlayers.length,
+                'Установлено позиций': appliedPositions,
+                'Капитан': captainApplied ? 'установлен' : 'не установлен',
+                'Стиль игры': styleApplied ? 'установлен' : 'не установлен',
+                'Грубость': roughnessApplied ? 'установлена' : 'не установлена',
+                'Вид защиты': defenseApplied ? 'установлен' : 'не установлен',
+                'Формация': formationApplied ? 'установлена' : 'не установлена',
+                'Сыгранность': synergyApplied ? 'установлена' : 'не установлена',
+                'Точных совпадений ID': foundPlayers.filter(fp => fp.method === 'exact_id').length,
+                'Совпадений по имени': foundPlayers.filter(fp => fp.method === 'name_match').length
+            });
+
+            if (loadedLineup.teamData) {
+                console.log('📈 Статистика команды:', {
+                    'Сыгранность': loadedLineup.teamChemistry > 0 ? `${loadedLineup.teamChemistry}%` : 'не указана',
+                    'Атмосфера': loadedLineup.teamData.atmosphere > 0 ? 
+                        `+${(loadedLineup.teamData.atmosphere * 100).toFixed(1)}%` : 
+                        `${(loadedLineup.teamData.atmosphere * 100).toFixed(1)}%`
+                });
+            }
+
+            if (loadedLineup.lineupStats) {
+                console.log('📊 Статистика состава:', {
+                    'Средний возраст': loadedLineup.lineupStats.averageAge,
+                    'Средняя усталость': loadedLineup.lineupStats.averageFatigue + '%',
+                    'Средняя форма': loadedLineup.lineupStats.averageForm + '%',
+                    'Уровень усталости': loadedLineup.lineupStats.fatigueLevel,
+                    'Уровень формы': loadedLineup.lineupStats.formLevel
+                });
+            }
+
+            if (failedPlayers.length > 0) {
+                console.warn('⚠️ Не удалось применить игроков:', failedPlayers);
+            }
+
             if (typeof window.__vs_onLineupChanged === 'function') {
                 window.__vs_onLineupChanged();
+                console.log('🔄 Интерфейс обновлен');
             }
 
-            alert('Состав успешно применен!');
+            const successMessage = `Состав применен: ${appliedPlayers} игроков${failedPlayers.length > 0 ? `, ${failedPlayers.length} ошибок` : ''}`;
+            console.log(`✅ ${successMessage}`);
+            console.groupEnd();
+            
+            let alertMessage = successMessage;
+            if (foundPlayers.filter(fp => fp.method === 'name_match').length > 0) {
+                alertMessage += `\n\n⚠️ Некоторые игроки найдены по имени (ID изменились)`;
+            }
+            
+            if (loadedLineup.teamData && loadedLineup.lineupStats) {
+                alertMessage += `\n\n📊 Статистика:\n` +
+                    `🧪 Сыгранность: ${loadedLineup.teamChemistry > 0 ? loadedLineup.teamChemistry + '%' : 'не указана'}\n` +
+                    `🏟️ Атмосфера: ${loadedLineup.teamData.atmosphere > 0 ? '+' : ''}${(loadedLineup.teamData.atmosphere * 100).toFixed(1)}%\n` +
+                    `👴 Средний возраст: ${loadedLineup.lineupStats.averageAge}\n` +
+                    `😴 Усталость: ${loadedLineup.lineupStats.averageFatigue}%\n` +
+                    `💪 Форма: ${loadedLineup.lineupStats.averageForm}%`;
+            }
+            
+            alert(alertMessage);
+            
         } catch (error) {
-            console.error('[LineupApply] Error applying lineup:', error);
-            alert('Ошибка при применении состава');
+            console.error('💥 [LineupApply] Критическая ошибка при применении состава:', {
+                message: error.message,
+                stack: error.stack,
+                loadedLineup: loadedLineup
+            });
+            console.groupEnd();
+            alert('Ошибка при применении состава: ' + error.message);
         }
     }
 
     async function init() {
         console.group('🚀 [INIT] Инициализация VF Liga Calculator');
         console.log('🔄 Замена иконок команд...');
+        
+        // Устанавливаем перехватчики AJAX запросов
+        interceptAjaxRequests();
         replaceTeamIcons();
+        
+        // Добавляем кнопку пересчета сыгранности
+        addRecalculateSynergyButton();
         
         // Проверяем, находимся ли мы в режиме калькулятора
         const bodyMode = document.body.getAttribute('data-calculator-mode') === 'true';
@@ -4319,6 +6760,12 @@ function getTournamentType() {
         console.log('👥 Загружено игроков гостей:', awayPlayers.length);
         console.log('🏟️ Атмосфера хозяев:', homeAtmosphere);
         console.log('🏟️ Атмосфера гостей:', awayAtmosphere);
+        
+        // Загружаем данные сыгранности для обеих команд
+        console.log('🔄 Загрузка данных сыгранности обеих команд...');
+        const orderDay = getOrderDayFromCurrentPage();
+        const bothTeamsSynergyData = await loadBothTeamsSynergyData(homeTeamId, awayTeamId, orderDay);
+        console.log('✅ Данные сыгранности загружены:', bothTeamsSynergyData);
         const oldUI = document.getElementById('vsol-calculator-ui');
         if (oldUI) oldUI.remove();
         const ui = createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere);
@@ -4335,13 +6782,29 @@ function getTournamentType() {
             border-radius: 5px;
             cursor: pointer;
             margin-bottom: 10px;
+            margin-right: 10px;
         `;
         backButton.onclick = () => {
             localStorage.removeItem('vs_calculator_mode');
             window.location.hash = '';
             window.location.reload();
         };
-        ui.insertBefore(backButton, ui.firstChild);
+        
+        // Добавляем кнопку загрузки состава в режиме калькулятора
+        const loadLineupButton = await createLoadLineupButton(orderDay, homePlayers, awayPlayers);
+        
+        // Создаем контейнер для кнопок
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.style.cssText = `
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        `;
+        buttonsContainer.appendChild(backButton);
+        buttonsContainer.appendChild(loadLineupButton);
+        
+        ui.insertBefore(buttonsContainer, ui.firstChild);
         
         const comparisonTable = document.querySelector('table.tobl');
         if (comparisonTable && comparisonTable.parentNode) {
@@ -4364,7 +6827,7 @@ function getTournamentType() {
                 });
                 
                 // Применяем загруженный состав
-                applyLoadedLineup(lineup, homePlayers);
+                applyLoadedLineup(lineup, homePlayers, awayPlayers);
                 localStorage.removeItem('vs_loaded_lineup');
                 console.log('✅ Состав успешно применен и удален из localStorage');
             } catch (error) {
@@ -5345,12 +7808,17 @@ function getTournamentType() {
         synergyWrap.appendChild(synergyAwayUI.block);
         container.appendChild(synergyWrap);
 
-        if (homeSaved && typeof homeSaved.synergyHomePercent !== 'undefined') {
-            setSynergyPercentHome(homeSaved.synergyHomePercent);
-        }
-        if (awaySaved && typeof awaySaved.synergyAwayPercent !== 'undefined') {
-            setSynergyPercentAway(awaySaved.synergyAwayPercent);
-        }
+        // НЕ восстанавливаем сохраненные значения сыгранности при инициализации
+        // Сыгранность должна устанавливаться только при загрузке конкретного состава
+        // if (homeSaved && typeof homeSaved.synergyHomePercent !== 'undefined') {
+        //     setSynergyPercentHome(homeSaved.synergyHomePercent);
+        // }
+        // if (awaySaved && typeof awaySaved.synergyAwayPercent !== 'undefined') {
+        //     setSynergyPercentAway(awaySaved.synergyAwayPercent);
+        // }
+        
+        console.log('ℹ️ [UI] Сыгранность не установлена - ожидается загрузка состава');
+        
         synergyHomeUI.input.addEventListener('input', () => {
             clampSynergyInput(synergyHomeUI.input);
             saveAllStates();
@@ -5445,6 +7913,19 @@ function getTournamentType() {
         
         // Функция для пересчета силы команд
         window.__vs_recalculateStrength = async () => {
+            // Сначала пересчитываем сыгранность
+            console.log('🔄 [Recalculate] Пересчет сыгранности перед расчетом силы...');
+            try {
+                if (typeof recalculateSynergy === 'function') {
+                    await recalculateSynergy();
+                    console.log('✅ [Recalculate] Сыгранность пересчитана');
+                } else {
+                    console.log('⚠️ [Recalculate] Функция recalculateSynergy не найдена');
+                }
+            } catch (error) {
+                console.error('❌ [Recalculate] Ошибка при пересчете сыгранности:', error);
+            }
+            
             const wt = getCurrentWeatherFromUI();
             if (!wt) {
                 alert('Не найдены элементы UI погоды');
