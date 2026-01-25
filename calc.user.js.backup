@@ -2,7 +2,7 @@
 // @name         Virtual Soccer Strength Analyzer
 // @namespace    http://tampermonkey.net/
 // @license MIT
-// @version      0.932
+// @version      0.926
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        *://*.virtualsoccer.ru/previewmatch.php*
@@ -34,29 +34,6 @@ const SITE_CONFIG = (() => {
 
     return { BASE_URL: baseUrl };
 })();
-
-// Константы для позиционирования футболок на поле
-const FIELD_LAYOUT = {
-    // Размеры внешнего контейнера (фон поля)
-    FIELD_WIDTH: 400,
-    FIELD_HEIGHT: 566,
-    
-    // Отступы контейнера футболок от краёв фона
-    // Установлено 0 для максимального прижатия игроков к краям поля
-    CONTAINER_PADDING: 0,
-    
-    // Размеры рабочей области (вычисляются автоматически)
-    get WORKING_WIDTH() { return this.FIELD_WIDTH - this.CONTAINER_PADDING * 2; },   // 400px
-    get WORKING_HEIGHT() { return this.FIELD_HEIGHT - this.CONTAINER_PADDING * 2; }, // 566px
-    
-    // Размеры футболок
-    SHIRT_WIDTH: 40,
-    SHIRT_HEIGHT: 34,
-    
-    // Половинные размеры (для центрирования)
-    get SHIRT_HALF_WIDTH() { return this.SHIRT_WIDTH / 2; },   // 20px
-    get SHIRT_HALF_HEIGHT() { return this.SHIRT_HEIGHT / 2; }  // 17px
-};
 
 const CONFIG = {
     COLLISION: {
@@ -291,24 +268,24 @@ function generateFieldPositionsWithFlankPreservation(formation, side, previousFo
         console.log(`[FlankPositioning] Предыдущие позиции:`, previousFormation);
     }
 
-    const fieldWidth = FIELD_LAYOUT.WORKING_WIDTH;   // 332px
-    const fieldHeight = FIELD_LAYOUT.WORKING_HEIGHT; // 498px
+    const fieldWidth = 332;
+    const fieldHeight = 498;
     const isHome = side === 'home';
 
     const zones = isHome ? {
-        gk: 549,      // 566 - 17 (максимально прижат к низу)
-        def: 499,     // Скорректировано для новой рабочей области
-        semidef: 475, // Скорректировано
-        mid: 449,     // Скорректировано
-        semiatt: 424, // Скорректировано
-        att: 339      // Скорректировано
+        gk: 497,
+        def: 450,
+        semidef: 400,
+        mid: 355,
+        semiatt: 310,
+        att: 265
     } : {
-        gk: 67,       // 0 + 17 (максимально прижат к верху)
-        def: 127,      // Скорректировано для новой рабочей области
-        semidef: 157, // Скорректировано
-        mid: 202,     // Скорректировано, расстояние по 75 px до def и att
-        semiatt: 232, // Скорректировано, +50 px от mid
-        att: 277      // Скорректировано
+        gk: 1,
+        def: 50,
+        semidef: 100,
+        mid: 145,
+        semiatt: 190,
+        att: 235
     };
 
     const positions = [];
@@ -484,48 +461,28 @@ function generateFieldPositionsWithFlankPreservation(formation, side, previousFo
     });
 
     console.log(`[FlankPositioning] Итоговые позиции для ${side}:`, positions);
-    
-    // Применяем ограничения координат чтобы футболки не выходили за границы
-    const SHIRT_HALF_WIDTH = FIELD_LAYOUT.SHIRT_HALF_WIDTH;   // 20px
-    const SHIRT_HALF_HEIGHT = FIELD_LAYOUT.SHIRT_HALF_HEIGHT; // 17px
-    
-    const MIN_X = SHIRT_HALF_WIDTH;
-    const MAX_X = fieldWidth - SHIRT_HALF_WIDTH;
-    const MIN_Y = SHIRT_HALF_HEIGHT;
-    const MAX_Y = fieldHeight - SHIRT_HALF_HEIGHT;
-    
-    positions.forEach(pos => {
-        if (pos) {
-            // Ограничиваем координаты
-            pos.left = Math.max(MIN_X, Math.min(MAX_X, pos.left));
-            pos.top = Math.max(MIN_Y, Math.min(MAX_Y, pos.top));
-        }
-    });
-    
-    console.log(`[FlankPositioning] Позиции после ограничений для ${side}:`, positions);
-    
     return positions;
 }
 
 function generateFieldPositions(formation, side) {
-    const fieldWidth = FIELD_LAYOUT.WORKING_WIDTH;   // 332px
-    const fieldHeight = FIELD_LAYOUT.WORKING_HEIGHT; // 498px
+    const fieldWidth = 332;
+    const fieldHeight = 498;
     const isHome = side === 'home';
 
     const zones = isHome ? {
-        gk: 549,      // 566 - 17 (максимально прижат к низу)
-        def: 498,     // Скорректировано для новой рабочей области
-        semidef: 447, // Скорректировано
-        mid: 396,     // Скорректировано
-        semiatt: 345, // Скорректировано
-        att: 294      // Скорректировано
+        gk: 497,
+        def: 450,
+        semidef: 400,
+        mid: 355,
+        semiatt: 310,
+        att: 265
     } : {
-        gk: 17,       // 0 + 17 (максимально прижат к верху)
-        def: 68,      // Скорректировано для новой рабочей области
-        semidef: 119, // Скорректировано
-        mid: 170,     // Скорректировано
-        semiatt: 221, // Скорректировано
-        att: 272      // Скорректировано
+        gk: 1,
+        def: 50,
+        semidef: 100,
+        mid: 145,
+        semiatt: 190,
+        att: 235
     };
 
     const positions = [];
@@ -626,23 +583,6 @@ function generateFieldPositions(formation, side) {
         });
     }
 
-    // Применяем ограничения координат чтобы футболки не выходили за границы
-    const SHIRT_HALF_WIDTH = FIELD_LAYOUT.SHIRT_HALF_WIDTH;   // 20px
-    const SHIRT_HALF_HEIGHT = FIELD_LAYOUT.SHIRT_HALF_HEIGHT; // 17px
-    
-    const MIN_X = SHIRT_HALF_WIDTH;
-    const MAX_X = fieldWidth - SHIRT_HALF_WIDTH;
-    const MIN_Y = SHIRT_HALF_HEIGHT;
-    const MAX_Y = fieldHeight - SHIRT_HALF_HEIGHT;
-    
-    positions.forEach(pos => {
-        if (pos) {
-            // Ограничиваем координаты
-            pos.left = Math.max(MIN_X, Math.min(MAX_X, pos.left));
-            pos.top = Math.max(MIN_Y, Math.min(MAX_Y, pos.top));
-        }
-    });
-
     return positions;
 }
 
@@ -665,13 +605,12 @@ window.debugFieldGrid = function () {
 
     const grid = document.createElement('div');
     grid.className = 'debug-grid';
-    const padding = FIELD_LAYOUT.CONTAINER_PADDING;
     grid.style.cssText = `
         position: absolute;
-        top: ${padding}px;
-        left: ${padding}px;
-        right: ${padding}px;
-        bottom: ${padding}px;
+        top: 34px;
+        left: 34px;
+        right: 34px;
+        bottom: 34px;
         pointer-events: none;
         z-index: 5;
         border: 2px solid rgba(255, 0, 0, 0.5);
@@ -3411,16 +3350,6 @@ function createDummySelect() {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
     }
-    @keyframes fadeInScale {
-      0% { 
-        opacity: 0; 
-        transform: scale(0.8); 
-      }
-      100% { 
-        opacity: 1; 
-        transform: scale(1); 
-      }
-    }
   `;
     const st = document.createElement('style');
     st.textContent = css;
@@ -3897,7 +3826,7 @@ function getAllowedMiniOptions({
     const pos = positions[rowIndex];
     if (!pos) return [];
 
-    console.log(`[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ ===`);
+    console.log(`[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === VERSION_2026_01_04_FIXED`);
     console.log(`[getAllowedMiniOptions] Позиция: ${pos} (индекс ${rowIndex})`);
     console.log(`[getAllowedMiniOptions] Формация: ${formationName}`);
     console.log(`[getAllowedMiniOptions] Все позиции:`, positions);
@@ -3949,52 +3878,6 @@ function getAllowedMiniOptions({
     const cfMax = cfIdxs.length ? Math.max(...cfIdxs) : null;
     const lmIdxs = (counts.indexes && counts.indexes['LM']) || [];
     const rmIdxs = (counts.indexes && counts.indexes['RM']) || [];
-
-    // === ОБЩИЕ ОПРЕДЕЛЕНИЯ ДЛЯ ВСЕХ CASE'ОВ ===
-    
-    // Количество позиций
-    const amCount = counts['AM'] || 0;
-    const frCount = counts['FR'] || 0;
-    
-    // Определение максимального индекса среди всех полузащитников (для CM/DM → AM)
-    const midfielderIndices = [];
-    positions.forEach((pos, idx) => {
-        if (['CM', 'DM', 'AM', 'FR'].includes(pos)) {
-            midfielderIndices.push(idx);
-        }
-    });
-    const maxMidfielderIndex = midfielderIndices.length ? Math.max(...midfielderIndices) : null;
-    const isMaxMidfielder = rowIndex === maxMidfielderIndex;
-    
-    // Определение центральных позиций (для FR логики)
-    const centralIndices = [];
-    positions.forEach((pos, idx) => {
-        if (['CM', 'DM', 'AM', 'FR'].includes(pos)) {
-            centralIndices.push(idx);
-        }
-    });
-    const minCentralIndex = centralIndices.length ? Math.min(...centralIndices) : null;
-    const maxCentralIndex = centralIndices.length ? Math.max(...centralIndices) : null;
-    const totalCentralCount = centralIndices.length;
-    
-    // Общие условия для превращения в AM
-    const amAbsent = amCount < 1;
-    const noWingers = !hasLW && !hasRW;
-    const canBecomeAM = !is424 && amAbsent && noWingers && isMaxMidfielder;
-    
-    // Общие условия для превращения в FR
-    const centralFieldPlayers = cmCount + dmCount + amCount + frCount;
-    const canBecomeFR = frCount < 1 && centralFieldPlayers < 4;
-    
-    console.log(`[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ ===`);
-    console.log(`[getAllowedMiniOptions] Полузащитники:`, {
-        midfielderIndices, maxMidfielderIndex, isMaxMidfielder,
-        amCount, frCount, canBecomeAM, canBecomeFR
-    });
-    console.log(`[getAllowedMiniOptions] Центральные позиции:`, {
-        centralIndices, minCentralIndex, maxCentralIndex, totalCentralCount
-    });
-
     const options = [];
     add(options, pos);
     switch (pos) {
@@ -4021,38 +3904,26 @@ function getAllowedMiniOptions({
         case 'LM': {
             console.log(`[getAllowedMiniOptions] === LM ЛОГИКА ===`);
             if (is424) add(options, 'CM');
-            
-            // ИСПРАВЛЕНИЕ: Запрет LM → LW для схемы 4-2-4
-            if (!is424) {
-                const amAbsent = (counts['AM'] || 0) < 1;
-                console.log(`[getAllowedMiniOptions] LM может стать LW? amAbsent: ${amAbsent}, hasLW: ${hasLW}, is424: ${is424}`);
-                if (amAbsent && !hasLW) {
-                    console.log(`[getAllowedMiniOptions] Добавляем LW для LM`);
-                    add(options, 'LW');
-                } else {
-                    console.log(`[getAllowedMiniOptions] НЕ добавляем LW для LM`);
-                }
+            const amAbsent = (counts['AM'] || 0) < 1;
+            console.log(`[getAllowedMiniOptions] LM может стать LW? amAbsent: ${amAbsent}, hasLW: ${hasLW}`);
+            if (amAbsent && !hasLW) {
+                console.log(`[getAllowedMiniOptions] Добавляем LW для LM`);
+                add(options, 'LW');
             } else {
-                console.log(`[getAllowedMiniOptions] LM → LW заблокировано для схемы 4-2-4`);
+                console.log(`[getAllowedMiniOptions] НЕ добавляем LW для LM`);
             }
             break;
         }
         case 'RM': {
             console.log(`[getAllowedMiniOptions] === RM ЛОГИКА ===`);
             if (is424) add(options, 'CM');
-            
-            // ИСПРАВЛЕНИЕ: Запрет RM → RW для схемы 4-2-4
-            if (!is424) {
-                const amAbsent = (counts['AM'] || 0) < 1;
-                console.log(`[getAllowedMiniOptions] RM может стать RW? amAbsent: ${amAbsent}, hasRW: ${hasRW}, is424: ${is424}`);
-                if (amAbsent && !hasRW) {
-                    console.log(`[getAllowedMiniOptions] Добавляем RW для RM`);
-                    add(options, 'RW');
-                } else {
-                    console.log(`[getAllowedMiniOptions] НЕ добавляем RW для RM`);
-                }
+            const amAbsent = (counts['AM'] || 0) < 1;
+            console.log(`[getAllowedMiniOptions] RM может стать RW? amAbsent: ${amAbsent}, hasRW: ${hasRW}`);
+            if (amAbsent && !hasRW) {
+                console.log(`[getAllowedMiniOptions] Добавляем RW для RM`);
+                add(options, 'RW');
             } else {
-                console.log(`[getAllowedMiniOptions] RM → RW заблокировано для схемы 4-2-4`);
+                console.log(`[getAllowedMiniOptions] НЕ добавляем RW для RM`);
             }
             break;
         }
@@ -4067,69 +3938,42 @@ function getAllowedMiniOptions({
                 if ((dmCount < 2) && cmCount === 2 && rowIndex !== cmMax) cmToDMAllowed = true;
                 if ((dmCount < 2) && cmCount === 1) cmToDMAllowed = true;
 
-                // ПРАВИЛО 3: Если DM есть на поле, а сумма всех ЦПЗ >= 2, то CM с минимальным индексом может быть DM
-
-                if (dmCount > 0 && totalCentralCount >= 2 && rowIndex === cmMin1) {
+                // ПРАВИЛО 3: Если DM есть на поле, а CM + AM >= 2, то CM с минимальным индексом может быть DM
+                const amCount = counts['AM'] || 0;
+                const centralMidfielders = cmCount + amCount;
+                if (dmCount > 0 && centralMidfielders >= 2 && rowIndex === cmMin1) {
                     cmToDMAllowed = true;
-                    console.log(`[PositionLogic] CM с мин индексом разрешен: DM=${dmCount}, totalCentralCount=${totalCentralCount}`);
+                    console.log(`[PositionLogic] ✅ CM с мин индексом разрешен: DM=${dmCount}, CM+AM=${centralMidfielders}`);
                 }
 
-                // ОГРАНИЧЕНИЕ 2: Если DM есть на поле, а сумма всех ЦПЗ < 2, то CM с макс индексом не может быть DM
-                if (dmCount > 0 && totalCentralCount < 2 && rowIndex === cmMax) {
+                // ОГРАНИЧЕНИЕ 2: Если DM есть на поле, а сумма CM + AM < 2, то CM с макс индексом не может быть DM
+                if (dmCount > 0 && centralMidfielders < 2 && rowIndex === cmMax) {
                     cmToDMAllowed = false;
-                    console.log(`[PositionLogic] CM с макс индексом заблокирован: DM=${dmCount}, totalCentralCount=${totalCentralCount}`);
-                }
-
-                // ИСПРАВЛЕНИЕ 3: Универсальное ограничение для DM при 2 полузащитниках
-                if (totalCentralCount === 2 && isMaxMidfielder) {
-                    cmToDMAllowed = false;
-                    console.log(`[PositionLogic] CM заблокирован: максимальный полузащитник при 2 полузащитниках не может стать DM`);
+                    console.log(`[PositionLogic] 🚫 CM с макс индексом заблокирован: DM=${dmCount}, CM+AM=${centralMidfielders}`);
                 }
 
                 console.log(`[PositionLogic] CM→DM проверка для позиции ${rowIndex}:`, {
-                    dmCount, cmCount, amCount, totalCentralCount, cmMin1, cmMax,
+                    dmCount, cmCount, amCount, centralMidfielders, cmMin1, cmMax,
                     isMinCM: rowIndex === cmMin1, isMaxCM: rowIndex === cmMax,
                     canBecomeDM: cmToDMAllowed
                 });
 
                 if (cmToDMAllowed) add(options, 'DM');
 
-                // НОВОЕ ПРАВИЛО: В схеме с 3 полузащитниками, если максимальный полузащитник - FR,
-                // то CM с максимальным индексом среди CM может стать DM
-                if (totalCentralCount === 3) {
-                    const maxMidfielderPos = positions[maxMidfielderIndex];
-                    if (maxMidfielderPos === 'FR' && rowIndex === cmMax) {
-                        console.log(`[PositionLogic] Специальное правило: 3 полузащитника, максимальный FR, CM с макс индексом может стать DM`);
-                        add(options, 'DM');
-                    }
-                }
+                const amAbsent = (counts['AM'] || 0) < 1;
+                const isMaxCM = rowIndex === cmMax;
 
-                // ИСПРАВЛЕНИЕ 2: Унифицированная проверка максимального полузащитника
-                // Используем общее определение isMaxMidfielder вместо локального
                 console.log(`[PositionLogic] CM→AM проверка для позиции ${rowIndex}:`, {
-                    hasLW, hasRW, amAbsent, isMaxMidfielder, maxMidfielderIndex, midfielderIndices,
-                    canBecomeAM: !hasLW && !hasRW && amAbsent && isMaxMidfielder
+                    hasLW, hasRW, amAbsent, isMaxCM,
+                    canBecomeAM: !hasLW && !hasRW && amAbsent && isMaxCM
                 });
 
-                // AM доступен только если НЕТ LW И НЕТ RW И это максимальный полузащитник
-                if (!hasLW && !hasRW && amAbsent && isMaxMidfielder) {
-                    console.log(`[PositionLogic] Добавляем AM для CM позиции ${rowIndex} (максимальный полузащитник)`);
+                // AM доступен только если НЕТ LW И НЕТ RW
+                if (!hasLW && !hasRW && amAbsent && isMaxCM) {
+                    console.log(`[PositionLogic] Добавляем AM для CM позиции ${rowIndex}`);
                     add(options, 'AM');
                 } else {
                     console.log(`[PositionLogic] НЕ добавляем AM для CM позиции ${rowIndex}`);
-                }
-
-                // НОВАЯ ЛОГИКА ДЛЯ FR: CM может стать FR
-                const centralFieldPlayers = cmCount + dmCount + amCount + frCount;
-                
-                console.log(`[PositionLogic] CM→FR проверка для позиции ${rowIndex}:`, {
-                    frCount, centralFieldPlayers,
-                    canBecomeFR: frCount < 1 && centralFieldPlayers < 4
-                });
-
-                if (frCount < 1 && centralFieldPlayers < 4) {
-                    console.log(`[PositionLogic] Добавляем FR для CM позиции ${rowIndex}`);
-                    add(options, 'FR');
                 }
             } else {
                 if (rowIndex === cmMin1) add(options, 'LM');
@@ -4146,53 +3990,26 @@ function getAllowedMiniOptions({
 
             if (!locked) {
                 add(options, 'CM');
+                const amAllowed = !is424 && (counts['AM'] || 0) < 1 && !hasLW && !hasRW;
 
                 console.log(`[PositionLogic] DM→AM проверка для позиции ${rowIndex}:`, {
-                    hasLW, hasRW, amCount, isMaxMidfielder, maxMidfielderIndex, midfielderIndices,
-                    canBecomeAM
+                    hasLW, hasRW, amCount: counts['AM'] || 0,
+                    canBecomeAM: amAllowed
                 });
 
-                if (canBecomeAM) {
-                    console.log(`[PositionLogic] Добавляем AM для DM позиции ${rowIndex} (максимальный полузащитник)`);
+                if (amAllowed) {
+                    console.log(`[PositionLogic] Добавляем AM для DM позиции ${rowIndex}`);
                     add(options, 'AM');
                 } else {
                     console.log(`[PositionLogic] НЕ добавляем AM для DM позиции ${rowIndex}`);
-                }
-
-                console.log(`[PositionLogic] DM→FR проверка для позиции ${rowIndex}:`, {
-                    frCount, centralFieldPlayers, canBecomeFR
-                });
-
-                if (canBecomeFR) {
-                    console.log(`[PositionLogic] Добавляем FR для DM позиции ${rowIndex}`);
-                    add(options, 'FR');
                 }
             }
             break;
         }
         case 'AM':
             console.log(`[getAllowedMiniOptions] === AM ЛОГИКА ===`);
+            console.log(`[getAllowedMiniOptions] AM позиция может стать только CM`);
             add(options, 'CM');
-
-            // ИСПРАВЛЕНИЕ 1: AM → DM для случая с 1 полузащитником
-            console.log(`[PositionLogic] AM→DM проверка для позиции ${rowIndex}:`, {
-                totalCentralCount,
-                canBecomeDM: totalCentralCount === 1
-            });
-
-            if (totalCentralCount === 1) {
-                console.log(`[PositionLogic] Добавляем DM для AM позиции ${rowIndex} (единственный полузащитник)`);
-                add(options, 'DM');
-            }
-
-            console.log(`[PositionLogic] AM→FR проверка для позиции ${rowIndex}:`, {
-                frCount, centralFieldPlayers, canBecomeFR
-            });
-
-            if (canBecomeFR) {
-                console.log(`[PositionLogic] Добавляем FR для AM позиции ${rowIndex}`);
-                add(options, 'FR');
-            }
             break;
         case 'CF': {
             if (is424) {
@@ -4287,69 +4104,6 @@ function getAllowedMiniOptions({
             console.log(`[getAllowedMiniOptions] LW может стать только LM`);
             add(options, 'LM');
             break;
-        case 'FR': {
-            console.log(`[getAllowedMiniOptions] === FR ЛОГИКА ===`);
-            
-            // 1. FR всегда может стать CM
-            add(options, 'CM');
-            
-            console.log(`[PositionLogic] FR обратная логика для позиции ${rowIndex}:`, {
-                centralIndices, minCentralIndex, maxCentralIndex, totalCentralCount,
-                isMinCentral: rowIndex === minCentralIndex,
-                isMaxCentral: rowIndex === maxCentralIndex
-            });
-            
-            // 3. Специальный случай: 1 центральный игрок
-            if (totalCentralCount === 1) {
-                console.log(`[PositionLogic] FR: Единственный центральный игрок - может стать DM, AM, CM`);
-                add(options, 'DM');
-                
-                // AM только если его нет в составе
-                if (amCount < 1) {
-                    console.log(`[PositionLogic] FR: Добавляем AM (единственный центральный и AM < 1)`);
-                    add(options, 'AM');
-                } else {
-                    console.log(`[PositionLogic] FR: НЕ добавляем AM (уже есть AM в составе)`);
-                }
-                
-                // CM уже добавлен выше
-                break;
-            }
-            
-            // 4. Специальный случай: формация 3-6-1
-            if (is361) {
-                console.log(`[PositionLogic] FR: Формация 3-6-1 - специальная логика для DM`);
-                if (rowIndex === minCentralIndex || rowIndex === minCentralIndex + 1) {
-                    console.log(`[PositionLogic] FR: Добавляем DM для минимального индекса или +1`);
-                    add(options, 'DM');
-                }
-            } else {
-                // 5. Обычная логика для других формаций
-                // ИСПРАВЛЕНИЕ 3: Универсальное ограничение для DM
-                const canBecomeDM = (totalCentralCount === 1) || 
-                                   (totalCentralCount >= 3) || 
-                                   (totalCentralCount === 2 && !isMaxMidfielder);
-                
-                console.log(`[PositionLogic] FR→DM проверка для позиции ${rowIndex}:`, {
-                    totalCentralCount, isMaxMidfielder, canBecomeDM
-                });
-
-                if (canBecomeDM) {
-                    console.log(`[PositionLogic] FR: Добавляем DM (универсальное правило)`);
-                    add(options, 'DM');
-                }
-            }
-            
-            // 6. FR → AM (только на максимальном индексе И если AM < 1)
-            if (rowIndex === maxCentralIndex && amCount < 1) {
-                console.log(`[PositionLogic] FR: Добавляем AM (максимальный индекс и AM < 1)`);
-                add(options, 'AM');
-            } else if (rowIndex === maxCentralIndex && amCount >= 1) {
-                console.log(`[PositionLogic] FR: НЕ добавляем AM (уже есть AM в составе)`);
-            }
-            
-            break;
-        }
         default:
             break;
     }
@@ -4781,91 +4535,6 @@ function onMiniPositionChange({
         lineup[rowIndex].miniPositionSelect.setValue(selectedOpt.value);
     }
 
-    // НОВАЯ ЛОГИКА ДЛЯ СХЕМЫ 4-2-4: Автоматическое превращение полузащитников
-    if (is424) {
-        // Когда один из центральных полузащитников (CM, FR) становится RM или LM,
-        // второй должен тоже становиться фланговым игроком (противоположный фланг)
-        if (selectedOpt.value === 'LM' || selectedOpt.value === 'RM') {
-            const originalPosition = positions[rowIndex];
-            
-            // Проверяем, был ли это центральный полузащитник
-            if (originalPosition === 'CM' || originalPosition === 'FR') {
-                console.log(`[onMiniPositionChange] 4-2-4: ${originalPosition} → ${selectedOpt.value}, ищем второго полузащитника`);
-                
-                // Определяем целевой фланг для второго полузащитника
-                const targetFlank = selectedOpt.value === 'LM' ? 'RM' : 'LM';
-                
-                // Ищем другого центрального полузащитника (CM или FR)
-                const otherMidfielderIndex = newPositions.findIndex((pos, idx) => {
-                    return (pos === 'CM' || pos === 'FR') && idx !== rowIndex;
-                });
-                
-                if (otherMidfielderIndex !== -1) {
-                    const otherOriginalPos = newPositions[otherMidfielderIndex];
-                    newPositions[otherMidfielderIndex] = targetFlank;
-                    
-                    console.log(`[onMiniPositionChange] 4-2-4: Автоматически превращаем ${otherOriginalPos} (индекс ${otherMidfielderIndex}) → ${targetFlank}`);
-                    
-                    // Обновить мини-селектор для второго полузащитника
-                    if (lineup && lineup[otherMidfielderIndex] && lineup[otherMidfielderIndex].miniPositionSelect) {
-                        const flankOpts = getAllowedMiniOptions({
-                            formationName,
-                            positions: newPositions,
-                            rowIndex: otherMidfielderIndex
-                        });
-                        lineup[otherMidfielderIndex].miniPositionSelect.setOptions(flankOpts);
-                        lineup[otherMidfielderIndex].miniPositionSelect.setValue(targetFlank);
-                    }
-                } else {
-                    console.log(`[onMiniPositionChange] 4-2-4: Не найден второй центральный полузащитник для автоматического превращения`);
-                }
-            }
-        }
-        
-        // Обратная логика: когда фланговый полузащитник (LM/RM) становится центральным (CM/FR),
-        // второй фланговый тоже должен стать центральным
-        if (selectedOpt.value === 'CM' || selectedOpt.value === 'FR') {
-            const originalPosition = positions[rowIndex];
-            
-            // Проверяем, был ли это фланговый полузащитник
-            if (originalPosition === 'LM' || originalPosition === 'RM') {
-                console.log(`[onMiniPositionChange] 4-2-4: ${originalPosition} → ${selectedOpt.value}, ищем второго флангового`);
-                
-                // Определяем противоположный фланг
-                const oppositeFlank = originalPosition === 'LM' ? 'RM' : 'LM';
-                
-                // Ищем противоположного флангового полузащитника
-                const oppositeFlankIndex = newPositions.findIndex((pos, idx) => {
-                    return pos === oppositeFlank && idx !== rowIndex;
-                });
-                
-                if (oppositeFlankIndex !== -1) {
-                    // Определяем целевую позицию (приоритет CM, если FR уже занят)
-                    const hasCM = newPositions.includes('CM');
-                    const hasFR = newPositions.includes('FR');
-                    const targetPosition = (!hasCM) ? 'CM' : (!hasFR) ? 'FR' : 'CM';
-                    
-                    newPositions[oppositeFlankIndex] = targetPosition;
-                    
-                    console.log(`[onMiniPositionChange] 4-2-4: Автоматически превращаем ${oppositeFlank} (индекс ${oppositeFlankIndex}) → ${targetPosition}`);
-                    
-                    // Обновить мини-селектор для противоположного флангового
-                    if (lineup && lineup[oppositeFlankIndex] && lineup[oppositeFlankIndex].miniPositionSelect) {
-                        const centralOpts = getAllowedMiniOptions({
-                            formationName,
-                            positions: newPositions,
-                            rowIndex: oppositeFlankIndex
-                        });
-                        lineup[oppositeFlankIndex].miniPositionSelect.setOptions(centralOpts);
-                        lineup[oppositeFlankIndex].miniPositionSelect.setValue(targetPosition);
-                    }
-                } else {
-                    console.log(`[onMiniPositionChange] 4-2-4: Не найден противоположный фланговый полузащитник для автоматического превращения`);
-                }
-            }
-        }
-    }
-
     // КРИТИЧЕСКИ ВАЖНО: Обновляем опции для ВСЕХ позиций после любого изменения
     // Это необходимо для корректной работы ограничений (например, AM при наличии LW/RW)
     if (lineup) {
@@ -5240,7 +4909,6 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         const slotApi = {
             rowIndex: row,
             posValue: initialPos,
-            selectedPlayer: null,  // ← ДОБАВЛЕНО: данные выбранного игрока
             getValue: () => orders.getValue(),
             setValue: (v, label) => {
                 orders.setValue(v, label);
@@ -5248,9 +4916,6 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                 if (v) {
                     const player = players.find(p => String(p.id) === String(v));
                     if (player) {
-                        // Сохраняем данные игрока в slotApi
-                        slotApi.selectedPlayer = player;  // ← ДОБАВЛЕНО
-                        
                         // Загружаем стиль игрока из кэша
                         const cachedStyle = getPlayerStyleFromCache(v);
                         if (cachedStyle && cachedStyle !== 'norm') {
@@ -5276,13 +4941,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                                 slotApi.modifiedRealStr = modifiedRealStr;
                             }
                         }
-                    } else {
-                        // Игрок не найден - очищаем данные
-                        slotApi.selectedPlayer = null;  // ← ДОБАВЛЕНО
                     }
-                } else {
-                    // Игрок не выбран - очищаем данные
-                    slotApi.selectedPlayer = null;  // ← ДОБАВЛЕНО
                 }
             },
             setOptions: (opts) => orders.setOptions(opts),
@@ -5306,9 +4965,6 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             }
             const player = players.find(p => String(p.id) === value);
             if (player) {
-                // Сохраняем данные игрока в slotApi
-                slotApi.selectedPlayer = player;  // ← ДОБАВЛЕНО
-                
                 logPlayerWeatherCoef({
                     player,
                     customStyleValue: slotApi.customStyleValue || 'norm',
@@ -5330,9 +4986,6 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     // Обновляем селекторы игроков с новой формой
                     updatePlayerSelectOptions();
                 }
-            } else {
-                // Игрок не выбран - очищаем данные
-                slotApi.selectedPlayer = null;  // ← ДОБАВЛЕНО
             }
         };
         const origSetOptions = slotApi.setOptions.bind(slotApi);
@@ -5353,22 +5006,6 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         // Ячейка с селектором игрока
         tdSel.className = 'player-cell';
         tdSel.appendChild(orders.el);
-
-        // ЗАМОРОЖЕНО: Детальные подсказки для селектора игроков
-        // addPlayerDetailHints(orders.el, () => {
-        //     const playerId = slotApi.getValue();
-        //     if (!playerId) return null;
-        //     
-        //     const player = players.find(p => String(p.id) === playerId);
-        //     if (!player) return null;
-        //     
-        //     return {
-        //         player: player,
-        //         matchPosition: slotApi.posValue,
-        //         physicalFormId: slotApi.physicalFormValue,
-        //         customStyle: slotApi.customStyleValue
-        //     };
-        // });
 
         // Ячейка с селектором стиля
         const tdStyle = document.createElement('td');
@@ -5622,194 +5259,6 @@ function createDefenceTypeSelector(team, onChange) {
     return select;
 }
 
-// ===== СИСТЕМА ПОДСКАЗОК (ГЛОБАЛЬНАЯ ОБЛАСТЬ ВИДИМОСТИ) =====
-
-/**
- * Показывает детальную подсказку для игрока при наведении
- * @param {HTMLElement} element - Элемент для привязки подсказки
- * @param {Object} player - Данные игрока
- * @param {string} matchPosition - Позиция в матче
- * @param {string} physicalFormId - ID физической формы
- * @param {string} customStyle - Пользовательский стиль
- */
-function showPlayerDetailHint(element, player, matchPosition, physicalFormId, customStyle) {
-    // Удаляем существующие подсказки
-    removeExistingHints();
-    
-    if (!player) return;
-    
-    // Создаем контейнер подсказки
-    const hint = document.createElement('div');
-    hint.className = 'vs-player-detail-hint';
-    hint.style.cssText = `
-        position: absolute;
-        width: 350px;
-        background: #fff;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 10001;
-        padding: 0;
-        font-size: 11px;
-        line-height: 1.4;
-        opacity: 0;
-        transform: scale(0.95);
-        transition: opacity 0.15s ease, transform 0.15s ease;
-    `;
-    
-    // Добавляем заголовок
-    const header = document.createElement('div');
-    header.style.cssText = `
-        background: linear-gradient(135deg, #0066cc, #0088ff);
-        color: white;
-        font-weight: bold;
-        padding: 8px 10px;
-        border-radius: 6px 6px 0 0;
-        font-size: 11px;
-    `;
-    header.textContent = 'Детали игрока';
-    hint.appendChild(header);
-    
-    // Добавляем содержимое
-    const content = document.createElement('div');
-    content.style.cssText = 'padding: 10px;';
-    content.innerHTML = getHintContent('player_details', {
-        player,
-        matchPosition,
-        physicalFormId,
-        customStyle
-    });
-    hint.appendChild(content);
-    
-    // Позиционируем подсказку
-    document.body.appendChild(hint);
-    positionHint(hint, element, 'right top');
-    
-    // Анимация появления
-    setTimeout(() => {
-        hint.style.opacity = '1';
-        hint.style.transform = 'scale(1)';
-    }, 10);
-    
-    // Сохраняем ссылку для удаления
-    element._playerHint = hint;
-    
-    return hint;
-}
-
-/**
- * Скрывает детальную подсказку игрока
- * @param {HTMLElement} element - Элемент с подсказкой
- */
-function hidePlayerDetailHint(element) {
-    if (element._playerHint) {
-        const hint = element._playerHint;
-        hint.style.opacity = '0';
-        hint.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            if (hint.parentNode) {
-                hint.remove();
-            }
-        }, 150);
-        element._playerHint = null;
-    }
-}
-
-/**
- * Добавляет обработчики для показа детальных подсказок игроков
- * @param {HTMLElement} selectElement - Селектор игрока
- * @param {Function} getPlayerData - Функция получения данных игрока
- */
-function addPlayerDetailHints(selectElement, getPlayerData) {
-    if (!selectElement || selectElement._hintsAdded) return;
-    
-    let hoverTimeout = null;
-    
-    // Обработчик наведения
-    selectElement.addEventListener('mouseenter', () => {
-        // Задержка перед показом подсказки
-        hoverTimeout = setTimeout(() => {
-            const playerData = getPlayerData();
-            if (playerData && playerData.player) {
-                showPlayerDetailHint(
-                    selectElement,
-                    playerData.player,
-                    playerData.matchPosition,
-                    playerData.physicalFormId,
-                    playerData.customStyle
-                );
-            }
-        }, 500); // 500ms задержка
-    });
-    
-    // Обработчик ухода курсора
-    selectElement.addEventListener('mouseleave', () => {
-        if (hoverTimeout) {
-            clearTimeout(hoverTimeout);
-            hoverTimeout = null;
-        }
-        hidePlayerDetailHint(selectElement);
-    });
-    
-    selectElement._hintsAdded = true;
-}
-
-/**
- * Добавляет кнопку подсказки к элементу
- * @param {HTMLElement} container - Контейнер для кнопки
- * @param {string} type - Тип подсказки
- * @param {string} title - Заголовок подсказки
- * @param {Object} context - Дополнительный контекст для подсказки
- */
-function addHelpButton(container, type, title, context = {}) {
-    const helpBtn = document.createElement('button');
-    helpBtn.className = 'vs-help-btn';
-    helpBtn.title = 'Показать подсказку';
-    helpBtn.onclick = (e) => {
-        e.preventDefault();
-        showCalculatorHint(helpBtn, type, title, 450, context);
-        return false;
-    };
-    
-    // Улучшенные стили кнопки
-    helpBtn.style.cssText = `
-        width: 16px;
-        height: 16px;
-        border: 1px solid #aaa;
-        background: linear-gradient(135deg, #f8f8f8, #e8e8e8);
-        cursor: pointer;
-        display: inline-block;
-        vertical-align: middle;
-        margin: 0 2px 0 4px;
-        border-radius: 3px;
-        font-size: 10px;
-        color: #666;
-        text-align: center;
-        line-height: 14px;
-        transition: all 0.2s ease;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    `;
-    helpBtn.textContent = '?';
-    
-    // Улучшенные hover эффекты
-    helpBtn.onmouseover = () => {
-        helpBtn.style.background = 'linear-gradient(135deg, #e8e8e8, #d8d8d8)';
-        helpBtn.style.borderColor = '#999';
-        helpBtn.style.transform = 'translateY(-1px)';
-        helpBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)';
-    };
-    helpBtn.onmouseout = () => {
-        helpBtn.style.background = 'linear-gradient(135deg, #f8f8f8, #e8e8e8)';
-        helpBtn.style.borderColor = '#aaa';
-        helpBtn.style.transform = 'translateY(0)';
-        helpBtn.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-    };
-    
-    container.appendChild(helpBtn);
-}
-
-// ===== КОНЕЦ СИСТЕМЫ ПОДСКАЗОК =====
-
 function createTeamSettingsBlock(team, sideLabel, onChange) {
     if (sideLabel === 'home') {
         if (!window.homeTeam) {
@@ -6007,15 +5456,6 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
 
     team._styleSelector = styleSelector;
     team._formationSelector = formationSelector;
-
-    // Добавляем кнопку подсказки для стиля игры
-    setTimeout(() => {
-        const styleCell = table.querySelector('tr:nth-child(1) td:nth-child(3)'); // Ячейка "Стиль"
-        if (styleCell) {
-            addHelpButton(styleCell, 'collision', 'Коллизии стилей');
-        }
-    }, 100);
-
     return block;
 }
 
@@ -6402,18 +5842,6 @@ function getTournamentType() {
         } else {
             document.body.prepend(container);
         }
-
-        // Добавляем кнопки подсказок к блоку погоды
-        setTimeout(() => {
-            // Подсказка для погоды
-            const weatherRow = container.querySelector('tr:nth-child(2)');
-            if (weatherRow) {
-                const weatherCell = weatherRow.querySelector('td.qt');
-                if (weatherCell) {
-                    addHelpButton(weatherCell, 'weather', 'Влияние погоды');
-                }
-            }
-        }, 100);
 
         return {
             container,
@@ -6842,513 +6270,12 @@ function getTournamentType() {
     }
 
 
-    /**
-     * Рассчитывает итоговую силу игрока с модификаторами
-     */
-    function calculatePlayerStrength(player, matchPosition, physicalFormId) {
-        const baseStrength = player.strength;
-        const modifiers = {};
-
-        // Модификатор физической формы
-        const formCoef = getPhysicalFormCoefficient(physicalFormId);
-        modifiers.form = {
-            name: 'Физическая форма',
-            coefficient: formCoef,
-            value: baseStrength * formCoef - baseStrength
-        };
-
-        // Модификатор усталости (если есть данные)
-        let fatigueCoef = 1.0;
-        if (player.fatigue !== undefined) {
-            fatigueCoef = getFatigueCoefficient(player.fatigue);
-        }
-        modifiers.fatigue = {
-            name: 'Усталость',
-            coefficient: fatigueCoef,
-            value: baseStrength * fatigueCoef - baseStrength
-        };
-
-        // Модификатор позиции
-        const positionCoef = getPositionModifier(player.position1, player.position2, matchPosition);
-        modifiers.position = {
-            name: 'Позиция',
-            coefficient: positionCoef,
-            value: baseStrength * positionCoef - baseStrength
-        };
-
-        // Модификатор реальности (если игрок не реальный)
-        let realityCoef = 1.0;
-        if (player.isReal === false) {
-            realityCoef = 0.8; // Предполагаемый штраф для нереальных игроков
-        }
-        modifiers.reality = {
-            name: 'Реальность',
-            coefficient: realityCoef,
-            value: baseStrength * realityCoef - baseStrength
-        };
-
-        // Итоговый расчет
-        const finalStrength = Math.round(baseStrength * formCoef * fatigueCoef * positionCoef * realityCoef);
-
-        return {
-            baseStrength,
-            finalStrength,
-            modifiers
-        };
-    }
-
-    /**
-     * Получает коэффициент физической формы
-     */
-    function getPhysicalFormCoefficient(formId) {
-        const formCoefficients = {
-            'excellent': 1.05,
-            'good': 1.02,
-            'normal': 1.0,
-            'poor': 0.98,
-            'terrible': 0.95
-        };
-        return formCoefficients[formId] || 1.0;
-    }
-
-    /**
-     * Получает коэффициент усталости
-     */
-    function getFatigueCoefficient(fatigue) {
-        // Усталость от 0 (свежий) до 100 (очень уставший)
-        if (fatigue <= 20) return 1.0;
-        if (fatigue <= 40) return 0.98;
-        if (fatigue <= 60) return 0.95;
-        if (fatigue <= 80) return 0.92;
-        return 0.88;
-    }
-
-    /**
-     * Получает полные данные игрока с расчетом всех бонусов
-     * @param {Object} player - Данные игрока
-     * @param {string} matchPosition - Позиция в матче
-     * @param {string} physicalFormId - ID физической формы
-     * @param {string} team - Команда ('home' или 'away')
-     * @param {number} playerIndex - Индекс игрока в составе
-     * @returns {Object} Полные данные игрока с бонусами
-     */
-    function getPlayerFullData(player, matchPosition, physicalFormId, team, playerIndex) {
-        if (!player) return null;
-
-        // Базовые расчеты силы
-        const baseStr = Number(player.baseStrength) || Number(player.realStr) || 0;
-        const physicalFormModifier = getPhysicalFormModifier(physicalFormId);
-        const fatigueModifier = getFatigueBonus(Number(player.fatigue) || 0);
-        const realityModifier = getRealityBonus(player.real_status, player.real_sign);
-        const positionModifier = getPositionModifier(player.mainPos, player.secondPos, matchPosition);
-        
-        const calculatedStr = Math.round(baseStr * physicalFormModifier * fatigueModifier * realityModifier * positionModifier);
-
-        // Расчет бонусов
-        const contribution = {
-            captain: 0,
-            synergy: 0,
-            chemistry: 0,
-            morale: 0,
-            atmosphere: 0,
-            defence: 0,
-            rough: 0,
-            leadership: 0
-        };
-
-        // Бонус капитана (если игрок капитан)
-        const captainSelect = document.getElementById(`vs-${team}-captain`);
-        if (captainSelect && captainSelect.value === String(player.id)) {
-            contribution.captain = Math.round(calculatedStr * 0.15); // 15% бонус капитана
-        }
-
-        // Бонус синергии
-        const synergyInputs = document.querySelectorAll(`#vs-${team}-synergy input`);
-        let synergyTotal = 0;
-        synergyInputs.forEach(input => {
-            synergyTotal += Number(input.value) || 0;
-        });
-        contribution.synergy = Math.round(synergyTotal * 0.1);
-
-        // Бонус морали
-        const moraleSelect = document.getElementById(`vs-${team}-morale`);
-        if (moraleSelect) {
-            const moraleValue = moraleSelect.value;
-            if (moraleValue === 'super') {
-                contribution.morale = Math.round(calculatedStr * 0.27);
-            } else if (moraleValue === 'rest') {
-                contribution.morale = Math.round(calculatedStr * -0.1);
-            }
-        }
-
-        // Бонус атмосферы (для домашней команды)
-        if (team === 'home') {
-            const atmosphereSelect = document.getElementById('vs-home-atmosphere');
-            if (atmosphereSelect) {
-                const atmosphereValue = Number(atmosphereSelect.value) || 0;
-                if (atmosphereValue >= 100) {
-                    contribution.atmosphere = Math.round(calculatedStr * 0.15);
-                } else if (atmosphereValue >= 90) {
-                    contribution.atmosphere = Math.round(calculatedStr * 0.10);
-                } else if (atmosphereValue >= 80) {
-                    contribution.atmosphere = Math.round(calculatedStr * 0.05);
-                } else {
-                    contribution.atmosphere = Math.round(calculatedStr * 0.025);
-                }
-            }
-        }
-
-        // Общий вклад
-        contribution.total = calculatedStr + 
-            contribution.captain + 
-            contribution.synergy + 
-            contribution.chemistry + 
-            contribution.morale + 
-            contribution.atmosphere + 
-            contribution.defence + 
-            contribution.rough + 
-            contribution.leadership;
-
-        return {
-            player,
-            calculatedStr,
-            contribution,
-            modifiers: {
-                physicalForm: physicalFormModifier,
-                fatigue: fatigueModifier,
-                reality: realityModifier,
-                position: positionModifier
-            }
-        };
-    }
-
-    /**
-     * Показывает подсказку при клике на футболку игрока в поле
-     * @param {string} position - Позиция игрока
-     * @param {string} team - Команда (home/away)
-     * @param {Object} playerData - Данные игрока
-     * @param {HTMLElement} shirtElement - Элемент футболки
-     */
-    function showFieldPlayerHint(position, team, playerData, shirtElement) {
-        console.log('[FieldHints] showFieldPlayerHint вызвана');
-        console.log('[FieldHints] position:', position);
-        console.log('[FieldHints] team:', team);
-        console.log('[FieldHints] playerData:', playerData);
-        console.log('[FieldHints] shirtElement:', shirtElement);
-        
-        // Удаляем существующие подсказки
-        removeExistingHints();
-
-        if (!playerData || !playerData.player) {
-            // Показываем базовую информацию о позиции
-            showPositionOnlyHint(position, team, shirtElement);
-            return;
-        }
-
-        const player = playerData.player;
-        const matchPosition = playerData.matchPosition || position;
-        const physicalFormId = playerData.physicalFormId || 'normal';
-        const playerIndex = playerData.playerIndex || 0;
-        
-        // Создаем контейнер подсказки
-        const hintDiv = document.createElement('div');
-        hintDiv.className = 'vs-field-player-hint';
-        hintDiv.style.cssText = `
-            position: fixed;
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border: 2px solid #007bff;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 8px 32px rgba(0, 123, 255, 0.3);
-            z-index: 10000;
-            max-width: 380px;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            backdrop-filter: blur(10px);
-            animation: fadeInScale 0.3s ease-out;
-        `;
-
-        // ОБНОВЛЕНО: Используем новую функцию getPlayerFullData
-        const fullData = getPlayerFullData(player, matchPosition, physicalFormId, team, playerIndex);
-        
-        // Создаем содержимое подсказки
-        const teamName = team === 'home' ? 'Хозяева' : 'Гости';
-        const teamColor = team === 'home' ? '#28a745' : '#dc3545';
-        
-        hintDiv.innerHTML = `
-            <div style="display: flex; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e9ecef;">
-                <div style="width: 32px; height: 32px; background: ${teamColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 10px;">
-                    ${position}
-                </div>
-                <div>
-                    <div style="font-weight: bold; color: #212529; font-size: 14px;">${player.name}</div>
-                    <div style="color: #6c757d; font-size: 10px;">${teamName} • ${player.age} лет</div>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span style="color: #495057;">Базовая сила:</span>
-                    <span style="font-weight: bold; color: #212529;">${player.strength || player.realStr}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span style="color: #495057;">Расчетная сила:</span>
-                    <span style="font-weight: bold; color: ${fullData.calculatedStr >= (player.strength || player.realStr) ? '#28a745' : '#dc3545'}; font-size: 14px;">
-                        ${fullData.calculatedStr}
-                    </span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span style="color: #495057;">Общий вклад:</span>
-                    <span style="font-weight: bold; color: #007bff; font-size: 14px;">
-                        ${fullData.contribution.total}
-                    </span>
-                </div>
-            </div>
-
-            <div style="background: #f8f9fa; padding: 8px; border-radius: 6px; margin-bottom: 12px;">
-                <div style="font-weight: bold; color: #495057; margin-bottom: 6px; font-size: 11px;">Модификаторы силы:</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px;">
-                    <div>Физ. форма: <span style="font-weight: bold;">×${fullData.modifiers.physicalForm.toFixed(3)}</span></div>
-                    <div>Усталость: <span style="font-weight: bold;">×${fullData.modifiers.fatigue.toFixed(3)}</span></div>
-                    <div>Позиция: <span style="font-weight: bold;">×${fullData.modifiers.position.toFixed(3)}</span></div>
-                    <div>Реальность: <span style="font-weight: bold;">×${fullData.modifiers.reality.toFixed(3)}</span></div>
-                </div>
-            </div>
-
-            <div style="background: #e3f2fd; padding: 8px; border-radius: 6px; margin-bottom: 12px;">
-                <div style="font-weight: bold; color: #1976d2; margin-bottom: 6px; font-size: 11px;">Вклад в команду:</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px;">
-                    ${fullData.contribution.captain ? `<div>Капитан: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.captain}</span></div>` : ''}
-                    ${fullData.contribution.synergy ? `<div>Синергия: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.synergy}</span></div>` : ''}
-                    ${fullData.contribution.chemistry ? `<div>Химия: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.chemistry}</span></div>` : ''}
-                    ${fullData.contribution.morale ? `<div>Настрой: <span style="font-weight: bold; color: ${fullData.contribution.morale > 0 ? '#28a745' : '#dc3545'};">${fullData.contribution.morale > 0 ? '+' : ''}${fullData.contribution.morale}</span></div>` : ''}
-                    ${fullData.contribution.atmosphere ? `<div>Атмосфера: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.atmosphere}</span></div>` : ''}
-                    ${fullData.contribution.defence ? `<div>Защита: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.defence}</span></div>` : ''}
-                    ${fullData.contribution.rough ? `<div>Грубость: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.rough}</span></div>` : ''}
-                    ${fullData.contribution.leadership ? `<div>Лидерство: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.leadership}</span></div>` : ''}
-                </div>
-            </div>
-
-            <div style="margin-bottom: 12px;">
-                <div style="font-weight: bold; color: #495057; margin-bottom: 6px; font-size: 11px;">Позиции:</div>
-                <div style="color: #212529;">
-                    Основная: <span style="font-weight: bold;">${player.position1 || player.mainPos}</span>
-                    ${(player.position2 || player.secondPos) ? `<br>Дополнительная: <span style="font-weight: bold;">${player.position2 || player.secondPos}</span>` : ''}
-                    <br>В матче: <span style="font-weight: bold; color: ${matchPosition === (player.position1 || player.mainPos) || matchPosition === (player.position2 || player.secondPos) ? '#28a745' : '#ffc107'};">${matchPosition}</span>
-                </div>
-            </div>
-
-            ${player.abilities && Array.isArray(player.abilities) && player.abilities.length > 0 ? `
-                <div style="margin-bottom: 12px;">
-                    <div style="font-weight: bold; color: #495057; margin-bottom: 6px; font-size: 11px;">Способности:</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                        ${player.abilities.map(ability => `
-                            <span style="background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 12px; font-size: 10px;">
-                                ${ability}
-                            </span>
-                        `).join('')}
-                    </div>
-                </div>
-            ` : ''}
-
-            <div style="text-align: center; margin-top: 12px; padding-top: 8px; border-top: 1px solid #e9ecef;">
-                <button onclick="this.parentElement.parentElement.remove()" style="
-                    background: #007bff; 
-                    color: white; 
-                    border: none; 
-                    padding: 6px 12px; 
-                    border-radius: 6px; 
-                    cursor: pointer; 
-                    font-size: 11px;
-                    transition: background 0.2s ease;
-                " onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
-                    Закрыть
-                </button>
-            </div>
-        `;
-
-        // Позиционируем подсказку
-        document.body.appendChild(hintDiv);
-        positionFieldHint(hintDiv, shirtElement);
-
-        // Добавляем обработчик для закрытия по клику вне подсказки
-        setTimeout(() => {
-            document.addEventListener('click', function closeHint(e) {
-                if (!hintDiv.contains(e.target)) {
-                    hintDiv.remove();
-                    document.removeEventListener('click', closeHint);
-                }
-            });
-        }, 100);
-    }
-
-    /**
-     * Показывает базовую подсказку для позиции без данных игрока
-     */
-    function showPositionOnlyHint(position, team, shirtElement) {
-        const hintDiv = document.createElement('div');
-        hintDiv.className = 'vs-field-position-hint';
-        hintDiv.style.cssText = `
-            position: fixed;
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border: 2px solid #6c757d;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 8px 32px rgba(108, 117, 125, 0.3);
-            z-index: 10000;
-            max-width: 280px;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            backdrop-filter: blur(10px);
-            animation: fadeInScale 0.3s ease-out;
-        `;
-
-        const teamName = team === 'home' ? 'Хозяева' : 'Гости';
-        const teamColor = team === 'home' ? '#28a745' : '#dc3545';
-        const positionInfo = getPositionInfo(position);
-
-        hintDiv.innerHTML = `
-            <div style="display: flex; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e9ecef;">
-                <div style="width: 32px; height: 32px; background: ${teamColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 10px;">
-                    ${position}
-                </div>
-                <div>
-                    <div style="font-weight: bold; color: #212529; font-size: 14px;">${positionInfo.name}</div>
-                    <div style="color: #6c757d; font-size: 10px;">${teamName} • ${positionInfo.line}</div>
-                </div>
-            </div>
-            
-            <div style="color: #6c757d; text-align: center; margin: 12px 0;">
-                <em>Игрок не выбран</em>
-            </div>
-
-            <div style="background: #f8f9fa; padding: 8px; border-radius: 6px; margin-bottom: 12px;">
-                <div style="font-weight: bold; color: #495057; margin-bottom: 6px; font-size: 11px;">О позиции:</div>
-                <div style="color: #212529; font-size: 11px;">
-                    ${positionInfo.description}
-                </div>
-            </div>
-
-            <div style="text-align: center; margin-top: 12px; padding-top: 8px; border-top: 1px solid #e9ecef;">
-                <button onclick="this.parentElement.parentElement.remove()" style="
-                    background: #6c757d; 
-                    color: white; 
-                    border: none; 
-                    padding: 6px 12px; 
-                    border-radius: 6px; 
-                    cursor: pointer; 
-                    font-size: 11px;
-                    transition: background 0.2s ease;
-                " onmouseover="this.style.background='#545b62'" onmouseout="this.style.background='#6c757d'">
-                    Закрыть
-                </button>
-            </div>
-        `;
-
-        document.body.appendChild(hintDiv);
-        positionFieldHint(hintDiv, shirtElement);
-
-        setTimeout(() => {
-            document.addEventListener('click', function closeHint(e) {
-                if (!hintDiv.contains(e.target)) {
-                    hintDiv.remove();
-                    document.removeEventListener('click', closeHint);
-                }
-            });
-        }, 100);
-    }
-
-    /**
-     * Позиционирует подсказку относительно футболки
-     */
-    function positionFieldHint(hintDiv, shirtElement) {
-        const shirtRect = shirtElement.getBoundingClientRect();
-        const hintRect = hintDiv.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-
-        let left = shirtRect.left + shirtRect.width / 2 - hintRect.width / 2;
-        let top = shirtRect.top - hintRect.height - 10;
-
-        // Корректируем позицию если выходит за границы экрана
-        if (left < 10) left = 10;
-        if (left + hintRect.width > viewportWidth - 10) left = viewportWidth - hintRect.width - 10;
-        
-        if (top < 10) {
-            top = shirtRect.bottom + 10;
-        }
-        if (top + hintRect.height > viewportHeight - 10) {
-            top = viewportHeight - hintRect.height - 10;
-        }
-
-        hintDiv.style.left = left + 'px';
-        hintDiv.style.top = top + 'px';
-    }
-
-    /**
-     * Генерирует HTML для модификаторов силы
-     */
-    function generateModifiersHTML(modifiers) {
-        return Object.entries(modifiers).map(([key, data]) => {
-            const color = data.coefficient >= 1 ? '#28a745' : data.coefficient >= 0.9 ? '#ffc107' : '#dc3545';
-            const sign = data.coefficient >= 1 ? '+' : '';
-            const change = ((data.coefficient - 1) * 100).toFixed(1);
-            
-            return `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <span style="color: #495057; font-size: 10px;">${data.name}:</span>
-                    <span style="color: ${color}; font-weight: bold; font-size: 10px;">
-                        ${data.coefficient.toFixed(3)} (${sign}${change}%)
-                    </span>
-                </div>
-            `;
-        }).join('');
-    }
-
-    /**
-     * Получает информацию о позиции
-     */
-    function getPositionInfo(position) {
-        const positions = {
-            'GK': { name: 'Вратарь', line: 'Вратарская линия', description: 'Защищает ворота команды. Может брать мяч руками в штрафной площади.' },
-            'LD': { name: 'Левый защитник', line: 'Линия защиты', description: 'Защищает левый фланг, участвует в атакующих действиях по флангу.' },
-            'CD': { name: 'Центральный защитник', line: 'Линия защиты', description: 'Основа обороны команды. Отвечает за центральную зону защиты.' },
-            'RD': { name: 'Правый защитник', line: 'Линия защиты', description: 'Защищает правый фланг, участвует в атакующих действиях по флангу.' },
-            'LB': { name: 'Левый крайний защитник', line: 'Линия защиты', description: 'Активно участвует в атаке и обороне по левому флангу.' },
-            'RB': { name: 'Правый крайний защитник', line: 'Линия защиты', description: 'Активно участвует в атаке и обороне по правому флангу.' },
-            'SW': { name: 'Свободный защитник', line: 'Линия защиты', description: 'Играет за спиной у других защитников, подстраховывает.' },
-            'LM': { name: 'Левый полузащитник', line: 'Линия полузащиты', description: 'Контролирует левый фланг в средней зоне поля.' },
-            'CM': { name: 'Центральный полузащитник', line: 'Линия полузащиты', description: 'Связующее звено между защитой и атакой.' },
-            'RM': { name: 'Правый полузащитник', line: 'Линия полузащиты', description: 'Контролирует правый фланг в средней зоне поля.' },
-            'DM': { name: 'Опорный полузащитник', line: 'Линия полузащиты', description: 'Играет перед защитой, разрушает атаки соперника.' },
-            'AM': { name: 'Атакующий полузащитник', line: 'Линия полузащиты', description: 'Создает голевые моменты, связывает полузащиту с атакой.' },
-            'FR': { name: 'Свободный полузащитник', line: 'Линия полузащиты', description: 'Универсальный игрок средней линии.' },
-            'LW': { name: 'Левый вингер', line: 'Линия атаки', description: 'Атакует по левому флангу, создает голевые моменты.' },
-            'RW': { name: 'Правый вингер', line: 'Линия атаки', description: 'Атакует по правому флангу, создает голевые моменты.' },
-            'LF': { name: 'Левый форвард', line: 'Линия атаки', description: 'Атакующий игрок левого фланга.' },
-            'RF': { name: 'Правый форвард', line: 'Линия атаки', description: 'Атакующий игрок правого фланга.' },
-            'CF': { name: 'Центральный форвард', line: 'Линия атаки', description: 'Основной бомбардир команды, играет в центре атаки.' },
-            'ST': { name: 'Нападающий', line: 'Линия атаки', description: 'Завершает атакующие действия команды.' }
-        };
-
-        return positions[position] || { name: position, line: 'Неизвестная позиция', description: 'Информация о позиции недоступна.' };
-    }
-
-    function createShirtElement(position, shirtUrl, top, left, playerName = null, team = null, playerData = null) {
+    function createShirtElement(position, shirtUrl, top, left, playerName = null) {
         const div = document.createElement('div');
-        
-        // Генерируем уникальный ID для футболки
-        const uniqueId = `shirt-${team || 'unknown'}-${position}-${Math.random().toString(36).substr(2, 9)}`;
-        div.id = uniqueId;
-        
-        console.log(`[FieldHints] Создание футболки: ID=${uniqueId}, позиция=${position}, команда=${team}, игрок=${playerName}, есть данные=${!!playerData}`);
-        
         div.style.cssText = `
             position: absolute;
-            width: ${FIELD_LAYOUT.SHIRT_WIDTH}px;
-            height: ${FIELD_LAYOUT.SHIRT_HEIGHT}px;
+            width: 40px;
+            height: 34px;
             background-image: url('${shirtUrl}');
             background-size: cover;
             background-repeat: no-repeat;
@@ -7360,45 +6287,24 @@ function getTournamentType() {
             font-weight: bold;
             color: white;
             text-align: center;
-            line-height: ${FIELD_LAYOUT.SHIRT_HEIGHT}px;
+            line-height: 34px;
             text-shadow: 0 0 3px black, 0 0 3px black, 0 0 3px black;
-            cursor: pointer;
-            pointer-events: auto;
+            cursor: default;
             z-index: 10;
         `;
         div.textContent = position;
         div.title = playerName ? `${position}: ${playerName}` : position;
 
-        // Добавляем обработчик клика для показа подсказки
-        div.addEventListener('click', (e) => {
-            e.stopPropagation();
-            console.log(`[FieldHints] Клик по футболке: ${uniqueId}, позиция: ${position}, команда: ${team}`);
-            
-            // Проверяем, есть ли данные игрока
-            if (playerData && playerData.player) {
-                console.log(`[FieldHints] Показываем подсказку для игрока: ${playerData.player.name}`);
-            } else {
-                console.log(`[FieldHints] Показываем подсказку только для позиции: ${position}`);
-            }
-            
-            showFieldPlayerHint(position, team, playerData, div);
-        });
-
         return div;
     }
 
     function displayShirtsOnField(fieldCol, homeShirts, awayShirts, homeFormation, awayFormation, homeLineup = null, awayLineup = null) {
-        console.log('[FieldHints] displayShirtsOnField вызвана');
-        console.log('[FieldHints] homeLineup:', homeLineup);
-        console.log('[FieldHints] awayLineup:', awayLineup);
-        
         // Создаём или очищаем контейнер для футболок
         let shirtsContainer = fieldCol.querySelector('.shirts-container');
         if (!shirtsContainer) {
             shirtsContainer = document.createElement('div');
             shirtsContainer.className = 'shirts-container';
-            const padding = FIELD_LAYOUT.CONTAINER_PADDING;
-            shirtsContainer.style.cssText = `position: absolute; top: ${padding}px; left: ${padding}px; right: ${padding}px; bottom: ${padding}px;`;
+            shirtsContainer.style.cssText = 'position: absolute; top: 34px; left: 34px; right: 34px; bottom: 34px;';
             fieldCol.appendChild(shirtsContainer);
         } else {
             shirtsContainer.innerHTML = '';
@@ -7442,30 +6348,17 @@ function getTournamentType() {
 
             const position = coord.position;
             const shirtUrl = position === 'GK' ? homeShirts.gk : homeShirts.field;
+            let playerName = null;
 
             // Пытаемся получить имя игрока из состава
-            let playerName = null;
-            let playerData = null;
             if (homeLineup && homeLineup[idx]) {
                 const playerId = homeLineup[idx].getValue && homeLineup[idx].getValue();
                 if (playerId && homeLineup[idx].selectedPlayer) {
                     playerName = homeLineup[idx].selectedPlayer.name;
-                    // Собираем данные игрока для подсказки
-                    playerData = {
-                        player: homeLineup[idx].selectedPlayer,
-                        matchPosition: position,
-                        physicalFormId: homeLineup[idx].physicalFormId || 'normal',
-                        playerIndex: idx
-                    };
-                    console.log(`[FieldHints] Домашняя команда - позиция ${position}: игрок ${playerName}, данные:`, playerData);
-                } else {
-                    console.log(`[FieldHints] Домашняя команда - позиция ${position}: игрок не выбран (playerId: ${playerId})`);
                 }
-            } else {
-                console.log(`[FieldHints] Домашняя команда - позиция ${position}: homeLineup[${idx}] отсутствует`);
             }
 
-            const shirt = createShirtElement(position, shirtUrl, coord.top, coord.left, playerName, 'home', playerData);
+            const shirt = createShirtElement(position, shirtUrl, coord.top, coord.left, playerName);
             if (shirt) shirtsContainer.appendChild(shirt);
         });
 
@@ -7475,30 +6368,17 @@ function getTournamentType() {
 
             const position = coord.position;
             const shirtUrl = position === 'GK' ? awayShirts.gk : awayShirts.field;
+            let playerName = null;
 
             // Пытаемся получить имя игрока из состава
-            let playerName = null;
-            let playerData = null;
             if (awayLineup && awayLineup[idx]) {
                 const playerId = awayLineup[idx].getValue && awayLineup[idx].getValue();
                 if (playerId && awayLineup[idx].selectedPlayer) {
                     playerName = awayLineup[idx].selectedPlayer.name;
-                    // Собираем данные игрока для подсказки
-                    playerData = {
-                        player: awayLineup[idx].selectedPlayer,
-                        matchPosition: position,
-                        physicalFormId: awayLineup[idx].physicalFormId || 'normal',
-                        playerIndex: idx
-                    };
-                    console.log(`[FieldHints] Гостевая команда - позиция ${position}: игрок ${playerName}, данные:`, playerData);
-                } else {
-                    console.log(`[FieldHints] Гостевая команда - позиция ${position}: игрок не выбран (playerId: ${playerId})`);
                 }
-            } else {
-                console.log(`[FieldHints] Гостевая команда - позиция ${position}: awayLineup[${idx}] отсутствует`);
             }
 
-            const shirt = createShirtElement(position, shirtUrl, coord.top, coord.left, playerName, 'away', playerData);
+            const shirt = createShirtElement(position, shirtUrl, coord.top, coord.left, playerName);
             if (shirt) shirtsContainer.appendChild(shirt);
         });
     }
@@ -7636,18 +6516,6 @@ function getTournamentType() {
             if (state.captain) captainSel.value = state.captain;
         }, 100);
     }
-
-    // Делаем функции системы подсказок глобально доступными
-    window.showPlayerDetailHint = showPlayerDetailHint;
-    window.hidePlayerDetailHint = hidePlayerDetailHint;
-    window.addPlayerDetailHints = addPlayerDetailHints;
-    window.addHelpButton = addHelpButton;
-    window.showCalculatorHint = showCalculatorHint;
-    window.getHintContent = getHintContent;
-    
-    // Новые функции ЭТАПА 4 - подсказки при клике на футболки
-    window.showFieldPlayerHint = showFieldPlayerHint;
-    window.calculatePlayerStrength = calculatePlayerStrength;
 
     function createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere = 0, awayAtmosphere = 0) {
         const parsedWeather = parseWeatherFromPreview();
@@ -7889,26 +6757,8 @@ function getTournamentType() {
         // Применяем определенный тип турнира к селекторам формы при первичной загрузке
         updatePhysicalFormSelectors(detectedType);
 
-        // Добавляем кнопку подсказки к блоку турнира
-        setTimeout(() => {
-            const tournamentRow = tournamentTypeUI.querySelector('tr:nth-child(2)');
-            if (tournamentRow) {
-                const tournamentCell = tournamentRow.querySelector('td.qt');
-                if (tournamentCell) {
-                    addHelpButton(tournamentCell, 'tournament', 'Тип турнира');
-                }
-            }
-        }, 100);
-
         const title = document.createElement('h3');
         title.textContent = 'Калькулятор силы';
-        title.style.position = 'relative';
-        
-        // Добавляем индикатор справки
-        const helpIndicator = document.createElement('span');
-        helpIndicator.innerHTML = ' <small style="color: #666; font-size: 10px;">(F1 - справка, Ctrl+H - горячие клавиши)</small>';
-        title.appendChild(helpIndicator);
-        
         container.appendChild(tournamentTypeUI);
         container.appendChild(title);
         container.appendChild(mainTable);
@@ -8035,45 +6885,6 @@ function getTournamentType() {
         window.leadershipAwayUI = leadershipAwayUI;
 
         container.appendChild(synergyWrap);
-
-        // Добавляем кнопки подсказок к блоку бонусов
-        setTimeout(() => {
-            // Подсказка для сыгранности
-            const synergyRow = synergyWrap.querySelector('tr:nth-child(2)');
-            if (synergyRow) {
-                const synergyCell = synergyRow.querySelector('td.qt');
-                if (synergyCell) {
-                    addHelpButton(synergyCell, 'synergy', 'Бонус сыгранности');
-                }
-            }
-
-            // Подсказка для командной игры
-            const teamworkRow = synergyWrap.querySelector('tr:nth-child(3)');
-            if (teamworkRow) {
-                const teamworkCell = teamworkRow.querySelector('td.qt');
-                if (teamworkCell) {
-                    addHelpButton(teamworkCell, 'teamwork', 'Командная игра');
-                }
-            }
-
-            // Подсказка для атмосферы
-            const atmosphereRow = synergyWrap.querySelector('tr:nth-child(4)');
-            if (atmosphereRow) {
-                const atmosphereCell = atmosphereRow.querySelector('td.qt');
-                if (atmosphereCell) {
-                    addHelpButton(atmosphereCell, 'atmosphere', 'Атмосфера в команде');
-                }
-            }
-
-            // Подсказка для лидерства
-            const leadershipRow = synergyWrap.querySelector('tr:nth-child(5)');
-            if (leadershipRow) {
-                const leadershipCell = leadershipRow.querySelector('td.qt');
-                if (leadershipCell) {
-                    addHelpButton(leadershipCell, 'leadership', 'Бонусы лидеров');
-                }
-            }
-        }, 100);
 
         if (homeSaved && typeof homeSaved.synergyHomePercent !== 'undefined') {
             setSynergyPercentHome(homeSaved.synergyHomePercent);
@@ -8704,1086 +7515,6 @@ function getTournamentType() {
         return container;
     }
 
-    // Делаем остальные функции системы подсказок глобально доступными
-    window.showCalculatorHint = showCalculatorHint;
-    window.removeExistingHints = removeExistingHints;
-    window.getHintContent = getHintContent;
-    window.positionHint = positionHint;
-
-    /**
-     * @param {string} type - Тип подсказки ('synergy', 'leadership', 'weather', 'collision', 'tournament')
-     * @param {string} title - Заголовок подсказки
-     * @param {number} width - Ширина подсказки
-     * @param {Object} context - Дополнительный контекст для интерактивных подсказок
-     */
-    function showCalculatorHint(button, type, title, width = 400, context = {}) {
-        // Удаляем существующие подсказки
-        removeExistingHints();
-        
-        // Создаем контейнер подсказки
-        const hint = document.createElement('div');
-        hint.className = 'vs-calculator-hint';
-        hint.style.cssText = `
-            position: absolute;
-            width: ${width}px;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 10000;
-            padding: 0;
-            font-size: 11px;
-            line-height: 1.4;
-            opacity: 0;
-            transform: scale(0.95);
-            transition: opacity 0.2s ease, transform 0.2s ease;
-        `;
-        
-        // Добавляем заголовок
-        const header = document.createElement('div');
-        header.style.cssText = `
-            background: linear-gradient(135deg, #006600, #008800);
-            color: white;
-            font-weight: bold;
-            padding: 10px 12px;
-            border-radius: 6px 6px 0 0;
-            position: relative;
-            font-size: 12px;
-        `;
-        header.textContent = title;
-        hint.appendChild(header);
-        
-        // Добавляем кнопку закрытия
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = '×';
-        closeBtn.style.cssText = `
-            position: absolute;
-            top: 8px;
-            right: 10px;
-            border: none;
-            background: none;
-            font-size: 18px;
-            cursor: pointer;
-            color: rgba(255,255,255,0.8);
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 3px;
-            transition: background-color 0.2s ease;
-        `;
-        closeBtn.onmouseover = () => closeBtn.style.backgroundColor = 'rgba(255,255,255,0.2)';
-        closeBtn.onmouseout = () => closeBtn.style.backgroundColor = 'transparent';
-        closeBtn.onclick = () => {
-            hint.style.opacity = '0';
-            hint.style.transform = 'scale(0.95)';
-            setTimeout(() => hint.remove(), 200);
-        };
-        header.appendChild(closeBtn);
-        
-        // Добавляем содержимое
-        const content = document.createElement('div');
-        content.style.cssText = 'padding: 12px;';
-        content.innerHTML = getHintContent(type, context);
-        hint.appendChild(content);
-        
-        // Позиционируем подсказку
-        document.body.appendChild(hint);
-        positionHint(hint, button, 'right top');
-        
-        // Анимация появления
-        setTimeout(() => {
-            hint.style.opacity = '1';
-            hint.style.transform = 'scale(1)';
-        }, 10);
-        
-        // Автоматическое закрытие при клике вне подсказки
-        setTimeout(() => {
-            document.addEventListener('click', function closeOnOutsideClick(e) {
-                if (!hint.contains(e.target) && e.target !== button) {
-                    hint.style.opacity = '0';
-                    hint.style.transform = 'scale(0.95)';
-                    setTimeout(() => {
-                        hint.remove();
-                        document.removeEventListener('click', closeOnOutsideClick);
-                    }, 200);
-                }
-            });
-        }, 100);
-    }
-
-    /**
-     * Удаляет все существующие подсказки
-     */
-    function removeExistingHints() {
-        const existingHints = document.querySelectorAll('.vs-calculator-hint');
-        existingHints.forEach(hint => hint.remove());
-    }
-
-    /**
-     * Возвращает HTML-контент для подсказки
-     * @param {string} type - Тип подсказки
-     * @param {Object} context - Дополнительный контекст для интерактивных подсказок
-     * @returns {string} HTML-контент
-     */
-    function getHintContent(type, context = {}) {
-        const hints = {
-            synergy: () => {
-                const currentHome = getSynergyPercentHome();
-                const currentAway = getSynergyPercentAway();
-                
-                return `
-                    <p><strong>Бонус сыгранности</strong> рассчитывается на основе последних 25 матчей команды.</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Текущие значения:</strong><br>
-                        Хозяева: <span style="color: #006600; font-weight: bold;">${currentHome.toFixed(2)}%</span><br>
-                        Гости: <span style="color: #006600; font-weight: bold;">${currentAway.toFixed(2)}%</span>
-                    </div>
-                    <p><strong>Правила начисления:</strong></p>
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 4px; border: 1px solid #ddd;">Игроков в составе</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Бонус за матч</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">За 25 матчей</th>
-                        </tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">6 игроков</td><td style="padding: 4px; border: 1px solid #ddd;">+0.10%</td><td style="padding: 4px; border: 1px solid #ddd;">+2.50%</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">7 игроков</td><td style="padding: 4px; border: 1px solid #ddd;">+0.25%</td><td style="padding: 4px; border: 1px solid #ddd;">+6.25%</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">8 игроков</td><td style="padding: 4px; border: 1px solid #ddd;">+0.50%</td><td style="padding: 4px; border: 1px solid #ddd;">+12.50%</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">9 игроков</td><td style="padding: 4px; border: 1px solid #ddd;">+0.75%</td><td style="padding: 4px; border: 1px solid #ddd;">+18.75%</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">10 игроков</td><td style="padding: 4px; border: 1px solid #ddd;">+1.00%</td><td style="padding: 4px; border: 1px solid #ddd;">+25.00%</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;"><strong>11+ игроков</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>+1.25%</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>+31.25%</strong></td></tr>
-                    </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>💡 Совет: Используйте кнопку "Пересчитать сыгранность" для автоматического расчета на основе текущего состава.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>⚠️ Товарищеские матчи не учитываются в расчете сыгранности.</em></p>
-                `;
-            },
-            
-            leadership: () => {
-                // Получаем текущие значения лидерства из UI
-                const homeDefValue = document.getElementById('vs-leadership-home-def-value')?.textContent || '0';
-                const homeMidValue = document.getElementById('vs-leadership-home-mid-value')?.textContent || '0';
-                const homeAttValue = document.getElementById('vs-leadership-home-att-value')?.textContent || '0';
-                const awayDefValue = document.getElementById('vs-leadership-away-def-value')?.textContent || '0';
-                const awayMidValue = document.getElementById('vs-leadership-away-mid-value')?.textContent || '0';
-                const awayAttValue = document.getElementById('vs-leadership-away-att-value')?.textContent || '0';
-                
-                return `
-                    <p><strong>Бонусы лидеров</strong> применяются к игрокам соответствующих линий.</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Текущие бонусы:</strong><br>
-                        <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                            <div style="flex: 1;">
-                                <strong>Хозяева:</strong><br>
-                                <span style="font-size: 10px;">Защ: ${homeDefValue} | Сер: ${homeMidValue} | Ата: ${homeAttValue}</span>
-                            </div>
-                            <div style="flex: 1; text-align: right;">
-                                <strong>Гости:</strong><br>
-                                <span style="font-size: 10px;">Защ: ${awayDefValue} | Сер: ${awayMidValue} | Ата: ${awayAttValue}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p><strong>Типы лидерства:</strong></p>
-                    <ul style="margin: 8px 0; padding-left: 16px; font-size: 10px;">
-                        <li><strong>Защита:</strong> GK, LD, LB, SW, CD, RD, RB</li>
-                        <li><strong>Полузащита:</strong> LM, DM, CM, FR, RM</li>
-                        <li><strong>Атака:</strong> LW, LF, AM, CF, ST, RW, RF</li>
-                    </ul>
-                    <p><strong>Коэффициенты по уровням:</strong></p>
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 4px; border: 1px solid #ddd;">Уровень</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Коэффициент</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Пример (сила 100)</th>
-                        </tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Л1</td><td style="padding: 4px; border: 1px solid #ddd;">3%</td><td style="padding: 4px; border: 1px solid #ddd;">+3.0</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Л2</td><td style="padding: 4px; border: 1px solid #ddd;">6%</td><td style="padding: 4px; border: 1px solid #ddd;">+6.0</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Л3</td><td style="padding: 4px; border: 1px solid #ddd;">9%</td><td style="padding: 4px; border: 1px solid #ddd;">+9.0</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;"><strong>Л4</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>12%</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>+12.0</strong></td></tr>
-                    </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>⚠️ Условие: В каждой линии должен быть ровно 1 лидер для получения бонуса.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>💡 Формула: Сила лидера × Коэффициент уровня = Бонус для всех игроков линии</em></p>
-                `;
-            },
-            
-            weather: () => {
-                const weatherUI = getCurrentWeatherFromUI();
-                const currentWeather = weatherUI ? weatherUI.weather : 'не выбрано';
-                const currentTemp = weatherUI ? weatherUI.temperature : 'не выбрано';
-                
-                return `
-                    <p><strong>Влияние погоды</strong> на силу игроков зависит от их адаптации к климатическим условиям.</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Текущие условия:</strong><br>
-                        Погода: <span style="color: #006600; font-weight: bold;">${currentWeather}</span><br>
-                        Температура: <span style="color: #006600; font-weight: bold;">${currentTemp}°</span>
-                    </div>
-                    <p><strong>Диапазоны температур:</strong></p>
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 4px; border: 1px solid #ddd;">Погода</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Температура</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Влияние</th>
-                        </tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Очень жарко</td><td style="padding: 4px; border: 1px solid #ddd;">26-30°</td><td style="padding: 4px; border: 1px solid #ddd;">Сильное</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Жарко</td><td style="padding: 4px; border: 1px solid #ddd;">15-29°</td><td style="padding: 4px; border: 1px solid #ddd;">Умеренное</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Солнечно</td><td style="padding: 4px; border: 1px solid #ddd;">10-29°</td><td style="padding: 4px; border: 1px solid #ddd;">Слабое</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;"><strong>Облачно</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>5-25°</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>Нейтральное</strong></td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Пасмурно</td><td style="padding: 4px; border: 1px solid #ddd;">1-20°</td><td style="padding: 4px; border: 1px solid #ddd;">Слабое</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Дождь</td><td style="padding: 4px; border: 1px solid #ddd;">1-15°</td><td style="padding: 4px; border: 1px solid #ddd;">Умеренное</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Снег</td><td style="padding: 4px; border: 1px solid #ddd;">0-4°</td><td style="padding: 4px; border: 1px solid #ddd;">Сильное</td></tr>
-                    </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>💡 Калькулятор использует интерполяцию для точного расчета между табличными значениями.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>⚠️ Влияние зависит от стиля игры игрока и его базовой силы.</em></p>
-                `;
-            },
-            
-            collision: () => {
-                const homeStyle = window.homeStyle?.value || 'norm';
-                const awayStyle = window.awayStyle?.value || 'norm';
-                const collisionInfo = getCollisionInfo(homeStyle, awayStyle);
-                
-                const styleNames = {
-                    'norm': 'Нормальный',
-                    'sp': 'Спартаковский', 
-                    'brazil': 'Бразильский',
-                    'tiki': 'Тики-така',
-                    'bb': 'Бей-беги',
-                    'kat': 'Катеначчо',
-                    'brit': 'Британский'
-                };
-                
-                let statusText = 'Нет коллизии';
-                let statusColor = '#666';
-                if (collisionInfo.teamStatus === 'win') {
-                    statusText = `Хозяева выигрывают (+${(collisionInfo.teamBonus * 100).toFixed(0)}%)`;
-                    statusColor = '#28a745';
-                } else if (collisionInfo.oppStatus === 'win') {
-                    statusText = `Гости выигрывают (+${(collisionInfo.oppBonus * 100).toFixed(0)}%)`;
-                    statusColor = '#dc3545';
-                }
-                
-                return `
-                    <p><strong>Коллизии стилей</strong> - взаимодействие между стилями игры команд.</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Текущая ситуация:</strong><br>
-                        Хозяева: <span style="color: #006600; font-weight: bold;">${styleNames[homeStyle]}</span><br>
-                        Гости: <span style="color: #006600; font-weight: bold;">${styleNames[awayStyle]}</span><br>
-                        <div style="margin-top: 4px; padding: 4px; background: white; border-radius: 3px;">
-                            <strong style="color: ${statusColor};">${statusText}</strong>
-                        </div>
-                    </div>
-                    <p><strong>Таблица коллизий:</strong></p>
-                    <table style="width: 100%; font-size: 9px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 3px; border: 1px solid #ddd;">Стиль</th>
-                            <th style="padding: 3px; border: 1px solid #ddd;">Побеждает</th>
-                            <th style="padding: 3px; border: 1px solid #ddd;">Бонус</th>
-                        </tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Спартаковский</td><td style="padding: 3px; border: 1px solid #ddd;">Британский</td><td style="padding: 3px; border: 1px solid #ddd;">+38%</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Бей-беги</td><td style="padding: 3px; border: 1px solid #ddd;">Спартаковский</td><td style="padding: 3px; border: 1px solid #ddd;">+42%</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Бразильский</td><td style="padding: 3px; border: 1px solid #ddd;">Бей-беги</td><td style="padding: 3px; border: 1px solid #ddd;">+34%</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Тики-така</td><td style="padding: 3px; border: 1px solid #ddd;">Катеначчо</td><td style="padding: 3px; border: 1px solid #ddd;">+36%</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Катеначчо</td><td style="padding: 3px; border: 1px solid #ddd;">Бразильский</td><td style="padding: 3px; border: 1px solid #ddd;">+44%</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Британский</td><td style="padding: 3px; border: 1px solid #ddd;">Тики-така</td><td style="padding: 3px; border: 1px solid #ddd;">+40%</td></tr>
-                    </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>💡 Селектор стиля подсвечивается зеленым (выигрыш) или красным (проигрыш).</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>⚠️ Бонус применяется ко всем игрокам выигрывающей команды.</em></p>
-                `;
-            },
-
-            tournament: () => {
-                const currentType = getTournamentType();
-                const typeNames = {
-                    'friendly': 'Товарищеский матч',
-                    'typeC': 'Тип C (кубки стран)',
-                    'typeC_international': 'Международный кубок',
-                    'typeB': 'Тип B (чемпионаты)',
-                    'typeB_amateur': 'Конференция любительских',
-                    'all': 'Все формы'
-                };
-                
-                return `
-                    <p><strong>Тип турнира</strong> определяет доступные физические формы игроков.</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Текущий тип:</strong><br>
-                        <span style="color: #006600; font-weight: bold;">${typeNames[currentType] || currentType}</span>
-                    </div>
-                    <p><strong>Типы турниров и формы:</strong></p>
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 4px; border: 1px solid #ddd;">Тип</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Диапазон форм</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Особенности</th>
-                        </tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Товарищеский</td><td style="padding: 4px; border: 1px solid #ddd;">100%</td><td style="padding: 4px; border: 1px solid #ddd;">Всегда стабильная форма</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Тип C</td><td style="padding: 4px; border: 1px solid #ddd;">76-124%</td><td style="padding: 4px; border: 1px solid #ddd;">Кубки стран, кубки вызова</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Тип B</td><td style="padding: 4px; border: 1px solid #ddd;">75-125%</td><td style="padding: 4px; border: 1px solid #ddd;">Чемпионаты, межсезонье</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;"><strong>Международный</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>76-124%</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>+ бонус дома</strong></td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Любительский</td><td style="padding: 4px; border: 1px solid #ddd;">75-125%</td><td style="padding: 4px; border: 1px solid #ddd;">Конференция КЛК</td></tr>
-                    </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>💡 Калькулятор автоматически определяет тип турнира по странице матча.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>⚠️ Изменение типа турнира пересчитывает формы всех игроков.</em></p>
-                `;
-            },
-
-            teamwork: () => {
-                const homeTeamwork = document.getElementById('vs_teamwork_home')?.textContent || '0.00';
-                const awayTeamwork = document.getElementById('vs_teamwork_away')?.textContent || '0.00';
-                
-                return `
-                    <p><strong>Командная игра</strong> - бонус от способности "Командная Игра" (И).</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Текущие бонусы:</strong><br>
-                        Хозяева: <span style="color: #006600; font-weight: bold;">+${homeTeamwork}</span><br>
-                        Гости: <span style="color: #006600; font-weight: bold;">+${awayTeamwork}</span>
-                    </div>
-                    <p><strong>Коэффициенты по уровням:</strong></p>
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 4px; border: 1px solid #ddd;">Уровень</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Коэффициент</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Пример (сила 100)</th>
-                        </tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">И1</td><td style="padding: 4px; border: 1px solid #ddd;">0.5%</td><td style="padding: 4px; border: 1px solid #ddd;">+0.5</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">И2</td><td style="padding: 4px; border: 1px solid #ddd;">1.0%</td><td style="padding: 4px; border: 1px solid #ddd;">+1.0</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">И3</td><td style="padding: 4px; border: 1px solid #ddd;">2.0%</td><td style="padding: 4px; border: 1px solid #ddd;">+2.0</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;"><strong>И4</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>3.0%</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>+3.0</strong></td></tr>
-                    </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Бонус рассчитывается от модифицированной силы игрока (с учетом формы, позиции и т.д.) и применяется ко всем игрокам команды как дополнительная прибавка.</em></p>
-                                    `;
-            },
-
-            atmosphere: () => {
-                const homeAtmosphere = document.getElementById('vs_atmosphere_home')?.textContent || '0.00';
-                const awayAtmosphere = document.getElementById('vs_atmosphere_away')?.textContent || '0.00';
-                
-                return `
-                    <p><strong>Атмосфера в команде</strong> влияет на всех игроков команды.</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Текущие значения:</strong><br>
-                        Хозяева: <span style="color: ${parseFloat(homeAtmosphere) >= 0 ? '#28a745' : '#dc3545'}; font-weight: bold;">${homeAtmosphere}</span><br>
-                        Гости: <span style="color: ${parseFloat(awayAtmosphere) >= 0 ? '#28a745' : '#dc3545'}; font-weight: bold;">${awayAtmosphere}</span>
-                    </div>
-                    <p><strong>Возможные значения:</strong></p>
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 4px; border: 1px solid #ddd;">Атмосфера</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Значение</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Влияние</th>
-                        </tr>
-                        <tr style="background: #f8d7da;"><td style="padding: 4px; border: 1px solid #ddd;">Очень плохая</td><td style="padding: 4px; border: 1px solid #ddd;">-3%</td><td style="padding: 4px; border: 1px solid #ddd;">Сильное снижение</td></tr>
-                        <tr style="background: #f8d7da;"><td style="padding: 4px; border: 1px solid #ddd;">Плохая</td><td style="padding: 4px; border: 1px solid #ddd;">-2%</td><td style="padding: 4px; border: 1px solid #ddd;">Умеренное снижение</td></tr>
-                        <tr style="background: #fff3cd;"><td style="padding: 4px; border: 1px solid #ddd;">Слабая</td><td style="padding: 4px; border: 1px solid #ddd;">-1%</td><td style="padding: 4px; border: 1px solid #ddd;">Слабое снижение</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Нейтральная</td><td style="padding: 4px; border: 1px solid #ddd;">0%</td><td style="padding: 4px; border: 1px solid #ddd;">Без влияния</td></tr>
-                        <tr style="background: #d1ecf1;"><td style="padding: 4px; border: 1px solid #ddd;">Хорошая</td><td style="padding: 4px; border: 1px solid #ddd;">+1%</td><td style="padding: 4px; border: 1px solid #ddd;">Слабое улучшение</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;">Отличная</td><td style="padding: 4px; border: 1px solid #ddd;">+2%</td><td style="padding: 4px; border: 1px solid #ddd;">Умеренное улучшение</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;">Превосходная</td><td style="padding: 4px; border: 1px solid #ddd;">+3%</td><td style="padding: 4px; border: 1px solid #ddd;">Сильное улучшение</td></tr>
-                    </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Данные загружаются автоматически со страницы состава команды.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>Бонус применяется ко всем игрокам в составе по аналогии с остальными прибавками (спецумения, например).</em></p>
-                `;
-            },
-
-            // Новые подсказки для составов и игроков
-            player_selection: () => {
-                return `
-                    <p><strong>Выбор игроков</strong> - рекомендации по составлению оптимального состава.</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Советы по выбору:</strong>
-                    </div>
-                    <ul style="margin: 8px 0; padding-left: 16px; font-size: 10px;">
-                        <li><strong>Сила:</strong>Выбирайте игроков, чтобы посчитать силу состава</li>
-                    </ul>
-                    <p><strong>Модификаторы позиций:</strong></p>
-                    <table style="width: 100%; font-size: 9px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 3px; border: 1px solid #ddd;">Соответствие</th>
-                            <th style="padding: 3px; border: 1px solid #ddd;">Модификатор</th>
-                            <th style="padding: 3px; border: 1px solid #ddd;">Пример</th>
-                        </tr>
-                        <tr style="background: #d4edda;"><td style="padding: 3px; border: 1px solid #ddd;">Основная позиция</td><td style="padding: 3px; border: 1px solid #ddd;">100%</td><td style="padding: 3px; border: 1px solid #ddd;">CD на CD</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Близкая позиция</td><td style="padding: 3px; border: 1px solid #ddd;">90-95%</td><td style="padding: 3px; border: 1px solid #ddd;">CD на LD/RD</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Смежная позиция</td><td style="padding: 3px; border: 1px solid #ddd;">80-85%</td><td style="padding: 3px; border: 1px solid #ddd;">CD на DM</td></tr>
-                        <tr style="background: #f8d7da;"><td style="padding: 3px; border: 1px solid #ddd;">Чужая позиция</td><td style="padding: 3px; border: 1px solid #ddd;">70%</td><td style="padding: 3px; border: 1px solid #ddd;">CD на ST</td></tr>
-                    </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Наведите курсор на селектор игрока для детальной информации.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>Калькулятор автоматически сортирует игроков по силе для позиции.</em></p>
-                `;
-            },
-
-            physical_form: () => {
-                return `
-                    <p><strong>Физическая форма</strong> - ключевой фактор силы игрока в матче.</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Влияние на силу:</strong><br>
-                        Сила в матче = Базовая сила × Модификатор формы
-                    </div>
-                    <p><strong>Диапазоны форм по турнирам:</strong></p>
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 4px; border: 1px solid #ddd;">Турнир</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Мин. форма</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Макс. форма</th>
-                        </tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Товарищеский</td><td style="padding: 4px; border: 1px solid #ddd;">100%</td><td style="padding: 4px; border: 1px solid #ddd;">100%</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Тип C</td><td style="padding: 4px; border: 1px solid #ddd;">76%</td><td style="padding: 4px; border: 1px solid #ddd;">124%</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Тип B</td><td style="padding: 4px; border: 1px solid #ddd;">75%</td><td style="padding: 4px; border: 1px solid #ddd;">125%</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Международный</td><td style="padding: 4px; border: 1px solid #ddd;">76%</td><td style="padding: 4px; border: 1px solid #ddd;">124%</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Любительский</td><td style="padding: 4px; border: 1px solid #ddd;">75%</td><td style="padding: 4px; border: 1px solid #ddd;">125%</td></tr>
-                    </table>
-                   
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Калькулятор автоматически определяет форму по данным игрока и типу турнира.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>Вы можете вручную изменить форму игрока в селекторе.</em></p>
-                `;
-            },
-
-            abilities: () => {
-                return `
-                    <p><strong>Способности игроков</strong> дают дополнительные бонусы в зависимости от стиля игры.</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Основные способности:</strong>
-                    </div>
-                    <table style="width: 100%; font-size: 9px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 3px; border: 1px solid #ddd;">Способность</th>
-                            <th style="padding: 3px; border: 1px solid #ddd;">Лучший стиль</th>
-                            <th style="padding: 3px; border: 1px solid #ddd;">Бонус (4 ур.)</th>
-                        </tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Скорость (Ск)</td><td style="padding: 3px; border: 1px solid #ddd;">Бей-беги</td><td style="padding: 3px; border: 1px solid #ddd;">+40%</td></tr>
-                    </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Бонусы способностей зависят от выбранного стиля игры команды.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>Лидерство работает только при наличии ровно 1 лидера в линии.</em></p>
-                `;
-            },
-
-            // Детальная подсказка для конкретного игрока
-            player_details: (context) => {
-                const { player, matchPosition, physicalFormId, customStyle } = context;
-                if (!player) return '<p>Игрок не найден.</p>';
-                
-                const baseStr = Number(player.baseStrength) || Number(player.realStr) || 0;
-                const age = Number(player.age) || 0;
-                const form = Number(player.form) || 0;
-                const fatigue = Number(player.fatigue) || 0;
-                
-                // Рассчитываем все модификаторы
-                const physicalFormModifier = getPhysicalFormModifier(physicalFormId);
-                const realityModifier = getRealityBonus(player.real_status, player.real_sign);
-                const positionModifier = getPositionModifier(player.mainPos, player.secondPos, matchPosition);
-                
-                // Усталость
-                let fatigueModifier;
-                const tournamentType = getTournamentType();
-                if (tournamentType === 'friendly') {
-                    fatigueModifier = 1 - (25 / 100);
-                } else {
-                    fatigueModifier = getFatigueBonus(fatigue);
-                }
-                
-                // Итоговая сила
-                const finalStr = Math.round(baseStr * physicalFormModifier * fatigueModifier * realityModifier * positionModifier);
-                
-                // Определяем цвет формы
-                let formColor = '#666';
-                if (form >= 110) formColor = '#28a745';
-                else if (form >= 95) formColor = '#ffc107';
-                else if (form >= 85) formColor = '#fd7e14';
-                else formColor = '#dc3545';
-                
-                // Определяем цвет усталости
-                let fatigueColor = '#666';
-                if (fatigue <= 25) fatigueColor = '#28a745';
-                else if (fatigue <= 50) fatigueColor = '#ffc107';
-                else if (fatigue <= 75) fatigueColor = '#fd7e14';
-                else fatigueColor = '#dc3545';
-                
-                return `
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin-bottom: 8px;">
-                        <strong style="font-size: 12px;">${player.name}</strong><br>
-                        <span style="font-size: 10px; color: #666;">
-                            ${player.mainPos}${player.secondPos ? '/' + player.secondPos : ''} | ${age} лет
-                        </span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <div style="flex: 1;">
-                            <strong>Базовая сила:</strong> ${baseStr}<br>
-                            <strong>Итоговая сила:</strong> <span style="color: #006600; font-weight: bold;">${finalStr}</span>
-                        </div>
-                        <div style="flex: 1; text-align: right;">
-                            <strong>Позиция:</strong> ${matchPosition}<br>
-                            <strong>Стиль:</strong> ${customStyle || 'norm'}
-                        </div>
-                    </div>
-                    
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 4px; border: 1px solid #ddd;">Модификатор</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Значение</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Влияние</th>
-                        </tr>
-                        <tr>
-                            <td style="padding: 4px; border: 1px solid #ddd;">Физ. форма</td>
-                            <td style="padding: 4px; border: 1px solid #ddd; color: ${formColor}; font-weight: bold;">${form}%</td>
-                            <td style="padding: 4px; border: 1px solid #ddd;">×${physicalFormModifier.toFixed(3)}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 4px; border: 1px solid #ddd;">Усталость</td>
-                            <td style="padding: 4px; border: 1px solid #ddd; color: ${fatigueColor}; font-weight: bold;">${fatigue}%</td>
-                            <td style="padding: 4px; border: 1px solid #ddd;">×${fatigueModifier.toFixed(3)}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 4px; border: 1px solid #ddd;">Позиция</td>
-                            <td style="padding: 4px; border: 1px solid #ddd;">${matchPosition}</td>
-                            <td style="padding: 4px; border: 1px solid #ddd;">×${positionModifier.toFixed(3)}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 4px; border: 1px solid #ddd;">Реальность</td>
-                            <td style="padding: 4px; border: 1px solid #ddd;">${player.real_status || 'нет'}</td>
-                            <td style="padding: 4px; border: 1px solid #ddd;">×${realityModifier.toFixed(3)}</td>
-                        </tr>
-                    </table>
-                    
-                    ${player.abilities ? `
-                        <div style="margin-top: 8px;">
-                            <strong>Способности:</strong><br>
-                            <span style="font-size: 10px; color: #666;">${player.abilities}</span>
-                        </div>
-                    ` : ''}
-                    
-                    <div style="margin-top: 8px; font-size: 10px; color: #666;">
-                        <em>💡 Расчет: ${baseStr} × ${physicalFormModifier.toFixed(3)} × ${fatigueModifier.toFixed(3)} × ${realityModifier.toFixed(3)} × ${positionModifier.toFixed(3)} = ${finalStr}</em>
-                    </div>
-                `;
-            },
-
-            physical_form: () => {
-                const tournamentType = getTournamentType();
-                const typeNames = {
-                    'friendly': 'Товарищеский',
-                    'typeC': 'Тип C',
-                    'typeB': 'Тип B',
-                    'typeC_international': 'Международный',
-                    'typeB_amateur': 'Любительский'
-                };
-                
-                return `
-                    <p><strong>Физическая форма</strong> влияет на итоговую силу игрока.</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Текущий турнир:</strong> ${typeNames[tournamentType] || tournamentType}
-                    </div>
-                    <p><strong>Влияние на силу:</strong></p>
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 4px; border: 1px solid #ddd;">Форма</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Модификатор</th>
-                            <th style="padding: 4px; border: 1px solid #ddd;">Пример (сила 100)</th>
-                        </tr>
-                        <tr style="background: #f8d7da;"><td style="padding: 4px; border: 1px solid #ddd;">76% ↓</td><td style="padding: 4px; border: 1px solid #ddd;">×0.76</td><td style="padding: 4px; border: 1px solid #ddd;">76</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">88% ↑</td><td style="padding: 4px; border: 1px solid #ddd;">×0.88</td><td style="padding: 4px; border: 1px solid #ddd;">88</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;">100% ↑</td><td style="padding: 4px; border: 1px solid #ddd;">×1.00</td><td style="padding: 4px; border: 1px solid #ddd;">100</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;">117% ↑</td><td style="padding: 4px; border: 1px solid #ddd;">×1.17</td><td style="padding: 4px; border: 1px solid #ddd;">117</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;">125% ↓</td><td style="padding: 4px; border: 1px solid #ddd;">×1.25</td><td style="padding: 4px; border: 1px solid #ddd;">125</td></tr>
-                    </table>
-                    <p><strong>Направления формы:</strong></p>
-                    <ul style="margin: 8px 0; padding-left: 16px; font-size: 10px;">
-                        <li><strong>↑ Растет:</strong> Форма улучшается</li>
-                        <li><strong>↓ Падает:</strong> Форма ухудшается</li>
-                        </ul>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Чем выше форма - тем лучше!</em></p>
-                `;
-            },
-
-            abilities: () => {
-                const currentStyle = window.homeStyle?.value || window.awayStyle?.value || 'norm';
-                const styleNames = {
-                    'norm': 'Нормальный',
-                    'sp': 'Спартаковский', 
-                    'brazil': 'Бразильский',
-                    'tiki': 'Тики-така',
-                    'bb': 'Бей-беги',
-                    'kat': 'Катеначчо',
-                    'brit': 'Британский'
-                };
-                
-                return `
-                    <p><strong>Способности игроков</strong> дают бонусы в зависимости от стиля команды.</p>
-                    <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Текущий стиль:</strong> ${styleNames[currentStyle]}
-                    </div>
-                    <p><strong>Основные способности:</strong></p>
-                    <table style="width: 100%; font-size: 9px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 3px; border: 1px solid #ddd;">Способность</th>
-                            <th style="padding: 3px; border: 1px solid #ddd;">Лучший стиль</th>
-                            <th style="padding: 3px; border: 1px solid #ddd;">Бонус (4 ур.)</th>
-                        </tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Скорость (Ск)</td><td style="padding: 3px; border: 1px solid #ddd;">Бей-беги</td><td style="padding: 3px; border: 1px solid #ddd;">+40%</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Игра головой(Г)</td><td style="padding: 3px; border: 1px solid #ddd;">Британский</td><td style="padding: 3px; border: 1px solid #ddd;">+40%</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Пас Дальний (Пд)</td><td style="padding: 3px; border: 1px solid #ddd;">Катеначчо</td><td style="padding: 3px; border: 1px solid #ddd;">+40%</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Пас короткий (Пк)</td><td style="padding: 3px; border: 1px solid #ddd;">Спартаковский</td><td style="padding: 3px; border: 1px solid #ddd;">+40%</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Дриблинг (Д)</td><td style="padding: 3px; border: 1px solid #ddd;">Бразильский</td><td style="padding: 3px; border: 1px solid #ddd;">+40%</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Комбинации (Км)</td><td style="padding: 3px; border: 1px solid #ddd;">Тики-така</td><td style="padding: 3px; border: 1px solid #ddd;">+40%</td></tr>
-                    </table>
-                    <p><strong>Специальные способности:</strong></p>
-                    <ul style="margin: 8px 0; padding-left: 16px; font-size: 10px;">
-                        <li><strong>Лидерство (Л):</strong> Дает бонус всей линии (3-12%)</li>
-                        <li><strong>Интуиция (И):</strong> Командная игра (0.5-3%)</li>
-                        <li><strong>Капитанство (Ка):</strong> Улучшает капитанские бонусы</li>
-                        <li><strong>Вратарские (В, Р):</strong> Зависят от наличия SW в защите</li>
-                    </ul>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Подбирайте игроков с способностями, подходящими под стиль команды.</em></p>
-                `;
-            }
-        };
-        
-        const hintFunction = hints[type];
-        if (typeof hintFunction === 'function') {
-            return hintFunction();
-        }
-        
-        return hints[type] || '<p>Информация недоступна.</p>';
-    }
-
-    /**
-     * Позиционирует подсказку относительно кнопки
-     * @param {HTMLElement} hint - Элемент подсказки
-     * @param {HTMLElement} button - Кнопка-триггер
-     * @param {string} position - Позиция ('right top', 'left bottom', etc.)
-     */
-    function positionHint(hint, button, position = 'right top') {
-        const buttonRect = button.getBoundingClientRect();
-        const hintRect = hint.getBoundingClientRect();
-        const viewport = {
-            width: window.innerWidth,
-            height: window.innerHeight
-        };
-        
-        let left, top;
-        
-        switch (position) {
-            case 'right top':
-                left = buttonRect.right + 8;
-                top = buttonRect.top;
-                break;
-            case 'left bottom':
-                left = buttonRect.left - hintRect.width - 8;
-                top = buttonRect.bottom + 8;
-                break;
-            case 'center bottom':
-                left = buttonRect.left + (buttonRect.width - hintRect.width) / 2;
-                top = buttonRect.bottom + 8;
-                break;
-            default:
-                left = buttonRect.right + 8;
-                top = buttonRect.top;
-        }
-        
-        // Корректируем позицию, чтобы подсказка не выходила за границы экрана
-        if (left + hintRect.width > viewport.width) {
-            left = buttonRect.left - hintRect.width - 8;
-        }
-        if (left < 0) {
-            left = 8;
-        }
-        if (top + hintRect.height > viewport.height) {
-            top = buttonRect.top - hintRect.height - 8;
-        }
-        if (top < 0) {
-            top = 8;
-        }
-        
-        hint.style.left = left + window.scrollX + 'px';
-        hint.style.top = top + window.scrollY + 'px';
-    }
-
-    /**
-     * Добавляет кнопку подсказки к элементу
-     * @param {HTMLElement} container - Контейнер для кнопки
-     * @param {string} type - Тип подсказки
-     * @param {string} title - Заголовок подсказки
-     * @param {Object} context - Дополнительный контекст для подсказки
-     */
-    function addHelpButton(container, type, title, context = {}) {
-        const helpBtn = document.createElement('button');
-        helpBtn.className = 'vs-help-btn';
-        helpBtn.title = 'Показать подсказку';
-        helpBtn.onclick = (e) => {
-            e.preventDefault();
-            showCalculatorHint(helpBtn, type, title, 450, context);
-            return false;
-        };
-        
-        // Улучшенные стили кнопки
-        helpBtn.style.cssText = `
-            width: 16px;
-            height: 16px;
-            border: 1px solid #aaa;
-            background: linear-gradient(135deg, #f8f8f8, #e8e8e8);
-            cursor: pointer;
-            display: inline-block;
-            vertical-align: middle;
-            margin: 0 2px 0 4px;
-            border-radius: 3px;
-            font-size: 10px;
-            color: #666;
-            text-align: center;
-            line-height: 14px;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        `;
-        helpBtn.textContent = '?';
-        
-        // Улучшенные hover эффекты
-        helpBtn.onmouseover = () => {
-            helpBtn.style.background = 'linear-gradient(135deg, #e8e8e8, #d8d8d8)';
-            helpBtn.style.borderColor = '#999';
-            helpBtn.style.transform = 'translateY(-1px)';
-            helpBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)';
-        };
-        helpBtn.onmouseout = () => {
-            helpBtn.style.background = 'linear-gradient(135deg, #f8f8f8, #e8e8e8)';
-            helpBtn.style.borderColor = '#aaa';
-            helpBtn.style.transform = 'translateY(0)';
-            helpBtn.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        };
-        
-        container.appendChild(helpBtn);
-    }
-
-    /**
-     * Создает контекстную подсказку при наведении
-     * @param {HTMLElement} element - Элемент для подсказки
-     * @param {string} content - Содержимое подсказки
-     * @param {string} position - Позиция подсказки
-     */
-    function addHoverHint(element, content, position = 'top') {
-        let hintElement = null;
-        let showTimeout = null;
-        let hideTimeout = null;
-
-        const showHint = () => {
-            if (hintElement) return;
-
-            hintElement = document.createElement('div');
-            hintElement.className = 'vs-hover-hint';
-            hintElement.innerHTML = content;
-            hintElement.style.cssText = `
-                position: absolute;
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                padding: 6px 8px;
-                border-radius: 4px;
-                font-size: 10px;
-                line-height: 1.3;
-                z-index: 10001;
-                pointer-events: none;
-                opacity: 0;
-                transition: opacity 0.2s ease;
-                max-width: 200px;
-                word-wrap: break-word;
-            `;
-
-            document.body.appendChild(hintElement);
-            
-            // Позиционируем подсказку
-            const rect = element.getBoundingClientRect();
-            const hintRect = hintElement.getBoundingClientRect();
-            
-            let left, top;
-            switch (position) {
-                case 'top':
-                    left = rect.left + (rect.width - hintRect.width) / 2;
-                    top = rect.top - hintRect.height - 5;
-                    break;
-                case 'bottom':
-                    left = rect.left + (rect.width - hintRect.width) / 2;
-                    top = rect.bottom + 5;
-                    break;
-                case 'left':
-                    left = rect.left - hintRect.width - 5;
-                    top = rect.top + (rect.height - hintRect.height) / 2;
-                    break;
-                case 'right':
-                    left = rect.right + 5;
-                    top = rect.top + (rect.height - hintRect.height) / 2;
-                    break;
-            }
-
-            // Корректируем позицию, чтобы не выходить за границы экрана
-            left = Math.max(5, Math.min(left, window.innerWidth - hintRect.width - 5));
-            top = Math.max(5, Math.min(top, window.innerHeight - hintRect.height - 5));
-
-            hintElement.style.left = left + window.scrollX + 'px';
-            hintElement.style.top = top + window.scrollY + 'px';
-            
-            // Показываем с анимацией
-            setTimeout(() => {
-                if (hintElement) hintElement.style.opacity = '1';
-            }, 10);
-        };
-
-        const hideHint = () => {
-            if (hintElement) {
-                hintElement.style.opacity = '0';
-                setTimeout(() => {
-                    if (hintElement && hintElement.parentNode) {
-                        hintElement.parentNode.removeChild(hintElement);
-                    }
-                    hintElement = null;
-                }, 200);
-            }
-        };
-
-        element.addEventListener('mouseenter', () => {
-            clearTimeout(hideTimeout);
-            showTimeout = setTimeout(showHint, 500); // Задержка 500ms
-        });
-
-        element.addEventListener('mouseleave', () => {
-            clearTimeout(showTimeout);
-            hideTimeout = setTimeout(hideHint, 100);
-        });
-    }
-
-    /**
-     * Добавляет интерактивную подсказку с примером расчета
-     * @param {HTMLElement} container - Контейнер для кнопки
-     * @param {string} type - Тип подсказки
-     * @param {string} title - Заголовок подсказки
-     * @param {Function} calculator - Функция для расчета примера
-     */
-    function addInteractiveHelpButton(container, type, title, calculator = null) {
-        const helpBtn = document.createElement('button');
-        helpBtn.className = 'vs-help-btn interactive';
-        helpBtn.title = 'Показать интерактивную подсказку';
-        
-        // Добавляем индикатор интерактивности
-        helpBtn.innerHTML = '<span style="font-size: 8px;">?</span><span style="font-size: 6px; position: absolute; top: 1px; right: 1px;">⚡</span>';
-        
-        helpBtn.onclick = (e) => {
-            e.preventDefault();
-            const context = calculator ? { example: calculator() } : {};
-            showCalculatorHint(helpBtn, type, title, 500, context);
-            return false;
-        };
-        
-        // Стили для интерактивной кнопки
-        helpBtn.style.cssText = `
-            width: 16px;
-            height: 16px;
-            border: 1px solid #007bff;
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-            cursor: pointer;
-            display: inline-block;
-            vertical-align: middle;
-            margin: 0 2px 0 4px;
-            border-radius: 3px;
-            color: #1976d2;
-            text-align: center;
-            line-height: 14px;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(0,123,255,0.2);
-            position: relative;
-        `;
-        
-        // Hover эффекты для интерактивной кнопки
-        helpBtn.onmouseover = () => {
-            helpBtn.style.background = 'linear-gradient(135deg, #bbdefb, #90caf9)';
-            helpBtn.style.borderColor = '#0056b3';
-            helpBtn.style.transform = 'translateY(-1px)';
-            helpBtn.style.boxShadow = '0 2px 4px rgba(0,123,255,0.3)';
-        };
-        helpBtn.onmouseout = () => {
-            helpBtn.style.background = 'linear-gradient(135deg, #e3f2fd, #bbdefb)';
-            helpBtn.style.borderColor = '#007bff';
-            helpBtn.style.transform = 'translateY(0)';
-            helpBtn.style.boxShadow = '0 1px 2px rgba(0,123,255,0.2)';
-        };
-        
-        container.appendChild(helpBtn);
-    }
-
-    /**
-     * Добавляет поддержку клавиатурных сокращений для подсказок
-     */
-    function initializeKeyboardShortcuts() {
-        document.addEventListener('keydown', (e) => {
-            // Ctrl + H - показать справку по горячим клавишам
-            if (e.ctrlKey && e.key === 'h') {
-                e.preventDefault();
-                showKeyboardShortcutsHelp();
-            }
-            
-            // Escape - закрыть все подсказки
-            if (e.key === 'Escape') {
-                removeExistingHints();
-            }
-            
-            // F1 - показать общую справку
-            if (e.key === 'F1') {
-                e.preventDefault();
-                showGeneralHelp();
-            }
-        });
-    }
-
-    /**
-     * Показывает справку по клавиатурным сокращениям
-     */
-    function showKeyboardShortcutsHelp() {
-        const hint = document.createElement('div');
-        hint.className = 'vs-calculator-hint keyboard-shortcuts';
-        hint.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 400px;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 10000;
-            padding: 0;
-            font-size: 11px;
-            line-height: 1.4;
-        `;
-        
-        hint.innerHTML = `
-            <div style="background: linear-gradient(135deg, #006600, #008800); color: white; font-weight: bold; padding: 10px 12px; border-radius: 6px 6px 0 0;">
-                Клавиатурные сокращения
-                <button onclick="this.parentElement.parentElement.remove()" style="position: absolute; top: 8px; right: 10px; border: none; background: none; font-size: 18px; cursor: pointer; color: rgba(255,255,255,0.8);">×</button>
-            </div>
-            <div style="padding: 12px;">
-                <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                    <tr style="background: #f8f9fa;">
-                        <th style="padding: 6px; text-align: left; border-bottom: 1px solid #ddd;">Сочетание</th>
-                        <th style="padding: 6px; text-align: left; border-bottom: 1px solid #ddd;">Действие</th>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px; border-bottom: 1px solid #eee;"><kbd style="background: #f8f9fa; padding: 2px 4px; border-radius: 2px;">Ctrl + H</kbd></td>
-                        <td style="padding: 4px; border-bottom: 1px solid #eee;">Показать эту справку</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px; border-bottom: 1px solid #eee;"><kbd style="background: #f8f9fa; padding: 2px 4px; border-radius: 2px;">F1</kbd></td>
-                        <td style="padding: 4px; border-bottom: 1px solid #eee;">Общая справка по калькулятору</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px; border-bottom: 1px solid #eee;"><kbd style="background: #f8f9fa; padding: 2px 4px; border-radius: 2px;">Escape</kbd></td>
-                        <td style="padding: 4px; border-bottom: 1px solid #eee;">Закрыть все подсказки</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px;"><kbd style="background: #f8f9fa; padding: 2px 4px; border-radius: 2px;">?</kbd></td>
-                        <td style="padding: 4px;">Кнопки подсказок в интерфейсе</td>
-                    </tr>
-                </table>
-                <p style="margin-top: 12px; font-size: 10px; color: #666;">
-                    Наведите курсор на элементы интерфейса для получения дополнительной информации.
-                </p>
-            </div>
-        `;
-        
-        document.body.appendChild(hint);
-    }
-
-    /**
-     * Показывает общую справку по калькулятору
-     */
-    function showGeneralHelp() {
-        const hint = document.createElement('div');
-        hint.className = 'vs-calculator-hint general-help';
-        hint.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 10000;
-            padding: 0;
-            font-size: 11px;
-            line-height: 1.4;
-        `;
-        
-        hint.innerHTML = `
-            <div style="background: linear-gradient(135deg, #006600, #008800); color: white; font-weight: bold; padding: 10px 12px; border-radius: 6px 6px 0 0;">
-                Справка по калькулятору силы команд
-                <button onclick="this.parentElement.parentElement.remove()" style="position: absolute; top: 8px; right: 10px; border: none; background: none; font-size: 18px; cursor: pointer; color: rgba(255,255,255,0.8);">×</button>
-            </div>
-            <div style="padding: 12px;">
-                <h4 style="margin: 0 0 8px 0; color: #006600;">Основные функции</h4>
-                <ul style="margin: 0 0 12px 0; padding-left: 16px; font-size: 10px;">
-                    <li><strong>Расчет силы команд</strong> - учитывает все бонусы и модификаторы</li>
-                    <li><strong>Автоматическая загрузка</strong> - составы и данные команд</li>
-                    <li><strong>Интерактивные подсказки</strong> - помощь по всем элементам</li>
-                    <li><strong>Сохранение состояний</strong> - автоматическое сохранение настроек</li>
-                </ul>
-                
-                <h4 style="margin: 12px 0 8px 0; color: #006600;">Порядок работы</h4>
-                <ol style="margin: 0 0 12px 0; padding-left: 16px; font-size: 10px;">
-                    <li>Выберите тип турнира (определяется автоматически)</li>
-                    <li>Настройте погодные условия</li>
-                    <li>Выберите стили игры и тактические настройки</li>
-                    <li>Составьте оптимальные составы команд</li>
-                    <li>Назначьте капитанов и исполнителей стандартов</li>
-                    <li>Нажмите "Рассчитать силу" для получения результата</li>
-                </ol>
-                
-                <h4 style="margin: 12px 0 8px 0; color: #006600;">Учитываемые факторы</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10px;">
-                    <div>
-                        <strong>Игроки:</strong>
-                        <ul style="margin: 4px 0; padding-left: 12px;">
-                            <li>Базовая сила</li>
-                            <li>Физическая форма</li>
-                            <li>Позиционные модификаторы</li>
-                            <li>Способности</li>
-                            <li>Усталость</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <strong>Команда:</strong>
-                        <ul style="margin: 4px 0; padding-left: 12px;">
-                            <li>Стиль игры</li>
-                            <li>Сыгранность</li>
-                            <li>Лидерство</li>
-                            <li>Атмосфера</li>
-                            <li>Настрой и грубость</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <h4 style="margin: 12px 0 8px 0; color: #006600;">Внешние факторы</h4>
-                <ul style="margin: 0 0 12px 0; padding-left: 16px; font-size: 10px;">
-                    <li><strong>Погода:</strong> Температура и условия влияют на игроков</li>
-                    <li><strong>Домашний бонус:</strong> Посещаемость стадиона (для некоторых турниров)</li>
-                    <li><strong>Коллизии стилей:</strong> Взаимодействие стилей команд</li>
-                </ul>
-                
-                <p style="margin-top: 12px; font-size: 10px; color: #666; text-align: center;">
-                    <strong>Версия:</strong> ${document.querySelector('script[src*="Virtual-Soccer-Strength-Analyzer"]')?.textContent?.match(/@version\s+([\d.]+)/)?.[1] || 'неизвестна'}<br>
-                    Для получения подробной справки нажимайте кнопки <strong>?</strong> рядом с элементами интерфейса.
-                </p>
-            </div>
-        `;
-        
-        document.body.appendChild(hint);
-    }
-
-    // Инициализируем клавиатурные сокращения при загрузке
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeKeyboardShortcuts);
-    } else {
-        initializeKeyboardShortcuts();
-    }
-
     // ===== НОВЫЕ ФУНКЦИИ ДЛЯ ВКЛАДОК КОМАНД =====
 
     function createTeamTabsContainer(homeTeamName, awayTeamName, homeContent, awayContent) {
@@ -9946,11 +7677,6 @@ function getTournamentType() {
         lineupHeaderRow.appendChild(lineupHeaderCell);
         lineupHeaderTable.appendChild(lineupHeaderRow);
 
-        // Добавляем подсказку к заголовку состава
-        setTimeout(() => {
-            addHelpButton(lineupHeaderCell, 'player_selection', 'Выбор игроков');
-        }, 100);
-
         // Добавляем состав напрямую без дополнительной обертки
         lineupSection.appendChild(lineupHeaderTable);
         lineupSection.appendChild(lineupBlock.block);
@@ -9984,11 +7710,6 @@ function getTournamentType() {
 
         rolesHeaderRow.appendChild(rolesHeaderCell);
         rolesHeaderTable.appendChild(rolesHeaderRow);
-
-        // Добавляем подсказку к заголовку ролей
-        setTimeout(() => {
-            addHelpButton(rolesHeaderCell, 'abilities', 'Способности игроков');
-        }, 100);
 
         // Создаем таблицу ролей
         const rolesTable = document.createElement('table');
@@ -10167,56 +7888,6 @@ function getTournamentType() {
         return content;
     }
 
-    // ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ ДЛЯ ИНТЕРАКТИВНЫХ КАЛЬКУЛЯТОРОВ =====
-    
-    /**
-     * Инициализирует систему подсказок для существующих элементов футболок на странице
-     * Используется для HTML страниц, где футболки уже созданы статически
-     */
-    window.initializeFieldHints = function() {
-        console.log('[FieldHints] Начинаем инициализацию системы подсказок...');
-        
-        // Находим все существующие элементы футболок
-        const shirtsContainers = document.querySelectorAll('.shirts-container');
-        console.log(`[FieldHints] Найдено контейнеров футболок: ${shirtsContainers.length}`);
-        
-        shirtsContainers.forEach((container, containerIndex) => {
-            const shirtElements = container.children;
-            console.log(`[FieldHints] Контейнер ${containerIndex}: найдено футболок: ${shirtElements.length}`);
-            
-            Array.from(shirtElements).forEach((shirtElement, shirtIndex) => {
-                // Проверяем, что это элемент футболки
-                if (shirtElement.style.backgroundImage && shirtElement.style.backgroundImage.includes('shirt')) {
-                    // Генерируем уникальный ID если его нет
-                    if (!shirtElement.id) {
-                        const position = shirtElement.textContent || `pos${shirtIndex}`;
-                        const team = containerIndex === 0 ? 'home' : 'away';
-                        shirtElement.id = `shirt-${team}-${position}-${Math.random().toString(36).substr(2, 9)}`;
-                    }
-                    
-                    // Добавляем стили для интерактивности
-                    shirtElement.style.cursor = 'pointer';
-                    
-                    // Добавляем обработчик клика для показа подсказки
-                    shirtElement.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const position = shirtElement.textContent || 'Unknown';
-                        const team = containerIndex === 0 ? 'home' : 'away';
-                        
-                        console.log(`[FieldHints] Клик по футболке: ${shirtElement.id}, позиция: ${position}, команда: ${team}`);
-                        
-                        // Показываем подсказку только для позиции (без данных игрока)
-                        showFieldPlayerHint(position, team, null, shirtElement);
-                    });
-                    
-                    console.log(`[FieldHints] Добавлены обработчики для футболки: ${shirtElement.id}`);
-                }
-            });
-        });
-        
-        console.log('[FieldHints] Инициализация системы подсказок завершена');
-    };
-    
     // ===== КОНЕЦ НОВЫХ ФУНКЦИЙ =====
     init();
 })();
