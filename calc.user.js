@@ -2,7 +2,7 @@
 // @name         Virtual Soccer Strength Analyzer
 // @namespace    http://tampermonkey.net/
 // @license MIT
-// @version      0.932
+// @version      0.934
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        *://*.virtualsoccer.ru/previewmatch.php*
@@ -757,6 +757,216 @@ const collision_bonuses = {
         tiki: 0.40
     }
 };
+
+// ===== CHEMISTRY SYSTEM (Система взаимопонимания игроков) =====
+
+/**
+ * Проверяет есть ли коллизия между двумя стилями
+ * @param {string} style1 - Стиль первого игрока
+ * @param {string} style2 - Стиль второго игрока
+ * @returns {boolean} - true если стили в коллизии
+ */
+function areStylesInCollision(style1, style2) {
+    if (!style1 || !style2 || style1 === 'norm' || style2 === 'norm') {
+        return false;
+    }
+    
+    // Проверяем есть ли победа style1 над style2
+    const style1Wins = collision_bonuses[style1];
+    const style1BeatsStyle2 = !!(style1Wins && style1Wins[style2]);
+    
+    // Проверяем есть ли победа style2 над style1
+    const style2Wins = collision_bonuses[style2];
+    const style2BeatsStyle1 = !!(style2Wins && style2Wins[style1]);
+    
+    // Коллизия есть если один стиль побеждает другой
+    return style1BeatsStyle2 || style2BeatsStyle1;
+}
+
+/**
+ * Рассчитывает модификатор линии между двумя игроками
+ * @param {Object} player1 - Первый игрок
+ * @param {Object} player2 - Второй игрок
+ * @returns {number} - Модификатор линии от -0.05 до +0.125
+ */
+function calculateLineModifier(player1, player2) {
+    // 1. Проверка на игрока от Лиги (нет стиля)
+    if (!player1.hidden_style || !player2.hidden_style) {
+        return 0;
+    }
+    
+    // 2. Проверка на коллизию стилей (приоритет!)
+    if (areStylesInCollision(player1.hidden_style, player2.hidden_style)) {
+        return -0.05; // -5%
+    }
+    
+    // 3. Проверка на совпадение стилей
+    if (player1.hidden_style === player2.hidden_style) {
+        // TODO: Добавить логику изученности стиля когда будут доступны данные
+        // Пока используем максимальный бонус для совпадающих стилей
+        return 0.125; // 12.5%
+    }
+    
+    // 4. Проверка на совпадение национальностей
+    if (player1.nat_id && player2.nat_id && player1.nat_id === player2.nat_id) {
+        return 0.05; // минимум 5%
+    }
+    
+    // 5. Все остальные случаи (разные нац, разные стили без коллизии)
+    return 0;
+}
+
+/**
+ * Получает связанные позиции для данной позиции
+ * @param {string} position - Позиция игрока
+ * @param {Array} lineup - Состав команды (массив позиций)
+ * @returns {Array} - Массив связанных позиций
+ */
+function getPositionConnections(position, lineup) {
+    // Базовая матрица связей позиций
+    const connections = {
+        // Защитники
+        'LD': ['GK', 'LM', 'CD', 'LB'],
+        'CD': ['GK', 'LD', 'RD', 'SW', 'CM', 'DM'],
+        'RD': ['GK', 'RM', 'CD', 'RB'],
+        'SW': ['GK', 'CD', 'CM', 'DM'],
+        'LB': ['LD', 'LM', 'DM'],
+        'RB': ['RD', 'RM', 'DM'],
+        
+        // Полузащитники
+        'LM': ['LD', 'LB', 'CM', 'LW', 'AM'],
+        'CM': ['CD', 'SW', 'LM', 'RM', 'DM', 'AM', 'FR'],
+        'RM': ['RD', 'RB', 'CM', 'RW', 'AM'],
+        'DM': ['CD', 'SW', 'LB', 'RB', 'CM', 'AM'],
+        'AM': ['LM', 'CM', 'RM', 'DM', 'LW', 'RW', 'CF', 'FR'],
+        'FR': ['CM', 'AM', 'CF', 'ST'],
+        
+        // Крайние
+        'LW': ['LM', 'AM', 'LF'],
+        'RW': ['RM', 'AM', 'RF'],
+        
+        // Нападающие
+        'LF': ['LW', 'CF', 'ST'],
+        'CF': ['AM', 'FR', 'LF', 'RF', 'ST'],
+        'RF': ['RW', 'CF', 'ST'],
+        'ST': ['FR', 'LF', 'CF', 'RF']
+    };
+    
+    // Особая логика для GK (динамические связи)
+    if (position === 'GK') {
+        return getGKConnections(lineup);
+    }
+    
+    return connections[position] || [];
+}
+
+/**
+ * Получает связи для вратаря на основе состава защиты
+ * @param {Array} lineup - Состав команды
+ * @returns {Array} - Массив связанных позиций для GK
+ */
+function getGKConnections(lineup) {
+    const defenders = lineup.filter(pos => 
+        ['LD', 'CD', 'RD', 'SW', 'LB', 'RB'].includes(pos)
+    );
+    
+    const hasLB = defenders.includes('LB');
+    const hasRB = defenders.includes('RB');
+    const hasSW = defenders.includes('SW');
+    const cdCount = defenders.filter(pos => pos === 'CD').length;
+    
+    // Правило 1: Если есть LB/RB + SW → связь только с SW
+    if ((hasLB || hasRB) && hasSW) {
+        return ['SW'];
+    }
+    
+    // Правило 2: Если 5 защитников с 3+ CD → связь только с CD
+    if (defenders.length === 5 && cdCount >= 3) {
+        return defenders.filter(pos => pos === 'CD');
+    }
+    
+    // Правило 3: Если SW без LB/RB → связь со всеми кроме CD
+    if (hasSW && !hasLB && !hasRB) {
+        return defenders.filter(pos => pos !== 'CD');
+    }
+    
+    // Правило 4: Остальные случаи → связь со всеми защитниками
+    return defenders;
+}
+
+/**
+ * Рассчитывает модификатор Chemistry для игрока
+ * @param {Object} player - Игрок
+ * @param {Array} lineup - Состав команды (объекты игроков)
+ * @param {Array} positions - Позиции игроков в составе
+ * @returns {number} - Модификатор Chemistry от -0.05 до +0.125
+ */
+function calculatePlayerChemistryModifier(player, lineup, positions) {
+    const playerIndex = lineup.findIndex(p => p.id === player.id);
+    if (playerIndex === -1) return 0;
+    
+    const playerPosition = positions[playerIndex];
+    if (!playerPosition) return 0;
+    
+    // Получаем связанные позиции
+    const connectedPositions = getPositionConnections(playerPosition, positions);
+    if (connectedPositions.length === 0) return 0;
+    
+    let totalModifier = 0;
+    let connectionCount = 0;
+    
+    // Рассчитываем модификатор для каждой связи
+    connectedPositions.forEach(connectedPos => {
+        const connectedPlayerIndex = positions.findIndex(pos => pos === connectedPos);
+        if (connectedPlayerIndex !== -1 && connectedPlayerIndex < lineup.length) {
+            const connectedPlayer = lineup[connectedPlayerIndex];
+            if (connectedPlayer) {
+                const lineModifier = calculateLineModifier(player, connectedPlayer);
+                totalModifier += lineModifier;
+                connectionCount++;
+            }
+        }
+    });
+    
+    // Возвращаем среднее арифметическое модификаторов всех линий
+    return connectionCount > 0 ? totalModifier / connectionCount : 0;
+}
+
+/**
+ * Получает бонус Chemistry для игрока (интеграция с существующей системой)
+ * @param {Object} player - Игрок
+ * @param {Array} inLineupPlayers - Массив игроков в составе
+ * @param {string} teamStyleId - Стиль команды (не используется в Chemistry)
+ * @returns {number} - Бонус Chemistry в процентах
+ */
+function getChemistryBonus(player, inLineupPlayers, teamStyleId) {
+    // Получаем позиции из slotEntries (если доступны)
+    const slotEntries = window.currentSlotEntries || [];
+    
+    if (slotEntries.length === 0) {
+        console.log('[Chemistry] slotEntries не доступны, Chemistry отключен');
+        return 0;
+    }
+    
+    // Находим позиции всех игроков
+    const positions = slotEntries.map(entry => entry.matchPos);
+    
+    // Рассчитываем модификатор Chemistry
+    const modifier = calculatePlayerChemistryModifier(player, inLineupPlayers, positions);
+    
+    // Логирование для отладки
+    if (modifier !== 0) {
+        console.log(`[Chemistry] ${player.name}: ${(modifier * 100).toFixed(1)}%`, {
+            nat_id: player.nat_id,
+            nat: player.nat,
+            hidden_style: player.hidden_style
+        });
+    }
+    
+    return modifier; // Возвращаем как есть (уже в долях от 1)
+}
+
+// ===== КОНЕЦ CHEMISTRY SYSTEM =====
 
 function pickClosest(target, nums) {
     if (!nums || !nums.length) {
@@ -6456,6 +6666,8 @@ function getTournamentType() {
         return plrdat.map(p => ({
             id: p[0],
             name: `${p[2]} ${p[3]}`,
+            nat_id: p[4],        // ID национальности для Chemistry системы
+            nat: p[5],           // Название национальности для Chemistry системы
             mainPos: p[6],
             secondPos: p[7],
             age: p[9],
@@ -6468,6 +6680,7 @@ function getTournamentType() {
             abilities: `${p[16]} ${p[17]} ${p[18]} ${p[19]}`,
             real_status: p[31],
             real_sign: p[32],
+            hidden_style: p[33], // Скрытый стиль игрока для Chemistry системы
             transfer: p[38],
             training: p[44]
         }));
@@ -6488,6 +6701,21 @@ function getTournamentType() {
                 console.log('Ошибка парсинга игрока:', e, m[1]);
             }
         }
+        
+        // Отладочное логирование для Chemistry системы
+        if (items.length > 0) {
+            const firstPlayer = items[0];
+            console.log('[plrdat] Первый игрок - индексы для chemistry:', {
+                'p[0] id': firstPlayer[0],
+                'p[2] name': firstPlayer[2],
+                'p[3] surname': firstPlayer[3],
+                'p[4] nat_id': firstPlayer[4],
+                'p[5] nat': firstPlayer[5],
+                'p[33] hidden_style': firstPlayer[33],
+                'total_length': firstPlayer.length
+            });
+        }
+        
         console.log('[plrdat] Extracted data:', items);
         return items;
     }
@@ -6531,6 +6759,17 @@ function getTournamentType() {
                             return;
                         }
                         const players = extractPlayersFromPlrdat(rawPlayers);
+                        
+                        // Отладочное логирование для Chemistry системы
+                        if (players.length > 0) {
+                            console.log('[Chemistry Debug] Пример игрока:', {
+                                name: players[0].name,
+                                nat_id: players[0].nat_id,
+                                nat: players[0].nat,
+                                hidden_style: players[0].hidden_style
+                            });
+                        }
+                        
                         resolve(players);
                     } catch (error) {
                         reject(error);
@@ -8319,6 +8558,9 @@ function getTournamentType() {
                         matchPos
                     } : null;
                 }).filter(Boolean);
+                
+                // Сохраняем slotEntries для Chemistry системы
+                window.currentSlotEntries = slotEntries;
                 const team = {
                     positions: slotEntries.map(e => e.matchPos),
                     realStr: slotEntries.map(e => Number(e.player.realStr) || 0),
@@ -10218,5 +10460,95 @@ function getTournamentType() {
     };
     
     // ===== КОНЕЦ НОВЫХ ФУНКЦИЙ =====
+    
+    // ===== ОТЛАДОЧНЫЕ ФУНКЦИИ ДЛЯ CHEMISTRY СИСТЕМЫ =====
+    
+    /**
+     * Отладочная функция для тестирования Chemistry системы
+     */
+    window.testChemistry = function() {
+        console.log('=== ТЕСТ CHEMISTRY СИСТЕМЫ ===');
+        
+        // Проверяем доступность данных
+        const slotEntries = window.currentSlotEntries || [];
+        if (slotEntries.length === 0) {
+            console.log('❌ slotEntries не доступны. Сначала рассчитайте силу команды.');
+            return;
+        }
+        
+        console.log('✅ Найдено игроков в составе:', slotEntries.length);
+        
+        // Проверяем данные игроков
+        slotEntries.forEach((entry, idx) => {
+            const player = entry.player;
+            console.log(`Игрок ${idx + 1}: ${player.name}`, {
+                position: entry.matchPos,
+                nat_id: player.nat_id,
+                nat: player.nat,
+                hidden_style: player.hidden_style
+            });
+        });
+        
+        // Тестируем функции Chemistry
+        console.log('\n=== ТЕСТ ФУНКЦИЙ ===');
+        
+        // Тест коллизий стилей
+        console.log('Коллизии стилей:');
+        console.log('sp vs brit:', areStylesInCollision('sp', 'brit')); // должно быть true
+        console.log('norm vs sp:', areStylesInCollision('norm', 'sp')); // должно быть false
+        console.log('bb vs sp:', areStylesInCollision('bb', 'sp')); // должно быть true
+        
+        // Тест связей позиций
+        const positions = slotEntries.map(e => e.matchPos);
+        console.log('\nСвязи позиций:');
+        positions.forEach((pos, idx) => {
+            const connections = getPositionConnections(pos, positions);
+            console.log(`${pos}: [${connections.join(', ')}]`);
+        });
+        
+        // Тест расчета Chemistry для каждого игрока
+        console.log('\n=== РАСЧЕТ CHEMISTRY ===');
+        const players = slotEntries.map(e => e.player);
+        
+        slotEntries.forEach((entry, idx) => {
+            const modifier = calculatePlayerChemistryModifier(entry.player, players, positions);
+            console.log(`${entry.player.name} (${entry.matchPos}): ${(modifier * 100).toFixed(1)}%`);
+        });
+        
+        console.log('=== КОНЕЦ ТЕСТА ===');
+    };
+    
+    /**
+     * Показывает информацию о Chemistry системе
+     */
+    window.chemistryInfo = function() {
+        console.log(`
+🧪 CHEMISTRY SYSTEM v0.934
+
+Команды для тестирования:
+- testChemistry() - полный тест системы
+- chemistryInfo() - эта справка
+
+Как использовать:
+1. Откройте калькулятор силы
+2. Настройте составы команд
+3. Нажмите "Рассчитать силу"
+4. Выполните testChemistry() в консоли
+
+Система учитывает:
+- Национальности игроков (nat_id, nat)
+- Стили игроков (hidden_style)
+- Связи между позициями на поле
+- Коллизии стилей (из collision_bonuses)
+
+Диапазон модификаторов: от -5% до +12.5%
+        `);
+    };
+    
+    // Показываем справку при загрузке
+    console.log('🧪 Chemistry System загружена! Используйте chemistryInfo() для справки.');
+    
+    // ===== КОНЕЦ ОТЛАДОЧНЫХ ФУНКЦИЙ =====
+    
     init();
 })();
