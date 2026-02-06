@@ -155,20 +155,26 @@ GK связан с позициями: **LD, LB, CD, SW, RD, RB** (все защ
 
 **Прямые связи:** (LD || LB ),  (CM (min index) || DM (min index)), (LF || CF (min index) || ST )
 
-### CM (Центральный полузащитник)
+### CM (Центральный полузащитник со средним индексом (CM = 3))
 
 ```
-        CD
-         |
-    LM ─ CM ─ RM
-     |   |   |
-    DM  AM  DM
-     |   |   |
-        CF
+
+```
+**Прямые связи:** ( CD all ), CM (all), (CF (all) || ST)
+
+### CM (Центральный полузащитник со min индексом (CM =< 3))
+
 ```
 
-**Прямые связи:** CD, LM, RM, DM, AM, CF
-**Диагональные:** LD, RD, LW, RW, LF, RF
+```
+**Прямые связи:** (DM (all) || ( CD min index )), (LM || LW), CM (index+1), ((FR, AM) || (is424? (CF min index) : (LF || CF (min index) || ST)))
+
+### CM (Центральный полузащитник со max индексом (CM =< 3))
+
+```
+
+```
+**Прямые связи:** (DM (all) || ( CD max index )), (RM || RW), CM (index-1), ((FR, AM) || (is424? (CF max index) : (RF || CF (max index) || ST)))
 
 ### RM (Правый полузащитник)
 
