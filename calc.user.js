@@ -2,7 +2,7 @@
 // @name         Virtual Soccer Strength Analyzer
 // @namespace    http://tampermonkey.net/
 // @license MIT
-// @version      0.934
+// @version      0.939
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        *://*.virtualsoccer.ru/previewmatch.php*
@@ -83,7 +83,17 @@ const CONFIG = {
             bb: 'бей-беги',
             kat: 'катеначчо'
         },
-        ORDER: ['norm', 'sp', 'tiki', 'brazil', 'brit', 'bb', 'kat']
+        ORDER: ['norm', 'sp', 'tiki', 'brazil', 'brit', 'bb', 'kat'],
+        // Обратное соответствие: числовой стиль → строковый
+        NUMERIC_TO_STRING: {
+            0: 'norm',
+            1: 'sp', 
+            2: 'bb',
+            3: 'brazil',
+            4: 'tiki',
+            5: 'kat',
+            6: 'brit'
+        }
     },
     WEATHER: {
         OPTIONS: ["очень жарко", "жарко", "солнечно", "облачно", "пасмурно", "дождь", "снег"],
@@ -761,6 +771,15 @@ const collision_bonuses = {
 // ===== CHEMISTRY SYSTEM (Система взаимопонимания игроков) =====
 
 /**
+ * Преобразует числовой стиль из hidden_style в строковое значение для селектора
+ * @param {number} numericStyle - Числовой стиль (0-6)
+ * @returns {string} - Строковое значение стиля
+ */
+function convertNumericStyleToString(numericStyle) {
+    return CONFIG.STYLES.NUMERIC_TO_STRING[numericStyle] || 'norm';
+}
+
+/**
  * Проверяет есть ли коллизия между двумя стилями
  * @param {string} style1 - Стиль первого игрока
  * @param {string} style2 - Стиль второго игрока
@@ -928,8 +947,14 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
         }
     });
     
-    // Возвращаем среднее арифметическое модификаторов всех линий
-    return connectionCount > 0 ? totalModifier / connectionCount : 0;
+    // Рассчитываем базовый Chemistry (среднее арифметическое модификаторов всех линий)
+    const baseChemistry = connectionCount > 0 ? totalModifier / connectionCount : 0;
+    
+    // Применяем модификатор изученности стиля игрока
+    const styleKnowledge = player.styleKnowledge || 1.0; // По умолчанию 100%
+    const finalChemistry = baseChemistry * styleKnowledge;
+    
+    return finalChemistry;
 }
 
 /**
@@ -940,26 +965,72 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
  * @returns {number} - Бонус Chemistry в процентах
  */
 function getChemistryBonus(player, inLineupPlayers, teamStyleId) {
+    // Проверяем наличие данных игрока
+    if (!player) {
+        console.warn('[CHEMISTRY] Игрок не найден');
+        return 0;
+    }
+    
     // Получаем позиции из slotEntries (если доступны)
     const slotEntries = window.currentSlotEntries || [];
     
     if (slotEntries.length === 0) {
-        console.log('[Chemistry] slotEntries не доступны, Chemistry отключен');
+        console.log('[CHEMISTRY] slotEntries не доступны, Chemistry отключен');
+        return 0;
+    }
+    
+    // Находим entry для текущего игрока чтобы получить customStyleValue
+    const playerEntry = slotEntries.find(entry => 
+        entry.player && String(entry.player.id) === String(player.id)
+    );
+    
+    // Определяем стиль для Chemistry: customStyleValue (если есть) или hidden_style
+    const effectiveStyle = (playerEntry && playerEntry.customStyleValue) || player.hidden_style || 'norm';
+    
+    // Создаем модифицированный объект игрока с эффективным стилем
+    const modifiedPlayer = {
+        ...player,
+        hidden_style: effectiveStyle
+    };
+    
+    // Проверяем наличие необходимых данных для Chemistry
+    if (!modifiedPlayer.nat_id && !modifiedPlayer.hidden_style) {
+        console.log(`[CHEMISTRY] ${player.name}: нет данных для Chemistry (nat_id: ${modifiedPlayer.nat_id}, style: ${modifiedPlayer.hidden_style})`);
         return 0;
     }
     
     // Находим позиции всех игроков
     const positions = slotEntries.map(entry => entry.matchPos);
     
-    // Рассчитываем модификатор Chemistry
-    const modifier = calculatePlayerChemistryModifier(player, inLineupPlayers, positions);
+    // Создаем модифицированный lineup с эффективными стилями
+    const modifiedLineup = inLineupPlayers.map(p => {
+        const pEntry = slotEntries.find(entry => 
+            entry.player && String(entry.player.id) === String(p.id)
+        );
+        const pEffectiveStyle = (pEntry && pEntry.customStyleValue) || p.hidden_style || 'norm';
+        
+        return {
+            ...p,
+            hidden_style: pEffectiveStyle
+        };
+    });
     
-    // Логирование для отладки
+    // Рассчитываем модификатор Chemistry
+    const modifier = calculatePlayerChemistryModifier(modifiedPlayer, modifiedLineup, positions);
+    
+    // Логирование для отладки (только если есть модификатор)
     if (modifier !== 0) {
-        console.log(`[Chemistry] ${player.name}: ${(modifier * 100).toFixed(1)}%`, {
+        const isCustomStyle = playerEntry && playerEntry.customStyleValue && 
+                             playerEntry.customStyleValue !== player.hidden_style;
+        
+        console.log(`[CHEMISTRY] ${player.name}: ${(modifier * 100).toFixed(1)}%`, {
             nat_id: player.nat_id,
             nat: player.nat,
-            hidden_style: player.hidden_style
+            original_style: player.hidden_style,
+            effective_style: effectiveStyle,
+            custom_style: isCustomStyle ? playerEntry.customStyleValue : null,
+            styleKnowledge: player.styleKnowledge,
+            modifier: modifier
         });
     }
     
@@ -2186,10 +2257,6 @@ function parseStadiumCapacity() {
         }
     }
     return null;
-}
-
-function getChemistryBonus(player, lineup, teamStyleId) {
-    return 0.125;
 }
 
 function getSynergyBonus(player, lineup, teamStyleId, userSynergy) {
@@ -5461,12 +5528,26 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                         // Сохраняем данные игрока в slotApi
                         slotApi.selectedPlayer = player;  // ← ДОБАВЛЕНО
                         
-                        // Загружаем стиль игрока из кэша
+                        // Автоматически устанавливаем стиль игрока из hidden_style
+                        const playerHiddenStyleNumeric = player.hidden_style;
+                        const playerHiddenStyle = convertNumericStyleToString(playerHiddenStyleNumeric);
+                        
+                        console.log(`[STYLE_SELECTOR] Игрок ${player.name}: hidden_style=${playerHiddenStyleNumeric} → ${playerHiddenStyle}`);
+                        
+                        // Загружаем стиль игрока из кэша или используем hidden_style
                         const cachedStyle = getPlayerStyleFromCache(v);
-                        if (cachedStyle && cachedStyle !== 'norm') {
-                            slotApi.customStyleValue = cachedStyle;
+                        const effectiveStyle = cachedStyle || playerHiddenStyle;
+                        
+                        if (effectiveStyle !== 'norm') {
+                            slotApi.customStyleValue = effectiveStyle;
                             if (styleSelect && styleSelect.setValue) {
-                                styleSelect.setValue(cachedStyle);
+                                styleSelect.setValue(effectiveStyle);
+                            }
+                        } else {
+                            // Устанавливаем norm если нет кэша и hidden_style = norm
+                            slotApi.customStyleValue = 'norm';
+                            if (styleSelect && styleSelect.setValue) {
+                                styleSelect.setValue('norm');
                             }
                         }
 
@@ -6681,6 +6762,7 @@ function getTournamentType() {
             real_status: p[31],
             real_sign: p[32],
             hidden_style: p[33], // Скрытый стиль игрока для Chemistry системы
+            styleKnowledge: 1.0, // Модификатор изученности стиля (по умолчанию 100% = 1.0)
             transfer: p[38],
             training: p[44]
         }));
@@ -6705,7 +6787,7 @@ function getTournamentType() {
         // Отладочное логирование для Chemistry системы
         if (items.length > 0) {
             const firstPlayer = items[0];
-            console.log('[plrdat] Первый игрок - индексы для chemistry:', {
+            console.log('[CHEMISTRY] Первый игрок - индексы для chemistry:', {
                 'p[0] id': firstPlayer[0],
                 'p[2] name': firstPlayer[2],
                 'p[3] surname': firstPlayer[3],
@@ -6716,7 +6798,7 @@ function getTournamentType() {
             });
         }
         
-        console.log('[plrdat] Extracted data:', items);
+        console.log('[CHEMISTRY] Extracted data:', items);
         return items;
     }
 
@@ -6762,7 +6844,7 @@ function getTournamentType() {
                         
                         // Отладочное логирование для Chemistry системы
                         if (players.length > 0) {
-                            console.log('[Chemistry Debug] Пример игрока:', {
+                            console.log('[CHEMISTRY] Пример игрока:', {
                                 name: players[0].name,
                                 nat_id: players[0].nat_id,
                                 nat: players[0].nat,
@@ -8559,8 +8641,11 @@ function getTournamentType() {
                     } : null;
                 }).filter(Boolean);
                 
-                // Сохраняем slotEntries для Chemistry системы
-                window.currentSlotEntries = slotEntries;
+                // Сохраняем slotEntries для Chemistry системы с customStyleValue
+                window.currentSlotEntries = slotEntries.map(entry => ({
+                    ...entry,
+                    customStyleValue: entry.slot.customStyleValue || entry.player.hidden_style || 'norm'
+                }));
                 const team = {
                     positions: slotEntries.map(e => e.matchPos),
                     realStr: slotEntries.map(e => Number(e.player.realStr) || 0),
@@ -10485,7 +10570,8 @@ function getTournamentType() {
                 position: entry.matchPos,
                 nat_id: player.nat_id,
                 nat: player.nat,
-                hidden_style: player.hidden_style
+                hidden_style: player.hidden_style,
+                styleKnowledge: player.styleKnowledge
             });
         });
         
@@ -10515,6 +10601,26 @@ function getTournamentType() {
             console.log(`${entry.player.name} (${entry.matchPos}): ${(modifier * 100).toFixed(1)}%`);
         });
         
+        // Тест Style Knowledge модификатора
+        console.log('\n=== ТЕСТ STYLE KNOWLEDGE ===');
+        if (players.length > 0) {
+            const testPlayer = players[0];
+            const originalKnowledge = testPlayer.styleKnowledge;
+            
+            console.log(`Тестируем игрока: ${testPlayer.name}`);
+            
+            // Тестируем разные уровни изученности
+            const knowledgeLevels = [0.2, 0.4, 0.6, 0.8, 1.0];
+            knowledgeLevels.forEach(level => {
+                testPlayer.styleKnowledge = level;
+                const modifier = calculatePlayerChemistryModifier(testPlayer, players, positions);
+                console.log(`Style Knowledge ${(level * 100)}%: Chemistry = ${(modifier * 100).toFixed(1)}%`);
+            });
+            
+            // Восстанавливаем оригинальное значение
+            testPlayer.styleKnowledge = originalKnowledge;
+        }
+        
         console.log('=== КОНЕЦ ТЕСТА ===');
     };
     
@@ -10523,7 +10629,12 @@ function getTournamentType() {
      */
     window.chemistryInfo = function() {
         console.log(`
-🧪 CHEMISTRY SYSTEM v0.934
+🧪 CHEMISTRY SYSTEM v0.938
+
+НОВОЕ: Интеграция с селектором стилей!
+- По умолчанию показывает hidden_style игрока
+- Пользователь может изменить стиль
+- Chemistry учитывает выбранный стиль
 
 Команды для тестирования:
 - testChemistry() - полный тест системы
@@ -10532,21 +10643,26 @@ function getTournamentType() {
 Как использовать:
 1. Откройте калькулятор силы
 2. Настройте составы команд
-3. Нажмите "Рассчитать силу"
-4. Выполните testChemistry() в консоли
+3. Измените стили игроков (по желанию)
+4. Нажмите "Рассчитать силу"
+5. Выполните testChemistry() в консоли
 
 Система учитывает:
 - Национальности игроков (nat_id, nat)
-- Стили игроков (hidden_style)
+- Стили игроков (customStyleValue ИЛИ hidden_style)
+- Изученность стиля (styleKnowledge) - модификатор от 0.0 до 1.0
 - Связи между позициями на поле
 - Коллизии стилей (из collision_bonuses)
 
+Формула: BaseChemistry * StyleKnowledge = FinalChemistry
 Диапазон модификаторов: от -5% до +12.5%
+
+Логирование: Все сообщения помечены тегом [CHEMISTRY]
         `);
     };
     
     // Показываем справку при загрузке
-    console.log('🧪 Chemistry System загружена! Используйте chemistryInfo() для справки.');
+    console.log('🧪 Chemistry System v0.939 загружена! ИСПРАВЛЕНА интеграция с селектором стилей. Используйте chemistryInfo() для справки.');
     
     // ===== КОНЕЦ ОТЛАДОЧНЫХ ФУНКЦИЙ =====
     
