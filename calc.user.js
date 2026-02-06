@@ -2,7 +2,7 @@
 // @name         Virtual Soccer Strength Analyzer
 // @namespace    http://tampermonkey.net/
 // @license MIT
-// @version      0.938
+// @version      0.939
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        *://*.virtualsoccer.ru/previewmatch.php*
@@ -83,7 +83,17 @@ const CONFIG = {
             bb: 'бей-беги',
             kat: 'катеначчо'
         },
-        ORDER: ['norm', 'sp', 'tiki', 'brazil', 'brit', 'bb', 'kat']
+        ORDER: ['norm', 'sp', 'tiki', 'brazil', 'brit', 'bb', 'kat'],
+        // Обратное соответствие: числовой стиль → строковый
+        NUMERIC_TO_STRING: {
+            0: 'norm',
+            1: 'sp', 
+            2: 'bb',
+            3: 'brazil',
+            4: 'tiki',
+            5: 'kat',
+            6: 'brit'
+        }
     },
     WEATHER: {
         OPTIONS: ["очень жарко", "жарко", "солнечно", "облачно", "пасмурно", "дождь", "снег"],
@@ -759,6 +769,15 @@ const collision_bonuses = {
 };
 
 // ===== CHEMISTRY SYSTEM (Система взаимопонимания игроков) =====
+
+/**
+ * Преобразует числовой стиль из hidden_style в строковое значение для селектора
+ * @param {number} numericStyle - Числовой стиль (0-6)
+ * @returns {string} - Строковое значение стиля
+ */
+function convertNumericStyleToString(numericStyle) {
+    return CONFIG.STYLES.NUMERIC_TO_STRING[numericStyle] || 'norm';
+}
 
 /**
  * Проверяет есть ли коллизия между двумя стилями
@@ -5510,7 +5529,10 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                         slotApi.selectedPlayer = player;  // ← ДОБАВЛЕНО
                         
                         // Автоматически устанавливаем стиль игрока из hidden_style
-                        const playerHiddenStyle = player.hidden_style || 'norm';
+                        const playerHiddenStyleNumeric = player.hidden_style;
+                        const playerHiddenStyle = convertNumericStyleToString(playerHiddenStyleNumeric);
+                        
+                        console.log(`[STYLE_SELECTOR] Игрок ${player.name}: hidden_style=${playerHiddenStyleNumeric} → ${playerHiddenStyle}`);
                         
                         // Загружаем стиль игрока из кэша или используем hidden_style
                         const cachedStyle = getPlayerStyleFromCache(v);
@@ -10640,7 +10662,7 @@ function getTournamentType() {
     };
     
     // Показываем справку при загрузке
-    console.log('🧪 Chemistry System v0.938 загружена! ИНТЕГРАЦИЯ с селектором стилей. Используйте chemistryInfo() для справки.');
+    console.log('🧪 Chemistry System v0.939 загружена! ИСПРАВЛЕНА интеграция с селектором стилей. Используйте chemistryInfo() для справки.');
     
     // ===== КОНЕЦ ОТЛАДОЧНЫХ ФУНКЦИЙ =====
     
