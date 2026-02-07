@@ -9520,9 +9520,11 @@ function getTournamentType() {
     }
 
 
-    function getLastMatchForTeam(teamId) {
+    function getLastMatchForTeam(teamId, preferHome = false) {
         return new Promise((resolve, reject) => {
             const url = `${SITE_CONFIG.BASE_URL}/roster_m.php?num=${teamId}`;
+            console.log(`[SHIRTS] Loading match list for team ${teamId}, preferHome=${preferHome}`);
+            
             GM_xmlhttpRequest({
                 method: "GET",
                 url: url,
@@ -9538,8 +9540,11 @@ function getTournamentType() {
 
                         // Ищем все строки матчей (только viewmatch.php - это сыгранные матчи)
                         const matchLinks = Array.from(doc.querySelectorAll('a[href*="viewmatch.php"]'));
+                        console.log(`[SHIRTS] Found ${matchLinks.length} match links`);
 
-                        // Ищем последний сыгранный матч (идем с конца списка)
+                        const matches = [];
+
+                        // Собираем все сыгранные матчи
                         for (let i = matchLinks.length - 1; i >= 0; i--) {
                             const link = matchLinks[i];
                             const scoreText = link.textContent.trim();
@@ -9552,12 +9557,60 @@ function getTournamentType() {
                             const href = link.getAttribute('href');
                             const match = href.match(/day=(\d+)&match_id=(\d+)/);
                             if (match) {
-                                resolve({ day: match[1], matchId: match[2] });
-                                return;
+                                // Определяем, дома или в гостях
+                                // Ищем строку таблицы с этим матчем
+                                const row = link.closest('tr');
+                                let isHome = false;
+                                
+                                if (row) {
+                                    // Проверяем, есть ли "(д)" или "(г)" в строке
+                                    const rowText = row.textContent;
+                                    if (rowText.includes('(д)')) {
+                                        isHome = true;
+                                    } else if (rowText.includes('(г)')) {
+                                        isHome = false;
+                                    } else {
+                                        // Альтернативный способ: проверяем позицию команды в ссылках
+                                        const teamLinks = row.querySelectorAll('a[href*="roster.php"]');
+                                        if (teamLinks.length >= 2) {
+                                            const firstTeamId = new URL(teamLinks[0].href, SITE_CONFIG.BASE_URL).searchParams.get('num');
+                                            isHome = (firstTeamId === String(teamId));
+                                        }
+                                    }
+                                }
+
+                                matches.push({
+                                    day: match[1],
+                                    matchId: match[2],
+                                    isHome: isHome,
+                                    scoreText: scoreText
+                                });
                             }
                         }
 
-                        resolve(null);
+                        console.log(`[SHIRTS] Found ${matches.length} played matches`);
+                        
+                        if (matches.length > 0) {
+                            // Если нужен домашний матч, ищем его
+                            if (preferHome) {
+                                const homeMatch = matches.find(m => m.isHome);
+                                if (homeMatch) {
+                                    console.log(`[SHIRTS] Selected home match: day=${homeMatch.day}, matchId=${homeMatch.matchId}, score=${homeMatch.scoreText}`);
+                                    resolve(homeMatch);
+                                    return;
+                                } else {
+                                    console.log(`[SHIRTS] No home match found, using last match`);
+                                }
+                            }
+                            
+                            // Возвращаем последний матч
+                            const lastMatch = matches[0];
+                            console.log(`[SHIRTS] Selected last match: day=${lastMatch.day}, matchId=${lastMatch.matchId}, isHome=${lastMatch.isHome}, score=${lastMatch.scoreText}`);
+                            resolve(lastMatch);
+                        } else {
+                            console.log(`[SHIRTS] No played matches found`);
+                            resolve(null);
+                        }
                     } catch (error) {
                         reject(error);
                     }
@@ -9568,7 +9621,6 @@ function getTournamentType() {
             });
         });
     }
-
     function getMatchLineup(day, matchId, teamId) {
         return new Promise((resolve, reject) => {
             const url = `${SITE_CONFIG.BASE_URL}/viewmatch.php?day=${day}&match_id=${matchId}`;
@@ -9734,7 +9786,7 @@ function getTournamentType() {
 
         try {
             // Получаем последний матч
-            const lastMatch = await getLastMatchForTeam(teamId);
+            const lastMatch = await getLastMatchForTeam(teamId, true);
 
             if (!lastMatch) {
 
