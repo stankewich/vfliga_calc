@@ -4900,6 +4900,7 @@ const SYNERGY_MATRIX_CONFIG = {
     MAX_MATCHES: 25,
     FORCE_REGENERATE_ON_DAY_CHANGE: true,
     EXCLUDE_FRIENDLY_MATCHES: true,
+    EXCLUDE_NATIONAL_TEAM_MATCHES: true,
 
     // Бонусы сыгранности по количеству игроков (официальные правила)
     SYNERGY_BONUSES: {
@@ -5017,6 +5018,7 @@ async function loadPlayerMatchHistoryForMatrix(playerId) {
                         const matches = [];
                         const tables = doc.querySelectorAll('table');
                         const excludeFriendly = SYNERGY_MATRIX_CONFIG.EXCLUDE_FRIENDLY_MATCHES;
+                        const excludeNationalTeam = SYNERGY_MATRIX_CONFIG.EXCLUDE_NATIONAL_TEAM_MATCHES;
 
                         tables.forEach(table => {
                             const rows = table.querySelectorAll('tr');
@@ -5036,19 +5038,34 @@ async function loadPlayerMatchHistoryForMatrix(playerId) {
                                             if (dayMatch) {
                                                 const day = parseInt(dayMatch[1]);
                                                 if (day && !isNaN(day)) {
-                                                    const isFriendly = tournamentCell.toLowerCase().includes('товарищеский') ||
-                                                                     tournamentCell.toLowerCase().includes('friendly');
+                                                    const tournamentLower = tournamentCell.toLowerCase();
+                                                    
+                                                    const isFriendly = tournamentLower.includes('товарищеский') ||
+                                                                     tournamentLower.includes('friendly');
+                                                    
+                                                    // Проверяем, является ли это матчем сборной
+                                                    const isNationalTeam = tournamentLower.includes('сборн') ||
+                                                                         tournamentLower.includes('отборочные') ||
+                                                                         tournamentLower.includes('чемпионат мира') ||
+                                                                         tournamentLower.includes('кубок конфедераций') ||
+                                                                         tournamentLower.includes('continental cup') ||
+                                                                         tournamentLower.includes('world cup');
 
                                                     // Проверяем, играл ли игрок (минуты > 0)
                                                     const minutes = parseInt(minutesCell);
                                                     const played = !isNaN(minutes) && minutes > 0;
 
-                                                    if (!excludeFriendly || !isFriendly) {
+                                                    // Исключаем товарищеские и матчи сборных, если настроено
+                                                    const shouldExclude = (excludeFriendly && isFriendly) || 
+                                                                        (excludeNationalTeam && isNationalTeam);
+
+                                                    if (!shouldExclude) {
                                                         matches.push({
                                                             day: day,
                                                             tournament: tournamentCell,
                                                             played: played,
                                                             isFriendly: isFriendly,
+                                                            isNationalTeam: isNationalTeam,
                                                             minutes: played ? minutes : 0
                                                         });
                                                     }
@@ -5063,6 +5080,13 @@ async function loadPlayerMatchHistoryForMatrix(playerId) {
                         const uniqueMatches = matches.filter((match, index, self) =>
                             index === self.findIndex(m => m.day === match.day && m.tournament === match.tournament)
                         ).sort((a, b) => b.day - a.day);
+
+                        // Логирование исключенных матчей
+                        const totalParsed = tables.length > 0 ? Array.from(tables[0].querySelectorAll('tr')).length - 1 : 0;
+                        const excluded = totalParsed - uniqueMatches.length;
+                        if (excluded > 0) {
+                            console.log(`[SynergyMatrix] Исключено матчей: ${excluded} (товарищеские: ${excludeFriendly ? 'да' : 'нет'}, сборные: ${excludeNationalTeam ? 'да' : 'нет'})`);
+                        }
 
                         resolve(uniqueMatches);
                     } catch (parseError) {
@@ -9916,12 +9940,13 @@ function getTournamentType() {
         }
 
         // Бонус синергии
-        const synergyInputs = document.querySelectorAll(`#vs-${team}-synergy input`);
-        let synergyTotal = 0;
-        synergyInputs.forEach(input => {
-            synergyTotal += Number(input.value) || 0;
-        });
-        contribution.synergy = Math.round(synergyTotal * 0.1);
+        let synergyBonus = 0;
+        if (team === 'home') {
+            synergyBonus = getSynergyPercentHome() / 100;
+        } else if (team === 'away') {
+            synergyBonus = getSynergyPercentAway() / 100;
+        }
+        contribution.synergy = Math.round(calculatedStr * synergyBonus);
 
         // Бонус морали
         const moraleSelect = document.getElementById(`vs-${team}-morale`);
