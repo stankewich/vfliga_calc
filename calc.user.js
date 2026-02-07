@@ -12048,9 +12048,11 @@ function getTournamentType() {
                 
                 // Усталость
                 let fatigueModifier;
+                let displayFatigue = fatigue; // Усталость для отображения
                 const tournamentType = getTournamentType();
                 if (tournamentType === 'friendly') {
                     fatigueModifier = 1 - (25 / 100);
+                    displayFatigue = 25; // В товарищеских всегда 25%
                 } else {
                     fatigueModifier = getFatigueBonus(fatigue);
                 }
@@ -12071,9 +12073,9 @@ function getTournamentType() {
                 
                 // Определяем цвет усталости
                 let fatigueColor = '#666';
-                if (fatigue <= 25) fatigueColor = '#28a745';
-                else if (fatigue <= 50) fatigueColor = '#ffc107';
-                else if (fatigue <= 75) fatigueColor = '#fd7e14';
+                if (displayFatigue <= 25) fatigueColor = '#28a745';
+                else if (displayFatigue <= 50) fatigueColor = '#ffc107';
+                else if (displayFatigue <= 75) fatigueColor = '#fd7e14';
                 else fatigueColor = '#dc3545';
                 
                 // Определяем цвет Chemistry
@@ -12118,7 +12120,7 @@ function getTournamentType() {
                         </tr>
                         <tr>
                             <td style="padding: 4px; border: 1px solid #ddd;">Усталость</td>
-                            <td style="padding: 4px; border: 1px solid #ddd; color: ${fatigueColor}; font-weight: bold;">${fatigue}%</td>
+                            <td style="padding: 4px; border: 1px solid #ddd; color: ${fatigueColor}; font-weight: bold;">${displayFatigue}%${tournamentType === 'friendly' ? ' (товарищ.)' : ''}</td>
                             <td style="padding: 4px; border: 1px solid #ddd;">×${fatigueModifier.toFixed(3)}</td>
                         </tr>
                         <tr>
