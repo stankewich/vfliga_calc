@@ -3060,7 +3060,17 @@ function getChemistryBonus(player, inLineupPlayers, teamStyleId) {
     });
     
     // Рассчитываем модификатор Chemistry
-    const modifier = calculatePlayerChemistryModifier(modifiedPlayer, modifiedLineup, positions);
+    let modifier = calculatePlayerChemistryModifier(modifiedPlayer, modifiedLineup, positions);
+    
+    // Добавляем бонус/штраф за совпадение/коллизию стиля игрока со стилем команды
+    if (teamStyleId && effectiveStyle && effectiveStyle !== 'norm') {
+        const teamStyleBonus = getFavoriteStyleBonus(teamStyleId, effectiveStyle);
+        modifier += teamStyleBonus;
+        
+        if (teamStyleBonus !== 0) {
+            console.log(`[CHEMISTRY] ${player.name}: team style bonus ${(teamStyleBonus * 100).toFixed(1)}% (team: ${teamStyleId}, player: ${effectiveStyle})`);
+        }
+    }
     
     // Логирование для отладки (только если есть модификатор)
     if (modifier !== 0) {
@@ -3827,7 +3837,7 @@ function getFavoriteStyleBonus(teamStyleId, playerStyleId) {
     const oppWins = collision_bonuses[playerStyleId] || null;
     const teamBeatsPlayer = !!(teamWins && teamWins[playerStyleId]);
     const playerBeatsTeam = !!(oppWins && oppWins[teamStyleId]);
-    if (teamBeatsPlayer || playerBeatsTeam) return -0.01;
+    if (teamBeatsPlayer || playerBeatsTeam) return -0.025; // Изменено с -0.01 на -0.025 для Chemistry
     return 0;
 }
 
@@ -8470,12 +8480,21 @@ function createDefenceTypeSelector(team, onChange) {
  * @param {string} matchPosition - Позиция в матче
  * @param {string} physicalFormId - ID физической формы
  * @param {string} customStyle - Пользовательский стиль
+ * @param {string} teamStyleId - Стиль команды (опционально)
  */
-function showPlayerDetailHint(element, player, matchPosition, physicalFormId, customStyle) {
+function showPlayerDetailHint(element, player, matchPosition, physicalFormId, customStyle, teamStyleId = null) {
     // Удаляем существующие подсказки
     removeExistingHints();
     
     if (!player) return;
+    
+    // Пытаемся определить стиль команды, если не передан
+    if (!teamStyleId) {
+        // Проверяем, есть ли доступ к селекторам стилей команд
+        if (window.homeTeam && window.homeTeam._styleSelector) {
+            teamStyleId = window.homeTeam._styleSelector.value;
+        }
+    }
     
     // Рассчитываем Chemistry бонус для игрока
     let chemistryBonus = 0;
@@ -8484,7 +8503,7 @@ function showPlayerDetailHint(element, player, matchPosition, physicalFormId, cu
         const inLineupPlayers = slotEntries.map(entry => entry.player).filter(Boolean);
         
         if (inLineupPlayers.length > 0) {
-            chemistryBonus = getChemistryBonus(player, inLineupPlayers, null);
+            chemistryBonus = getChemistryBonus(player, inLineupPlayers, teamStyleId);
         }
     } catch (e) {
         console.warn('[CHEMISTRY] Ошибка расчета бонуса для подсказки:', e);
@@ -9818,6 +9837,14 @@ function getTournamentType() {
     function getPlayerFullData(player, matchPosition, physicalFormId, team, playerIndex) {
         if (!player) return null;
 
+        // Получаем стиль команды
+        let teamStyleId = null;
+        if (team === 'home' && window.homeTeam && window.homeTeam._styleSelector) {
+            teamStyleId = window.homeTeam._styleSelector.value;
+        } else if (team === 'away' && window.awayTeam && window.awayTeam._styleSelector) {
+            teamStyleId = window.awayTeam._styleSelector.value;
+        }
+
         // Базовые расчеты силы
         const baseStr = Number(player.baseStrength) || Number(player.realStr) || 0;
         const physicalFormModifier = getPhysicalFormModifier(physicalFormId);
@@ -9840,8 +9867,30 @@ function getTournamentType() {
         };
 
         // Бонус Chemistry
+        let chemistryModifier = 0;
         try {
-            const slotEntries = window.currentSlotEntries || [];
+            let slotEntries = window.currentSlotEntries || [];
+            
+            // Если currentSlotEntries пустой, пытаемся использовать currentFieldLineups
+            if (slotEntries.length === 0 && window.currentFieldLineups) {
+                const lineup = window.currentFieldLineups[team];
+                if (lineup && lineup.length > 0) {
+                    console.log('[CHEMISTRY] Field hint - используем currentFieldLineups для', team);
+                    slotEntries = lineup.map((slot, idx) => {
+                        if (!slot.selectedPlayer) return null;
+                        return {
+                            player: slot.selectedPlayer,
+                            matchPos: slot.posValue || '',
+                            customStyleValue: slot.customStyleValue || slot.selectedPlayer.hidden_style || 'norm',
+                            playerIndex: idx
+                        };
+                    }).filter(Boolean);
+                    
+                    // Временно устанавливаем currentSlotEntries для getChemistryBonus
+                    window.currentSlotEntries = slotEntries;
+                }
+            }
+            
             const inLineupPlayers = slotEntries.map(entry => entry.player).filter(Boolean);
             
             console.log('[CHEMISTRY] Field hint - slotEntries:', slotEntries.length);
@@ -9849,7 +9898,7 @@ function getTournamentType() {
             console.log('[CHEMISTRY] Field hint - player:', player.name);
             
             if (inLineupPlayers.length > 0) {
-                const chemistryModifier = getChemistryBonus(player, inLineupPlayers, null);
+                chemistryModifier = getChemistryBonus(player, inLineupPlayers, teamStyleId);
                 contribution.chemistry = Math.round(calculatedStr * chemistryModifier);
                 console.log('[CHEMISTRY] Field hint - modifier:', chemistryModifier);
                 console.log('[CHEMISTRY] Field hint - contribution:', contribution.chemistry);
@@ -9921,7 +9970,8 @@ function getTournamentType() {
                 physicalForm: physicalFormModifier,
                 fatigue: fatigueModifier,
                 reality: realityModifier,
-                position: positionModifier
+                position: positionModifier,
+                chemistry: chemistryModifier
             },
             details: {
                 form: Number(player.form) || 0,
@@ -10043,7 +10093,7 @@ function getTournamentType() {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px;">
                     ${fullData.contribution.captain ? `<div>Капитан: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.captain}</span></div>` : ''}
                     ${fullData.contribution.synergy ? `<div>Синергия: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.synergy}</span></div>` : ''}
-                    <div>⚡ Chemistry: <span style="font-weight: bold; color: ${fullData.contribution.chemistry > 0 ? '#28a745' : fullData.contribution.chemistry < 0 ? '#dc3545' : '#6c757d'};">${fullData.contribution.chemistry > 0 ? '+' : ''}${fullData.contribution.chemistry}</span></div>
+                    <div>Взаимопонимание: <span style="font-weight: bold; color: ${fullData.contribution.chemistry > 0 ? '#28a745' : fullData.contribution.chemistry < 0 ? '#dc3545' : '#6c757d'};">${fullData.contribution.chemistry > 0 ? '+' : ''}${fullData.contribution.chemistry}</span> <span style="color: #6c757d;">(${(fullData.modifiers.chemistry * 100).toFixed(1)}%)</span></div>
                     ${fullData.contribution.morale ? `<div>Настрой: <span style="font-weight: bold; color: ${fullData.contribution.morale > 0 ? '#28a745' : '#dc3545'};">${fullData.contribution.morale > 0 ? '+' : ''}${fullData.contribution.morale}</span></div>` : ''}
                     ${fullData.contribution.atmosphere ? `<div>Атмосфера: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.atmosphere}</span></div>` : ''}
                     ${fullData.contribution.defence ? `<div>Защита: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.defence}</span></div>` : ''}
@@ -10313,6 +10363,12 @@ function getTournamentType() {
         console.log('[FieldHints] displayShirtsOnField вызвана');
         console.log('[FieldHints] homeLineup:', homeLineup);
         console.log('[FieldHints] awayLineup:', awayLineup);
+        
+        // Сохраняем lineups глобально для использования в field hints
+        window.currentFieldLineups = {
+            home: homeLineup,
+            away: awayLineup
+        };
         
         // Создаём или очищаем контейнер для футболок
         let shirtsContainer = fieldCol.querySelector('.shirts-container');
