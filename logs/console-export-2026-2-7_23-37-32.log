@@ -1,0 +1,1289 @@
+[CHEMISTRY] GK connections: LD, CD, CD (3 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 12.5% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 8.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] LM connections: LD, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CF at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 6.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CF at index 6 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 5.0% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.05 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 2.5% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.025 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 1748.6580413000001, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 59.43000000000001, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 76.1055475, totalHomeBonus: 168.9396498, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD (3 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 12.5% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 8.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] LM connections: LD, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CF at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 6.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CF at index 6 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 5.0% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.05 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 2.5% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.025 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 1758.1080413000002, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 68.88000000000001, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 76.1055475, totalHomeBonus: 168.9396498, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD (3 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 12.5% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 8.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] LM connections: LD, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CF at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 6.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CF at index 6 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 5.0% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.05 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 2.5% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.025 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 1758.1080413000002, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 68.88000000000001, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 76.1055475, totalHomeBonus: 168.9396498, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD (3 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 12.5% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 8.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] LM connections: LD, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CF at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 6.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CF at index 6 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 5.0% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.05 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 2.5% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.025 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 1758.1080413000002, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 68.88000000000001, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 76.1055475, totalHomeBonus: 168.9396498, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD (3 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 12.5% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 8.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] LM connections: LD, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CF at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 6.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CF at index 6 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 5.0% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.05 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 2.5% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.025 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 1758.1080413000002, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 68.88000000000001, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 76.1055475, totalHomeBonus: 168.9396498, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 8.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 1.7% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.016666666666666666 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CF at index 7 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 6.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CF at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 5.0% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.05 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 2.5% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.025 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2008.778883916667, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 100.08000000000001, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 79.83664191666668, totalHomeBonus: 194.29353, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 8.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 1.7% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.016666666666666666 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CF at index 7 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 6.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CF at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 5.0% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.05 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 2.5% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.025 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2020.058883916667, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 111.36, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 79.83664191666668, totalHomeBonus: 194.29353, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 8.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 1.7% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.016666666666666666 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CF at index 7 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 6.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CF at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 5.0% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.05 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 2.5% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.025 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2020.058883916667, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 111.36, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 79.83664191666668, totalHomeBonus: 194.29353, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 8.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 1.7% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.016666666666666666 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CF at index 7 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 6.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CF at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 5.0% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.05 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 2.5% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.025 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2020.058883916667, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 111.36, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 79.83664191666668, totalHomeBonus: 194.29353, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] Field hint - используем currentFieldLineups для home Virtual-Soccer-Strength-Analyzer.user.js:9851:29
+[CHEMISTRY] Field hint - slotEntries: 8 Virtual-Soccer-Strength-Analyzer.user.js:9869:21
+[CHEMISTRY] Field hint - inLineupPlayers: 8 Virtual-Soccer-Strength-Analyzer.user.js:9870:21
+[CHEMISTRY] Field hint - player: Яннис Касиаккис Virtual-Soccer-Strength-Analyzer.user.js:9871:21
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] Field hint - modifier: 0.09375 Virtual-Soccer-Strength-Analyzer.user.js:9876:25
+[CHEMISTRY] Field hint - contribution: 17 Virtual-Soccer-Strength-Analyzer.user.js:9877:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 8.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 1.7% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.016666666666666666 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CF at index 7 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 6.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CF at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 5.0% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.05 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 2.5% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.025 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2023.9447545166668, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 111.36, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 3.8858706000000005, totalChemistryBonus: 79.83664191666668, totalHomeBonus: 194.29353, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 8.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 1.7% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.016666666666666666 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CF at index 7 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 6.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CF at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 5.0% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.05 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 2.5% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.025 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2023.9447545166668, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 111.36, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 3.8858706000000005, totalChemistryBonus: 79.83664191666668, totalHomeBonus: 194.29353, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] Field hint - используем currentFieldLineups для home Virtual-Soccer-Strength-Analyzer.user.js:9851:29
+[CHEMISTRY] Field hint - slotEntries: 8 Virtual-Soccer-Strength-Analyzer.user.js:9869:21
+[CHEMISTRY] Field hint - inLineupPlayers: 8 Virtual-Soccer-Strength-Analyzer.user.js:9870:21
+[CHEMISTRY] Field hint - player: Бриан Плат Virtual-Soccer-Strength-Analyzer.user.js:9871:21
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 1.7% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.016666666666666666 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] Field hint - modifier: 0.016666666666666666 Virtual-Soccer-Strength-Analyzer.user.js:9876:25
+[CHEMISTRY] Field hint - contribution: 3 Virtual-Soccer-Strength-Analyzer.user.js:9877:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 8 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 4.2% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.041666666666666664 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 6 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 8 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.7% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.016666666666666666 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2214.615912788667, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 150.12000000000003, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 4.241796672, totalChemistryBonus: 71.22514171666667, totalHomeBonus: 212.0898336, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 8 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 4.2% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.041666666666666664 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 6 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 8 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.7% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.016666666666666666 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2227.8459127886667, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 163.35000000000002, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 4.241796672, totalChemistryBonus: 71.22514171666667, totalHomeBonus: 212.0898336, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 9 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 4.2% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.041666666666666664 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Кристиян Белич: 3.1% 
+Object { nat_id: 174, nat: "Сербия", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.03125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: max at index 7 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, RM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Каспер Ниссен: 6.3% 
+Object { nat_id: 49, nat: "Дания", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 9 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CM, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.0125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2440.650447154, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 181.50000000000003, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 4.603557504, totalChemistryBonus: 81.76594725000001, totalHomeBonus: 230.1778752, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 9 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 4.2% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.041666666666666664 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Кристиян Белич: 3.1% 
+Object { nat_id: 174, nat: "Сербия", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.03125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: max at index 7 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, RM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Каспер Ниссен: 6.3% 
+Object { nat_id: 49, nat: "Дания", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 9 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: single, count: 1, total forwards: 1, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CM, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.0125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2440.650447154, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 181.50000000000003, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 4.603557504, totalChemistryBonus: 81.76594725000001, totalHomeBonus: 230.1778752, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 9 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 8.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Кристиян Белич: 3.1% 
+Object { nat_id: 174, nat: "Сербия", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.03125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: max at index 7 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, RM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Каспер Ниссен: 6.3% 
+Object { nat_id: 49, nat: "Дания", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 10 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: min, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Трой Пэрротт: 6.3% 
+Object { nat_id: 62, nat: "Ирландия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: max, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.0125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2628.524451654, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 199.65000000000003, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 4.943589504, totalChemistryBonus: 97.76431975000001, totalHomeBonus: 247.17947519999998, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 9 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 8.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Кристиян Белич: 3.1% 
+Object { nat_id: 174, nat: "Сербия", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.03125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: max at index 7 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, RM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Каспер Ниссен: 6.3% 
+Object { nat_id: 49, nat: "Дания", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 10 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: min, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Трой Пэрротт: 6.3% 
+Object { nat_id: 62, nat: "Ирландия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: max, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.0125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2628.524451654, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 199.65000000000003, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 4.943589504, totalChemistryBonus: 97.76431975000001, totalHomeBonus: 247.17947519999998, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 9 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 8.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Кристиян Белич: 3.1% 
+Object { nat_id: 174, nat: "Сербия", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.03125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: max at index 7 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, RM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Каспер Ниссен: 6.3% 
+Object { nat_id: 49, nat: "Дания", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 10 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: min, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Трой Пэрротт: 6.3% 
+Object { nat_id: 62, nat: "Ирландия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: max, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.0125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2633.468041158, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 199.65000000000003, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 9.887179008, totalChemistryBonus: 97.76431975000001, totalHomeBonus: 247.17947519999998, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] Field hint - используем currentFieldLineups для home Virtual-Soccer-Strength-Analyzer.user.js:9851:29
+[CHEMISTRY] Field hint - slotEntries: 11 Virtual-Soccer-Strength-Analyzer.user.js:9869:21
+[CHEMISTRY] Field hint - inLineupPlayers: 11 Virtual-Soccer-Strength-Analyzer.user.js:9870:21
+[CHEMISTRY] Field hint - player: Яннис Касиаккис Virtual-Soccer-Strength-Analyzer.user.js:9871:21
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] Field hint - modifier: 0.09375 Virtual-Soccer-Strength-Analyzer.user.js:9876:25
+[CHEMISTRY] Field hint - contribution: 17 Virtual-Soccer-Strength-Analyzer.user.js:9877:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 9 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 8.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Кристиян Белич: 3.1% 
+Object { nat_id: 174, nat: "Сербия", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.03125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: max at index 7 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, RM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Каспер Ниссен: 6.3% 
+Object { nat_id: 49, nat: "Дания", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 10 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: min, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Трой Пэрротт: 6.3% 
+Object { nat_id: 62, nat: "Ирландия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: max, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.0125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2633.468041158, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 199.65000000000003, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 9.887179008, totalChemistryBonus: 97.76431975000001, totalHomeBonus: 247.17947519999998, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 9 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 8.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Кристиян Белич: 3.1% 
+Object { nat_id: 174, nat: "Сербия", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.03125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: max at index 7 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, RM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Каспер Ниссен: 6.3% 
+Object { nat_id: 49, nat: "Дания", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 10 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: min, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Трой Пэрротт: 6.3% 
+Object { nat_id: 62, nat: "Ирландия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: max, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.0125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2644.1791517499996, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 199.65000000000003, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 20.5982896, totalChemistryBonus: 97.76431975000001, totalHomeBonus: 247.17947519999998, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 9 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 8.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Кристиян Белич: 3.1% 
+Object { nat_id: 174, nat: "Сербия", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.03125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: max at index 7 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, RM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Каспер Ниссен: 6.3% 
+Object { nat_id: 49, nat: "Дания", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 10 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: min, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Трой Пэрротт: 6.3% 
+Object { nat_id: 62, nat: "Ирландия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: max, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.0125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2644.1791517499996, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 199.65000000000003, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 20.5982896, totalChemistryBonus: 97.76431975000001, totalHomeBonus: 247.17947519999998, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 9 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 8.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Кристиян Белич: 3.1% 
+Object { nat_id: 174, nat: "Сербия", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.03125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: max at index 7 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, RM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Каспер Ниссен: 6.3% 
+Object { nat_id: 49, nat: "Дания", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 10 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: min, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Трой Пэрротт: 6.3% 
+Object { nat_id: 62, nat: "Ирландия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: max, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.0125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2652.4184675900005, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 199.65000000000003, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 28.837605440000004, totalChemistryBonus: 97.76431975000001, totalHomeBonus: 247.17947519999998, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] GK connections: LD, CD, CD, RD (4 defenders total) Virtual-Soccer-Strength-Analyzer.user.js:2215:13
+[CHEMISTRY] Яннис Касиаккис: 9.4% 
+Object { nat_id: 74, nat: "Кипр", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.09375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: min at index 2 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, LD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Мартин Зубименди: 6.3% 
+Object { nat_id: 64, nat: "Испания", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CD type: max at index 3 Virtual-Soccer-Strength-Analyzer.user.js:1230:17
+[CHEMISTRY] CD connections: GK, CD, RD, CM Virtual-Soccer-Strength-Analyzer.user.js:1300:17
+[CHEMISTRY] Бриан Плат: 4.4% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.04375 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RD CD selector: max, selected CD at index 3 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] RD connections: GK, CD, RM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] RD connecting to CD at index 3 (max) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Льюис Схоутен: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 9 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 8.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: min at index 6 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, LM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Кристиян Белич: 3.1% 
+Object { nat_id: 174, nat: "Сербия", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.03125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CM type: max at index 7 Virtual-Soccer-Strength-Analyzer.user.js:1312:17
+[CHEMISTRY] CM connections: CD, RM, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1491:17
+[CHEMISTRY] Каспер Ниссен: 6.3% 
+Object { nat_id: 49, nat: "Дания", original_style: 4, effective_style: "tiki", custom_style: "tiki", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] RM connections: RD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1217:17
+[CHEMISTRY] RM connecting to CM at index 7 (max) Virtual-Soccer-Strength-Analyzer.user.js:2721:25
+[CHEMISTRY] RM connecting to CF at index 10 (max) Virtual-Soccer-Strength-Analyzer.user.js:2743:25
+[CHEMISTRY] Дани де Вит: 3.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.03333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: min, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Трой Пэрротт: 6.3% 
+Object { nat_id: 62, nat: "Ирландия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.0625 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] CF connections building Virtual-Soccer-Strength-Analyzer.user.js:1767:17
+[CHEMISTRY] CF type: max, count: 2, total forwards: 2, is424: false Virtual-Soccer-Strength-Analyzer.user.js:1778:17
+[CHEMISTRY] CF connections: LM, RM, CF, CM Virtual-Soccer-Strength-Analyzer.user.js:2033:17
+[CHEMISTRY] Йорди Класи: 1.3% 
+Object { nat_id: 42, nat: "Нидерланды", original_style: 1, effective_style: "sp", custom_style: "sp", styleKnowledge: 1, modifier: 0.0125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[Calc] Team total 
+Object { side: "home", total: 2652.4184675900005, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 199.65000000000003, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 28.837605440000004, totalChemistryBonus: 97.76431975000001, totalHomeBonus: 247.17947519999998, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11553:25
+[CHEMISTRY] Field hint - используем currentFieldLineups для home Virtual-Soccer-Strength-Analyzer.user.js:9851:29
+[CHEMISTRY] Field hint - slotEntries: 11 Virtual-Soccer-Strength-Analyzer.user.js:9869:21
+[CHEMISTRY] Field hint - inLineupPlayers: 11 Virtual-Soccer-Strength-Analyzer.user.js:9870:21
+[CHEMISTRY] Field hint - player: Хакон Эвьен Virtual-Soccer-Strength-Analyzer.user.js:9871:21
+[CHEMISTRY] LM connections: LD, CM, CF Virtual-Soccer-Strength-Analyzer.user.js:1171:17
+[CHEMISTRY] LM connecting to CM at index 6 (min) Virtual-Soccer-Strength-Analyzer.user.js:2688:25
+[CHEMISTRY] LM connecting to CF at index 9 (min) Virtual-Soccer-Strength-Analyzer.user.js:2710:25
+[CHEMISTRY] Хакон Эвьен: 8.3% 
+Object { nat_id: 114, nat: "Норвегия", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.08333333333333333 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] Field hint - modifier: 0.08333333333333333 Virtual-Soccer-Strength-Analyzer.user.js:9876:25
+[CHEMISTRY] Field hint - contribution: 17 Virtual-Soccer-Strength-Analyzer.user.js:9877:25
+[CHEMISTRY] Field hint - slotEntries: 11 Virtual-Soccer-Strength-Analyzer.user.js:9869:21
+[CHEMISTRY] Field hint - inLineupPlayers: 11 Virtual-Soccer-Strength-Analyzer.user.js:9870:21
+[CHEMISTRY] Field hint - player: Рихедли Базур Virtual-Soccer-Strength-Analyzer.user.js:9871:21
+[CHEMISTRY] LD CD selector: min, selected CD at index 2 (total CDs: 2) Virtual-Soccer-Strength-Analyzer.user.js:2182:21
+[CHEMISTRY] LD connections: GK, CD, LM Virtual-Soccer-Strength-Analyzer.user.js:2187:13
+[CHEMISTRY] LD connecting to CD at index 2 (min) Virtual-Soccer-Strength-Analyzer.user.js:2528:21
+[CHEMISTRY] Рихедли Базур: 12.5% 
+Object { nat_id: 9, nat: "Кюрасао", original_style: 3, effective_style: "brazil", custom_style: "brazil", styleKnowledge: 1, modifier: 0.125 }
+Virtual-Soccer-Strength-Analyzer.user.js:3071:17
+[CHEMISTRY] Field hint - modifier: 0.125 Virtual-Soccer-Strength-Analyzer.user.js:9876:25
+[CHEMISTRY] Field hint - contribution: 17 Virtual-Soccer-Strength-Analyzer.user.js:9877:25
