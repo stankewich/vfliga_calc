@@ -2,7 +2,7 @@
 // @name         Virtual Soccer Strength Analyzer
 // @namespace    http://tampermonkey.net/
 // @license MIT
-// @version      0.939
+// @version      0.946
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        *://*.virtualsoccer.ru/previewmatch.php*
@@ -836,81 +836,1653 @@ function calculateLineModifier(player1, player2) {
 }
 
 /**
+ * Определяет является ли формация 4-2-4
+ * @param {Array} positions - Массив позиций в составе
+ * @returns {boolean} - true если формация 4-2-4
+ */
+function is424Formation(positions) {
+    if (!positions) return false;
+    
+    const defenderCount = positions.filter(p => 
+        ['LD', 'LB', 'CD', 'SW', 'RD', 'RB'].includes(p)
+    ).length;
+    
+    const cmCount = positions.filter(p => p === 'CM').length;
+    
+    const forwardCount = positions.filter(p => 
+        ['LF', 'CF', 'RF', 'ST', 'LW', 'RW'].includes(p)
+    ).length;
+    
+    return defenderCount === 4 && cmCount === 2 && forwardCount === 4;
+}
+
+/**
+ * Определяет тип CF по его индексу в составе
+ * @param {Array} positions - Массив позиций в составе
+ * @param {number} cfIndex - Индекс текущего CF
+ * @returns {string} - Тип CF: 'single', 'middle', 'min', 'max', 'other'
+ */
+function getCFType(positions, cfIndex) {
+    if (!positions || cfIndex < 0) return 'other';
+    
+    const cfIndices = [];
+    positions.forEach((pos, idx) => {
+        if (pos === 'CF') cfIndices.push(idx);
+    });
+    
+    const cfCount = cfIndices.length;
+    
+    if (cfCount === 0) return 'other';
+    if (cfCount === 1) return 'single';
+    if (cfCount === 3 && cfIndex === cfIndices[1]) return 'middle';
+    if (cfIndex === Math.min(...cfIndices)) return 'min';
+    if (cfIndex === Math.max(...cfIndices)) return 'max';
+    
+    return 'other';
+}
+
+/**
+ * Получает CM по "same index" с CF (соответствующий индекс)
+ * @param {Array} positions - Массив позиций в составе
+ * @param {string} cfType - Тип CF ('min', 'max')
+ * @returns {number} - Индекс CM или -1
+ */
+function getCMBySameIndex(positions, cfType) {
+    if (!positions) return -1;
+    
+    const cmIndices = [];
+    positions.forEach((pos, idx) => {
+        if (pos === 'CM') cmIndices.push(idx);
+    });
+    
+    if (cmIndices.length === 0) return -1;
+    
+    if (cfType === 'min') {
+        return Math.min(...cmIndices);
+    } else if (cfType === 'max') {
+        return Math.max(...cmIndices);
+    }
+    
+    return -1;
+}
+
+/**
+ * Подсчитывает количество позиций в составе
+ * @param {Array} positions - Массив позиций
+ * @param {string} position - Позиция для подсчета
+ * @returns {number} - Количество
+ */
+function countPositionInLineup(positions, position) {
+    if (!positions) return 0;
+    return positions.filter(p => p === position).length;
+}
+
+/**
  * Получает связанные позиции для данной позиции
  * @param {string} position - Позиция игрока
  * @param {Array} lineup - Состав команды (массив позиций)
+ * @param {number} playerIndex - Индекс игрока в составе (опционально, для динамических позиций)
  * @returns {Array} - Массив связанных позиций
  */
-function getPositionConnections(position, lineup) {
-    // Базовая матрица связей позиций
-    const connections = {
-        // Защитники
-        'LD': ['GK', 'LM', 'CD', 'LB'],
-        'CD': ['GK', 'LD', 'RD', 'SW', 'CM', 'DM'],
-        'RD': ['GK', 'RM', 'CD', 'RB'],
-        'SW': ['GK', 'CD', 'CM', 'DM'],
-        'LB': ['LD', 'LM', 'DM'],
-        'RB': ['RD', 'RM', 'DM'],
-        
-        // Полузащитники
-        'LM': ['LD', 'LB', 'CM', 'LW', 'AM'],
-        'CM': ['CD', 'SW', 'LM', 'RM', 'DM', 'AM', 'FR'],
-        'RM': ['RD', 'RB', 'CM', 'RW', 'AM'],
-        'DM': ['CD', 'SW', 'LB', 'RB', 'CM', 'AM'],
-        'AM': ['LM', 'CM', 'RM', 'DM', 'LW', 'RW', 'CF', 'FR'],
-        'FR': ['CM', 'AM', 'CF', 'ST'],
-        
-        // Крайние
-        'LW': ['LM', 'AM', 'LF'],
-        'RW': ['RM', 'AM', 'RF'],
-        
-        // Нападающие
-        'LF': ['LW', 'CF', 'ST'],
-        'CF': ['AM', 'FR', 'LF', 'RF', 'ST'],
-        'RF': ['RW', 'CF', 'ST'],
-        'ST': ['FR', 'LF', 'CF', 'RF']
-    };
-    
-    // Особая логика для GK (динамические связи)
+function getPositionConnections(position, lineup, playerIndex = -1) {
+    // Специальная логика для GK - динамические связи
     if (position === 'GK') {
         return getGKConnections(lineup);
     }
     
-    return connections[position] || [];
+    // Обновленная матрица связей согласно CHEMISTRY_CONNECTIONS_GRAPH.md v0.945
+    const connections = {
+        // Защитники
+        'LD': {
+            direct: ['GK', 'CD'],
+            priorityAttack: ['LM', 'LW', 'LF'], // Приоритетная связь с атакой (первый найденный)
+            conditions: {
+                'GK': (lineup) => {
+                    // GK связь только если CD count != 3
+                    const cdCount = countPositionInLineup(lineup, 'CD');
+                    return cdCount !== 3;
+                }
+            },
+            cdSelector: 'min' // LD связан с CD с минимальным индексом (ближайший слева)
+        },
+        'LB': {
+            // LB имеет динамические связи
+            dynamic: true
+        },
+        'CD': {
+            // CD имеет динамические связи в зависимости от типа (single, middle, min, max)
+            // Обрабатывается специальной логикой в getPositionConnections
+            dynamic: true
+        },
+        'SW': {
+            // SW связан с GK и всеми CD
+            direct: ['GK'],
+            connectToAllCD: true // Специальный флаг для связи со всеми CD
+        },
+        'RD': {
+            direct: ['GK', 'CD'],
+            priorityAttack: ['RM', 'RW', 'RF'], // Приоритетная связь с атакой (первый найденный)
+            conditions: {
+                'GK': (lineup) => {
+                    // GK связь только если CD count != 3
+                    const cdCount = countPositionInLineup(lineup, 'CD');
+                    return cdCount !== 3;
+                }
+            },
+            cdSelector: 'max' // RD связан с CD с максимальным индексом (ближайший справа)
+        },
+        'RB': {
+            // RB имеет динамические связи
+            dynamic: true
+        },
+        
+        // Полузащитники
+        'LM': {
+            // LM имеет динамические связи
+            dynamic: true
+        },
+        'LW': {
+            direct: ['LM', 'AM', 'LF', 'CF']
+        },
+        'CM': {
+            // CM имеет динамические связи в зависимости от типа (middle, min, max)
+            dynamic: true
+        },
+        'DM': {
+            // DM имеет динамические связи
+            dynamic: true
+        },
+        'AM': {
+            // AM имеет динамические связи
+            dynamic: true
+        },
+        'FR': {
+            direct: ['CD', 'CM', 'DM', 'AM', 'CF']
+        },
+        'RM': {
+            // RM имеет динамические связи
+            dynamic: true
+        },
+        'RW': {
+            direct: ['RM', 'AM', 'RF', 'CF']
+        },
+        
+        // Нападающие
+        'LF': {
+            // LF имеет динамические связи
+            dynamic: true
+        },
+        'CF': {
+            // CF имеет динамические связи
+            dynamic: true
+        },
+        'RF': {
+            // RF имеет динамические связи
+            dynamic: true
+        },
+        'ST': {
+            // ST имеет динамические связи
+            dynamic: true
+        }
+    };
+    
+    const positionData = connections[position];
+    if (!positionData) {
+        console.warn(`[CHEMISTRY] Unknown position: ${position}`);
+        return [];
+    }
+    
+    // Специальная обработка для SW - связь со всеми CD
+    if (position === 'SW' && positionData.connectToAllCD && lineup) {
+        const directConnections = [...positionData.direct];
+        
+        // Добавляем все CD из состава
+        lineup.forEach(pos => {
+            if (pos === 'CD') {
+                directConnections.push('CD');
+            }
+        });
+        
+        console.log(`[CHEMISTRY] SW connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для LB - динамические связи
+    if (position === 'LB' && positionData.dynamic && lineup) {
+        const directConnections = [];
+        
+        console.log(`[CHEMISTRY] LB connections building`);
+        
+        // 1. GK (если есть SW)
+        if (lineup.includes('SW')) {
+            directConnections.push('GK');
+        }
+        
+        // 2. CD (min index если CD > 1)
+        const cdIndices = [];
+        lineup.forEach((pos, idx) => {
+            if (pos === 'CD') cdIndices.push(idx);
+        });
+        
+        if (cdIndices.length > 1) {
+            directConnections.push('CD'); // Левый CD (min index)
+        } else if (cdIndices.length === 1) {
+            directConnections.push('CD');
+        }
+        
+        // 3. Атака: LM || LW || LF
+        if (lineup.includes('LM')) {
+            directConnections.push('LM');
+        } else if (lineup.includes('LW')) {
+            directConnections.push('LW');
+        } else if (lineup.includes('LF')) {
+            directConnections.push('LF');
+        }
+        
+        console.log(`[CHEMISTRY] LB connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для RB - динамические связи
+    if (position === 'RB' && positionData.dynamic && lineup) {
+        const directConnections = [];
+        
+        console.log(`[CHEMISTRY] RB connections building`);
+        
+        // 1. GK (если есть SW)
+        if (lineup.includes('SW')) {
+            directConnections.push('GK');
+        }
+        
+        // 2. CD (max index если CD > 1)
+        const cdIndices = [];
+        lineup.forEach((pos, idx) => {
+            if (pos === 'CD') cdIndices.push(idx);
+        });
+        
+        if (cdIndices.length > 1) {
+            directConnections.push('CD'); // Правый CD (max index)
+        } else if (cdIndices.length === 1) {
+            directConnections.push('CD');
+        }
+        
+        // 3. Атака: RM || RW || RF
+        if (lineup.includes('RM')) {
+            directConnections.push('RM');
+        } else if (lineup.includes('RW')) {
+            directConnections.push('RW');
+        } else if (lineup.includes('RF')) {
+            directConnections.push('RF');
+        }
+        
+        console.log(`[CHEMISTRY] RB connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для LM - динамические связи
+    if (position === 'LM' && positionData.dynamic && lineup) {
+        const directConnections = [];
+        
+        // 1. Связь с защитой: LD || LB
+        if (lineup.includes('LD')) {
+            directConnections.push('LD');
+        } else if (lineup.includes('LB')) {
+            directConnections.push('LB');
+        }
+        
+        // 2. Связь с полузащитой: CM (min index) || DM (min index)
+        const cmIndices = [];
+        const dmIndices = [];
+        lineup.forEach((pos, idx) => {
+            if (pos === 'CM') cmIndices.push(idx);
+            if (pos === 'DM') dmIndices.push(idx);
+        });
+        
+        if (cmIndices.length > 0) {
+            // Приоритет CM
+            directConnections.push('CM'); // Левый CM (min index)
+        } else if (dmIndices.length > 0) {
+            directConnections.push('DM'); // Левый DM (min index)
+        }
+        
+        // 3. Связь с атакой: LF || CF (min index) || ST
+        if (lineup.includes('LF')) {
+            directConnections.push('LF');
+        } else {
+            const cfIndices = [];
+            lineup.forEach((pos, idx) => {
+                if (pos === 'CF') cfIndices.push(idx);
+            });
+            
+            if (cfIndices.length > 0) {
+                directConnections.push('CF'); // Левый CF (min index)
+            } else if (lineup.includes('ST')) {
+                directConnections.push('ST');
+            }
+        }
+        
+        console.log(`[CHEMISTRY] LM connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для RM - динамические связи
+    if (position === 'RM' && positionData.dynamic && lineup) {
+        const directConnections = [];
+        
+        // 1. Связь с защитой: RD || RB
+        if (lineup.includes('RD')) {
+            directConnections.push('RD');
+        } else if (lineup.includes('RB')) {
+            directConnections.push('RB');
+        }
+        
+        // 2. Связь с полузащитой: CM (max index) || DM (max index)
+        const cmIndices = [];
+        const dmIndices = [];
+        lineup.forEach((pos, idx) => {
+            if (pos === 'CM') cmIndices.push(idx);
+            if (pos === 'DM') dmIndices.push(idx);
+        });
+        
+        if (cmIndices.length > 0) {
+            // Приоритет CM
+            directConnections.push('CM'); // Правый CM (max index)
+        } else if (dmIndices.length > 0) {
+            directConnections.push('DM'); // Правый DM (max index)
+        }
+        
+        // 3. Связь с атакой: RF || CF (max index) || ST
+        if (lineup.includes('RF')) {
+            directConnections.push('RF');
+        } else {
+            const cfIndices = [];
+            lineup.forEach((pos, idx) => {
+                if (pos === 'CF') cfIndices.push(idx);
+            });
+            
+            if (cfIndices.length > 0) {
+                directConnections.push('CF'); // Правый CF (max index)
+            } else if (lineup.includes('ST')) {
+                directConnections.push('ST');
+            }
+        }
+        
+        console.log(`[CHEMISTRY] RM connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для CD - динамические связи
+    if (position === 'CD' && positionData.dynamic && lineup) {
+        // Используем переданный playerIndex или находим первое вхождение
+        const cdPlayerIndex = playerIndex >= 0 ? playerIndex : lineup.indexOf('CD');
+        if (cdPlayerIndex === -1) return [];
+        
+        const cdType = getCDType(lineup, cdPlayerIndex);
+        const directConnections = [];
+        
+        console.log(`[CHEMISTRY] CD type: ${cdType} at index ${cdPlayerIndex}`);
+        
+        // 1. Связь вверх: GK || SW (приоритет SW)
+        if (lineup.includes('SW')) {
+            directConnections.push('SW');
+        } else {
+            directConnections.push('GK');
+        }
+        
+        // 2. Горизонтальные связи с другими CD
+        switch(cdType) {
+            case 'single':
+                // Единственный CD не связан с другими CD
+                break;
+            case 'middle':
+                // Средний CD связан со всеми остальными CD
+                lineup.forEach((pos, idx) => {
+                    if (pos === 'CD' && idx !== cdPlayerIndex) {
+                        directConnections.push('CD');
+                    }
+                });
+                break;
+            case 'min':
+                // Левый CD связан со следующим CD (index+1)
+                directConnections.push('CD'); // Следующий CD
+                break;
+            case 'max':
+                // Правый CD связан с предыдущим CD (index-1)
+                directConnections.push('CD'); // Предыдущий CD
+                break;
+        }
+        
+        // 3. Связи с фланговыми защитниками
+        if (cdType === 'min') {
+            // Левый CD связан с LD || LB
+            if (lineup.includes('LD')) {
+                directConnections.push('LD');
+            } else if (lineup.includes('LB')) {
+                directConnections.push('LB');
+            }
+        } else if (cdType === 'max') {
+            // Правый CD связан с RD || RB
+            if (lineup.includes('RD')) {
+                directConnections.push('RD');
+            } else if (lineup.includes('RB')) {
+                directConnections.push('RB');
+            }
+        } else if (cdType === 'single') {
+            // Единственный CD связан с обоими флангами
+            if (lineup.includes('LD')) {
+                directConnections.push('LD');
+            } else if (lineup.includes('LB')) {
+                directConnections.push('LB');
+            }
+            if (lineup.includes('RD')) {
+                directConnections.push('RD');
+            } else if (lineup.includes('RB')) {
+                directConnections.push('RB');
+            }
+        }
+        
+        // 4. Связи с полузащитой (приоритет: DM > CM > FR > AM)
+        const midfieldIndices = getMidfieldConnectionsForCD(lineup, cdType);
+        midfieldIndices.forEach(idx => {
+            const pos = lineup[idx];
+            if (pos) {
+                directConnections.push(pos);
+            }
+        });
+        
+        console.log(`[CHEMISTRY] CD connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для CM - динамические связи
+    if (position === 'CM' && positionData.dynamic && lineup) {
+        const cmPlayerIndex = playerIndex >= 0 ? playerIndex : lineup.indexOf('CM');
+        if (cmPlayerIndex === -1) return [];
+        
+        const cmType = getCMType(lineup, cmPlayerIndex);
+        const directConnections = [];
+        
+        console.log(`[CHEMISTRY] CM type: ${cmType} at index ${cmPlayerIndex}`);
+        
+        // Средний CM (CM = 3)
+        if (cmType === 'middle') {
+            // 1. Связь со всеми CD
+            lineup.forEach(pos => {
+                if (pos === 'CD') {
+                    directConnections.push('CD');
+                }
+            });
+            
+            // 2. Связь со всеми остальными CM
+            lineup.forEach((pos, idx) => {
+                if (pos === 'CM' && idx !== cmPlayerIndex) {
+                    directConnections.push('CM');
+                }
+            });
+            
+            // 3. Связь с атакой: CF (all) || ST
+            const cfIndices = [];
+            lineup.forEach((pos, idx) => {
+                if (pos === 'CF') cfIndices.push(idx);
+            });
+            
+            if (cfIndices.length > 0) {
+                // Связь со всеми CF
+                cfIndices.forEach(() => directConnections.push('CF'));
+            } else if (lineup.includes('ST')) {
+                // Если нет CF, связь с ST
+                directConnections.push('ST');
+            }
+        }
+        // Левый CM (min index)
+        else if (cmType === 'min') {
+            // 1. Защита/опора: DM (all) || CD (min index)
+            const dmIndices = [];
+            lineup.forEach((pos, idx) => {
+                if (pos === 'DM') dmIndices.push(idx);
+            });
+            
+            if (dmIndices.length > 0) {
+                // Связь со всеми DM
+                dmIndices.forEach(() => directConnections.push('DM'));
+            } else {
+                // Связь с левым CD
+                const cdIndices = [];
+                lineup.forEach((pos, idx) => {
+                    if (pos === 'CD') cdIndices.push(idx);
+                });
+                if (cdIndices.length > 0) {
+                    directConnections.push('CD'); // Левый CD (min)
+                }
+            }
+            
+            // 2. Левый фланг: LM || LW
+            if (lineup.includes('LM')) {
+                directConnections.push('LM');
+            } else if (lineup.includes('LW')) {
+                directConnections.push('LW');
+            }
+            
+            // 3. Следующий CM
+            const cmIndices = [];
+            lineup.forEach((pos, idx) => {
+                if (pos === 'CM') cmIndices.push(idx);
+            });
+            if (cmIndices.length > 1) {
+                directConnections.push('CM'); // CM (index+1)
+            }
+            
+            // 4. Атака: (FR, AM) || (is424? CF(min) : (LF || CF(min) || ST))
+            if (lineup.includes('FR')) {
+                directConnections.push('FR');
+            } else if (lineup.includes('AM')) {
+                directConnections.push('AM');
+            } else {
+                const is424 = is424Formation(lineup);
+                
+                if (is424) {
+                    // Формация 4-2-4: связь с левым CF
+                    const cfIndices = [];
+                    lineup.forEach((pos, idx) => {
+                        if (pos === 'CF') cfIndices.push(idx);
+                    });
+                    if (cfIndices.length > 0) {
+                        directConnections.push('CF'); // Левый CF (min)
+                    }
+                } else {
+                    // Обычная формация: LF || CF(min) || ST
+                    if (lineup.includes('LF')) {
+                        directConnections.push('LF');
+                    } else {
+                        const cfIndices = [];
+                        lineup.forEach((pos, idx) => {
+                            if (pos === 'CF') cfIndices.push(idx);
+                        });
+                        if (cfIndices.length > 0) {
+                            directConnections.push('CF'); // Левый CF (min)
+                        } else if (lineup.includes('ST')) {
+                            directConnections.push('ST');
+                        }
+                    }
+                }
+            }
+        }
+        // Правый CM (max index)
+        else if (cmType === 'max') {
+            // 1. Защита/опора: DM (all) || CD (max index)
+            const dmIndices = [];
+            lineup.forEach((pos, idx) => {
+                if (pos === 'DM') dmIndices.push(idx);
+            });
+            
+            if (dmIndices.length > 0) {
+                // Связь со всеми DM
+                dmIndices.forEach(() => directConnections.push('DM'));
+            } else {
+                // Связь с правым CD
+                const cdIndices = [];
+                lineup.forEach((pos, idx) => {
+                    if (pos === 'CD') cdIndices.push(idx);
+                });
+                if (cdIndices.length > 0) {
+                    directConnections.push('CD'); // Правый CD (max)
+                }
+            }
+            
+            // 2. Правый фланг: RM || RW
+            if (lineup.includes('RM')) {
+                directConnections.push('RM');
+            } else if (lineup.includes('RW')) {
+                directConnections.push('RW');
+            }
+            
+            // 3. Предыдущий CM
+            const cmIndices = [];
+            lineup.forEach((pos, idx) => {
+                if (pos === 'CM') cmIndices.push(idx);
+            });
+            if (cmIndices.length > 1) {
+                directConnections.push('CM'); // CM (index-1)
+            }
+            
+            // 4. Атака: (FR, AM) || (is424? CF(max) : (RF || CF(max) || ST))
+            if (lineup.includes('FR')) {
+                directConnections.push('FR');
+            } else if (lineup.includes('AM')) {
+                directConnections.push('AM');
+            } else {
+                const is424 = is424Formation(lineup);
+                
+                if (is424) {
+                    // Формация 4-2-4: связь с правым CF
+                    const cfIndices = [];
+                    lineup.forEach((pos, idx) => {
+                        if (pos === 'CF') cfIndices.push(idx);
+                    });
+                    if (cfIndices.length > 0) {
+                        directConnections.push('CF'); // Правый CF (max)
+                    }
+                } else {
+                    // Обычная формация: RF || CF(max) || ST
+                    if (lineup.includes('RF')) {
+                        directConnections.push('RF');
+                    } else {
+                        const cfIndices = [];
+                        lineup.forEach((pos, idx) => {
+                            if (pos === 'CF') cfIndices.push(idx);
+                        });
+                        if (cfIndices.length > 0) {
+                            directConnections.push('CF'); // Правый CF (max)
+                        } else if (lineup.includes('ST')) {
+                            directConnections.push('ST');
+                        }
+                    }
+                }
+            }
+        }
+        
+        console.log(`[CHEMISTRY] CM connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для DM - динамические связи
+    if (position === 'DM' && positionData.dynamic && lineup) {
+        const dmPlayerIndex = playerIndex >= 0 ? playerIndex : lineup.indexOf('DM');
+        if (dmPlayerIndex === -1) return [];
+        
+        const directConnections = [];
+        
+        console.log(`[CHEMISTRY] DM at index ${dmPlayerIndex}`);
+        
+        // 1. Связь со всеми CD
+        lineup.forEach(pos => {
+            if (pos === 'CD') {
+                directConnections.push('CD');
+            }
+        });
+        
+        // 2. Связь с другими DM
+        lineup.forEach((pos, idx) => {
+            if (pos === 'DM' && idx !== dmPlayerIndex) {
+                directConnections.push('DM');
+            }
+        });
+        
+        // 3. Приоритетная цепочка полузащиты/атаки
+        const cmIndices = [];
+        lineup.forEach((pos, idx) => {
+            if (pos === 'CM') cmIndices.push(idx);
+        });
+        
+        if (cmIndices.length > 0) {
+            // Приоритет 1: все CM
+            cmIndices.forEach(() => directConnections.push('CM'));
+        } else {
+            // Приоритет 2: FR, AM
+            const hasFR = lineup.includes('FR');
+            const hasAM = lineup.includes('AM');
+            
+            if (hasFR || hasAM) {
+                if (hasFR) directConnections.push('FR');
+                if (hasAM) directConnections.push('AM');
+            } else {
+                // Приоритет 3: все CF
+                const cfIndices = [];
+                lineup.forEach((pos, idx) => {
+                    if (pos === 'CF') cfIndices.push(idx);
+                });
+                
+                if (cfIndices.length > 0) {
+                    cfIndices.forEach(() => directConnections.push('CF'));
+                } else {
+                    // Приоритет 4: LF, RF
+                    const hasLF = lineup.includes('LF');
+                    const hasRF = lineup.includes('RF');
+                    
+                    if (hasLF || hasRF) {
+                        if (hasLF) directConnections.push('LF');
+                        if (hasRF) directConnections.push('RF');
+                    } else {
+                        // Приоритет 5: LM, LW, RM, RW
+                        ['LM', 'LW', 'RM', 'RW'].forEach(pos => {
+                            if (lineup.includes(pos)) {
+                                directConnections.push(pos);
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        
+        console.log(`[CHEMISTRY] DM connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для AM - динамические связи
+    if (position === 'AM' && positionData.dynamic && lineup) {
+        const directConnections = [];
+        
+        console.log(`[CHEMISTRY] AM connections building`);
+        
+        // 1. Полузащита: CM (all) || DM (all)
+        const cmIndices = [];
+        lineup.forEach((pos, idx) => {
+            if (pos === 'CM') cmIndices.push(idx);
+        });
+        
+        if (cmIndices.length > 0) {
+            // Приоритет 1: все CM
+            cmIndices.forEach(() => directConnections.push('CM'));
+        } else {
+            // Приоритет 2: все DM
+            const dmIndices = [];
+            lineup.forEach((pos, idx) => {
+                if (pos === 'DM') dmIndices.push(idx);
+            });
+            dmIndices.forEach(() => directConnections.push('DM'));
+        }
+        
+        // 2. FR (если есть)
+        if (lineup.includes('FR')) {
+            directConnections.push('FR');
+        }
+        
+        // 3. Атака: (CF (all), RF, LF) || (ST, LF, RF)
+        const cfIndices = [];
+        lineup.forEach((pos, idx) => {
+            if (pos === 'CF') cfIndices.push(idx);
+        });
+        
+        if (cfIndices.length > 0) {
+            // Приоритет 1: все CF + RF + LF
+            cfIndices.forEach(() => directConnections.push('CF'));
+            
+            if (lineup.includes('RF')) directConnections.push('RF');
+            if (lineup.includes('LF')) directConnections.push('LF');
+        } else {
+            // Приоритет 2: ST + LF + RF
+            if (lineup.includes('ST')) directConnections.push('ST');
+            if (lineup.includes('LF')) directConnections.push('LF');
+            if (lineup.includes('RF')) directConnections.push('RF');
+        }
+        
+        console.log(`[CHEMISTRY] AM connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для LF - динамические связи
+    if (position === 'LF' && positionData.dynamic && lineup) {
+        const directConnections = [];
+        
+        console.log(`[CHEMISTRY] LF connections building`);
+        
+        // 1. Левый фланг: LW || LM || LB || LD
+        if (lineup.includes('LW')) {
+            directConnections.push('LW');
+        } else if (lineup.includes('LM')) {
+            directConnections.push('LM');
+        } else if (lineup.includes('LB')) {
+            directConnections.push('LB');
+        } else if (lineup.includes('LD')) {
+            directConnections.push('LD');
+        }
+        
+        // 2. Атака и полузащита
+        const is424 = is424Formation(lineup);
+        const hasCF = lineup.includes('CF');
+        const hasST = lineup.includes('ST');
+        
+        if (is424) {
+            // Формация 4-2-4: (ST & CF) || CF(min)
+            if (hasST && hasCF) {
+                directConnections.push('ST');
+                directConnections.push('CF'); // Левый CF (min)
+            } else if (hasCF) {
+                // Только CF - берем левый (min index)
+                directConnections.push('CF');
+            }
+        } else {
+            // Обычная формация: CF || ST || (RF + полузащита)
+            if (hasCF) {
+                // Приоритет 1: CF (без полузащиты)
+                directConnections.push('CF');
+            } else if (hasST) {
+                // Приоритет 2: ST (без полузащиты)
+                directConnections.push('ST');
+            } else {
+                // Приоритет 3: RF + полузащита (только если нет CF и ST)
+                if (lineup.includes('RF')) {
+                    directConnections.push('RF');
+                    
+                    // Добавляем полузащиту: (AM || FR) || (CM(min) || DM)
+                    if (lineup.includes('AM')) {
+                        directConnections.push('AM');
+                    } else if (lineup.includes('FR')) {
+                        directConnections.push('FR');
+                    } else {
+                        // CM (min index) || DM
+                        const cmIndices = [];
+                        lineup.forEach((pos, idx) => {
+                            if (pos === 'CM') cmIndices.push(idx);
+                        });
+                        
+                        if (cmIndices.length > 0) {
+                            directConnections.push('CM'); // Левый CM (min)
+                        } else if (lineup.includes('DM')) {
+                            directConnections.push('DM');
+                        }
+                    }
+                }
+            }
+        }
+        
+        console.log(`[CHEMISTRY] LF connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для RF - динамические связи
+    if (position === 'RF' && positionData.dynamic && lineup) {
+        const directConnections = [];
+        
+        console.log(`[CHEMISTRY] RF connections building`);
+        
+        // 1. Правый фланг: RW || RM || RB || RD
+        if (lineup.includes('RW')) {
+            directConnections.push('RW');
+        } else if (lineup.includes('RM')) {
+            directConnections.push('RM');
+        } else if (lineup.includes('RB')) {
+            directConnections.push('RB');
+        } else if (lineup.includes('RD')) {
+            directConnections.push('RD');
+        }
+        
+        // 2. Атака и полузащита
+        const is424 = is424Formation(lineup);
+        const hasCF = lineup.includes('CF');
+        const hasST = lineup.includes('ST');
+        
+        if (is424) {
+            // Формация 4-2-4: (ST & CF) || CF(max)
+            if (hasST && hasCF) {
+                directConnections.push('ST');
+                directConnections.push('CF'); // Правый CF (max)
+            } else if (hasCF) {
+                // Только CF - берем правый (max index)
+                directConnections.push('CF');
+            }
+        } else {
+            // Обычная формация: CF || ST || (LF + полузащита)
+            if (hasCF) {
+                // Приоритет 1: CF (без полузащиты)
+                directConnections.push('CF');
+            } else if (hasST) {
+                // Приоритет 2: ST (без полузащиты)
+                directConnections.push('ST');
+            } else {
+                // Приоритет 3: LF + полузащита (только если нет CF и ST)
+                if (lineup.includes('LF')) {
+                    directConnections.push('LF');
+                    
+                    // Добавляем полузащиту: (AM || FR) || (CM(max) || DM)
+                    if (lineup.includes('AM')) {
+                        directConnections.push('AM');
+                    } else if (lineup.includes('FR')) {
+                        directConnections.push('FR');
+                    } else {
+                        // CM (max index) || DM
+                        const cmIndices = [];
+                        lineup.forEach((pos, idx) => {
+                            if (pos === 'CM') cmIndices.push(idx);
+                        });
+                        
+                        if (cmIndices.length > 0) {
+                            directConnections.push('CM'); // Правый CM (max)
+                        } else if (lineup.includes('DM')) {
+                            directConnections.push('DM');
+                        }
+                    }
+                }
+            }
+        }
+        
+        console.log(`[CHEMISTRY] RF connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для CF - динамические связи
+    if (position === 'CF' && positionData.dynamic && lineup) {
+        const cfPlayerIndex = playerIndex >= 0 ? playerIndex : lineup.indexOf('CF');
+        if (cfPlayerIndex === -1) return [];
+        
+        const directConnections = [];
+        
+        console.log(`[CHEMISTRY] CF connections building`);
+        
+        // Подсчет нападающих
+        const cfCount = countPositionInLineup(lineup, 'CF');
+        const stCount = countPositionInLineup(lineup, 'ST');
+        const lfCount = countPositionInLineup(lineup, 'LF');
+        const rfCount = countPositionInLineup(lineup, 'RF');
+        const totalForwards = cfCount + stCount + lfCount + rfCount;
+        const is424 = is424Formation(lineup);
+        const cfType = getCFType(lineup, cfPlayerIndex);
+        
+        console.log(`[CHEMISTRY] CF type: ${cfType}, count: ${cfCount}, total forwards: ${totalForwards}, is424: ${is424}`);
+        
+        // Случай 1: Единственный нападающий (ST + CF + RF + LF) = 1
+        if (totalForwards === 1) {
+            // Левый фланг: LW || LM
+            if (lineup.includes('LW')) {
+                directConnections.push('LW');
+            } else if (lineup.includes('LM')) {
+                directConnections.push('LM');
+            }
+            
+            // Правый фланг: RW || RM
+            if (lineup.includes('RW')) {
+                directConnections.push('RW');
+            } else if (lineup.includes('RM')) {
+                directConnections.push('RM');
+            }
+            
+            // Полузащита: AM || FR || CM(all) || DM(all)
+            if (lineup.includes('AM')) {
+                directConnections.push('AM');
+            } else if (lineup.includes('FR')) {
+                directConnections.push('FR');
+            } else {
+                const cmIndices = [];
+                lineup.forEach((pos, idx) => {
+                    if (pos === 'CM') cmIndices.push(idx);
+                });
+                if (cmIndices.length > 0) {
+                    cmIndices.forEach(() => directConnections.push('CM'));
+                } else {
+                    const dmIndices = [];
+                    lineup.forEach((pos, idx) => {
+                        if (pos === 'DM') dmIndices.push(idx);
+                    });
+                    dmIndices.forEach(() => directConnections.push('DM'));
+                }
+            }
+        }
+        // Случай 2: CF + LF + RF = 3 (нет ST)
+        else if (cfCount === 1 && lfCount === 1 && rfCount === 1 && stCount === 0) {
+            // Фланги: LF, RF
+            directConnections.push('LF', 'RF');
+            
+            // Полузащита: (AM, FR) || (AM || FR || CM(all) || DM(all))
+            const hasAM = lineup.includes('AM');
+            const hasFR = lineup.includes('FR');
+            
+            if (hasAM && hasFR) {
+                // Оба вместе
+                directConnections.push('AM', 'FR');
+            } else if (hasAM) {
+                directConnections.push('AM');
+            } else if (hasFR) {
+                directConnections.push('FR');
+            } else {
+                const cmIndices = [];
+                lineup.forEach((pos, idx) => {
+                    if (pos === 'CM') cmIndices.push(idx);
+                });
+                if (cmIndices.length > 0) {
+                    cmIndices.forEach(() => directConnections.push('CM'));
+                } else {
+                    const dmIndices = [];
+                    lineup.forEach((pos, idx) => {
+                        if (pos === 'DM') dmIndices.push(idx);
+                    });
+                    dmIndices.forEach(() => directConnections.push('DM'));
+                }
+            }
+        }
+        // Случай 3: CF = 2
+        else if (cfCount === 2) {
+            // Фланги: (LF || LW || LM), (RF || RW || RM)
+            if (lineup.includes('LF')) {
+                directConnections.push('LF');
+            } else if (lineup.includes('LW')) {
+                directConnections.push('LW');
+            } else if (lineup.includes('LM')) {
+                directConnections.push('LM');
+            }
+            
+            if (lineup.includes('RF')) {
+                directConnections.push('RF');
+            } else if (lineup.includes('RW')) {
+                directConnections.push('RW');
+            } else if (lineup.includes('RM')) {
+                directConnections.push('RM');
+            }
+            
+            // Другой CF
+            directConnections.push('CF');
+            
+            // ST (если есть)
+            if (stCount > 0) {
+                directConnections.push('ST');
+            }
+            
+            // Полузащита
+            if (is424) {
+                // Формация 4-2-4
+                if (stCount > 0) {
+                    // Есть ST: (FR || CM(all)) || (CF min? LM : RM)
+                    if (lineup.includes('FR')) {
+                        directConnections.push('FR');
+                    } else {
+                        const cmIndices = [];
+                        lineup.forEach((pos, idx) => {
+                            if (pos === 'CM') cmIndices.push(idx);
+                        });
+                        if (cmIndices.length > 0) {
+                            cmIndices.forEach(() => directConnections.push('CM'));
+                        }
+                    }
+                    
+                    // Дополнительно: LM/RM по индексу
+                    if (cfType === 'min') {
+                        if (lineup.includes('LM')) directConnections.push('LM');
+                    } else if (cfType === 'max') {
+                        if (lineup.includes('RM')) directConnections.push('RM');
+                    }
+                } else {
+                    // Нет ST: CM(same index)
+                    const cmSameIndex = getCMBySameIndex(lineup, cfType);
+                    if (cmSameIndex !== -1) {
+                        directConnections.push('CM');
+                    }
+                }
+                
+                // Дополнительная связь: FR || CM(same index)
+                if (lineup.includes('FR')) {
+                    directConnections.push('FR');
+                } else {
+                    const cmSameIndex = getCMBySameIndex(lineup, cfType);
+                    if (cmSameIndex !== -1) {
+                        directConnections.push('CM');
+                    }
+                }
+            } else {
+                // Обычная формация: AM || FR || CM(same index) || DM(all)
+                if (lineup.includes('AM')) {
+                    directConnections.push('AM');
+                } else if (lineup.includes('FR')) {
+                    directConnections.push('FR');
+                } else {
+                    const cmSameIndex = getCMBySameIndex(lineup, cfType);
+                    if (cmSameIndex !== -1) {
+                        directConnections.push('CM');
+                    } else {
+                        const dmIndices = [];
+                        lineup.forEach((pos, idx) => {
+                            if (pos === 'DM') dmIndices.push(idx);
+                        });
+                        dmIndices.forEach(() => directConnections.push('DM'));
+                    }
+                }
+            }
+        }
+        // Случай 4: CF = 3
+        else if (cfCount === 3) {
+            if (cfType === 'min') {
+                // Левый CF: (LW || LM), CF(index+1), (AM || FR || CM(min) || DM(all))
+                if (lineup.includes('LW')) {
+                    directConnections.push('LW');
+                } else if (lineup.includes('LM')) {
+                    directConnections.push('LM');
+                }
+                
+                // Следующий CF
+                directConnections.push('CF');
+                
+                // Полузащита
+                if (lineup.includes('AM')) {
+                    directConnections.push('AM');
+                } else if (lineup.includes('FR')) {
+                    directConnections.push('FR');
+                } else {
+                    const cmIndices = [];
+                    lineup.forEach((pos, idx) => {
+                        if (pos === 'CM') cmIndices.push(idx);
+                    });
+                    if (cmIndices.length > 0) {
+                        const minCM = Math.min(...cmIndices);
+                        directConnections.push('CM');
+                    } else {
+                        const dmIndices = [];
+                        lineup.forEach((pos, idx) => {
+                            if (pos === 'DM') dmIndices.push(idx);
+                        });
+                        dmIndices.forEach(() => directConnections.push('DM'));
+                    }
+                }
+            } else if (cfType === 'max') {
+                // Правый CF: (RW || RM), CF(index-1), (AM || FR || CM(max) || DM(all))
+                if (lineup.includes('RW')) {
+                    directConnections.push('RW');
+                } else if (lineup.includes('RM')) {
+                    directConnections.push('RM');
+                }
+                
+                // Предыдущий CF
+                directConnections.push('CF');
+                
+                // Полузащита
+                if (lineup.includes('AM')) {
+                    directConnections.push('AM');
+                } else if (lineup.includes('FR')) {
+                    directConnections.push('FR');
+                } else {
+                    const cmIndices = [];
+                    lineup.forEach((pos, idx) => {
+                        if (pos === 'CM') cmIndices.push(idx);
+                    });
+                    if (cmIndices.length > 0) {
+                        const maxCM = Math.max(...cmIndices);
+                        directConnections.push('CM');
+                    } else {
+                        const dmIndices = [];
+                        lineup.forEach((pos, idx) => {
+                            if (pos === 'DM') dmIndices.push(idx);
+                        });
+                        dmIndices.forEach(() => directConnections.push('DM'));
+                    }
+                }
+            } else if (cfType === 'middle') {
+                // Средний CF: CF(all), (AM || FR || CM(all) || DM(all))
+                lineup.forEach((pos, idx) => {
+                    if (pos === 'CF' && idx !== cfPlayerIndex) {
+                        directConnections.push('CF');
+                    }
+                });
+                
+                // Полузащита
+                if (lineup.includes('AM')) {
+                    directConnections.push('AM');
+                } else if (lineup.includes('FR')) {
+                    directConnections.push('FR');
+                } else {
+                    const cmIndices = [];
+                    lineup.forEach((pos, idx) => {
+                        if (pos === 'CM') cmIndices.push(idx);
+                    });
+                    if (cmIndices.length > 0) {
+                        cmIndices.forEach(() => directConnections.push('CM'));
+                    } else {
+                        const dmIndices = [];
+                        lineup.forEach((pos, idx) => {
+                            if (pos === 'DM') dmIndices.push(idx);
+                        });
+                        dmIndices.forEach(() => directConnections.push('DM'));
+                    }
+                }
+            }
+        }
+        
+        console.log(`[CHEMISTRY] CF connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Специальная обработка для ST - динамические связи
+    if (position === 'ST' && positionData.dynamic && lineup) {
+        const directConnections = [];
+        
+        console.log(`[CHEMISTRY] ST connections building`);
+        
+        // Подсчет нападающих
+        const cfCount = countPositionInLineup(lineup, 'CF');
+        const stCount = countPositionInLineup(lineup, 'ST');
+        const lfCount = countPositionInLineup(lineup, 'LF');
+        const rfCount = countPositionInLineup(lineup, 'RF');
+        const totalForwards = cfCount + stCount + lfCount + rfCount;
+        const is424 = is424Formation(lineup);
+        
+        console.log(`[CHEMISTRY] ST count: ${stCount}, CF: ${cfCount}, total forwards: ${totalForwards}, is424: ${is424}`);
+        
+        // Случай 1: Единственный нападающий (ST + CF + RF + LF) = 1
+        if (totalForwards === 1) {
+            // Левый фланг: LW || LM
+            if (lineup.includes('LW')) {
+                directConnections.push('LW');
+            } else if (lineup.includes('LM')) {
+                directConnections.push('LM');
+            }
+            
+            // Правый фланг: RW || RM
+            if (lineup.includes('RW')) {
+                directConnections.push('RW');
+            } else if (lineup.includes('RM')) {
+                directConnections.push('RM');
+            }
+            
+            // Полузащита: AM || FR || CM(all) || DM(all)
+            if (lineup.includes('AM')) {
+                directConnections.push('AM');
+            } else if (lineup.includes('FR')) {
+                directConnections.push('FR');
+            } else {
+                const cmIndices = [];
+                lineup.forEach((pos, idx) => {
+                    if (pos === 'CM') cmIndices.push(idx);
+                });
+                if (cmIndices.length > 0) {
+                    cmIndices.forEach(() => directConnections.push('CM'));
+                } else {
+                    const dmIndices = [];
+                    lineup.forEach((pos, idx) => {
+                        if (pos === 'DM') dmIndices.push(idx);
+                    });
+                    dmIndices.forEach(() => directConnections.push('DM'));
+                }
+            }
+        }
+        // Случай 2: ST + LF + RF = 3 (нет CF)
+        else if (stCount === 1 && lfCount === 1 && rfCount === 1 && cfCount === 0) {
+            // Фланги: LF, RF
+            directConnections.push('LF', 'RF');
+            
+            // Полузащита: (AM, FR) || (AM || FR || CM(all) || DM(all))
+            const hasAM = lineup.includes('AM');
+            const hasFR = lineup.includes('FR');
+            
+            if (hasAM && hasFR) {
+                // Оба вместе
+                directConnections.push('AM', 'FR');
+            } else if (hasAM) {
+                directConnections.push('AM');
+            } else if (hasFR) {
+                directConnections.push('FR');
+            } else {
+                const cmIndices = [];
+                lineup.forEach((pos, idx) => {
+                    if (pos === 'CM') cmIndices.push(idx);
+                });
+                if (cmIndices.length > 0) {
+                    cmIndices.forEach(() => directConnections.push('CM'));
+                } else {
+                    const dmIndices = [];
+                    lineup.forEach((pos, idx) => {
+                        if (pos === 'DM') dmIndices.push(idx);
+                    });
+                    dmIndices.forEach(() => directConnections.push('DM'));
+                }
+            }
+        }
+        // Случай 3: is424
+        else if (is424) {
+            // CF(все), LF, RF
+            const cfIndices = [];
+            lineup.forEach((pos, idx) => {
+                if (pos === 'CF') cfIndices.push(idx);
+            });
+            cfIndices.forEach(() => directConnections.push('CF'));
+            
+            if (lfCount > 0) directConnections.push('LF');
+            if (rfCount > 0) directConnections.push('RF');
+        }
+        // Случай 4: CF + ST = 2 или CF + ST = 3
+        else if (cfCount > 0) {
+            // Связь со всеми CF
+            const cfIndices = [];
+            lineup.forEach((pos, idx) => {
+                if (pos === 'CF') cfIndices.push(idx);
+            });
+            cfIndices.forEach(() => directConnections.push('CF'));
+        }
+        
+        console.log(`[CHEMISTRY] ST connections: ${directConnections.join(', ')}`);
+        return directConnections;
+    }
+    
+    // Применяем условия если они есть
+    let directConnections = [...positionData.direct];
+    if (positionData.conditions && lineup) {
+        directConnections = positionData.direct.filter(connectedPos => {
+            const condition = positionData.conditions[connectedPos];
+            return !condition || condition(lineup);
+        });
+    }
+    
+    // Обработка приоритетной связи с атакой (для LD и RD)
+    if (positionData.priorityAttack && lineup) {
+        // Ищем первую доступную позицию из приоритетного списка
+        const attackConnection = positionData.priorityAttack.find(pos => lineup.includes(pos));
+        if (attackConnection) {
+            directConnections.push(attackConnection);
+        }
+    }
+    
+    // Обработка специального выбора CD (для LD и RD)
+    if (positionData.cdSelector && lineup && directConnections.includes('CD')) {
+        // Находим все индексы CD в составе
+        const cdIndices = [];
+        lineup.forEach((pos, idx) => {
+            if (pos === 'CD') {
+                cdIndices.push(idx);
+            }
+        });
+        
+        if (cdIndices.length > 0) {
+            // Выбираем CD по правилу (min или max индекс)
+            const selectedCdIndex = positionData.cdSelector === 'min' 
+                ? Math.min(...cdIndices) 
+                : Math.max(...cdIndices);
+            
+            console.log(`[CHEMISTRY] ${position} CD selector: ${positionData.cdSelector}, selected CD at index ${selectedCdIndex} (total CDs: ${cdIndices.length})`);
+        }
+    }
+    
+    // Возвращаем только прямые связи (пока не используем диагональные)
+    console.log(`[CHEMISTRY] ${position} connections: ${directConnections.join(', ')}`);
+    return directConnections;
 }
 
 /**
  * Получает связи для вратаря на основе состава защиты
- * @param {Array} lineup - Состав команды
+ * Новая логика: GK связан со ВСЕМИ защитниками в составе
+ * @param {Array} lineup - Состав команды (позиции)
  * @returns {Array} - Массив связанных позиций для GK
  */
 function getGKConnections(lineup) {
-    const defenders = lineup.filter(pos => 
-        ['LD', 'CD', 'RD', 'SW', 'LB', 'RB'].includes(pos)
-    );
-    
-    const hasLB = defenders.includes('LB');
-    const hasRB = defenders.includes('RB');
-    const hasSW = defenders.includes('SW');
-    const cdCount = defenders.filter(pos => pos === 'CD').length;
-    
-    // Правило 1: Если есть LB/RB + SW → связь только с SW
-    if ((hasLB || hasRB) && hasSW) {
-        return ['SW'];
+    if (!lineup) {
+        // Если состав не передан, возвращаем все возможные защитники
+        console.log('[CHEMISTRY] GK: no lineup provided, returning all defenders');
+        return ['LD', 'LB', 'CD', 'SW', 'RD', 'RB'];
     }
     
-    // Правило 2: Если 5 защитников с 3+ CD → связь только с CD
-    if (defenders.length === 5 && cdCount >= 3) {
-        return defenders.filter(pos => pos === 'CD');
+    // Находим всех защитников в составе
+    const defenderPositions = ['LD', 'LB', 'CD', 'SW', 'RD', 'RB'];
+    const defenders = [];
+    
+    // Проходим по составу и собираем всех защитников
+    for (const position of lineup) {
+        if (position && defenderPositions.includes(position)) {
+            defenders.push(position);
+        }
     }
     
-    // Правило 3: Если SW без LB/RB → связь со всеми кроме CD
-    if (hasSW && !hasLB && !hasRB) {
-        return defenders.filter(pos => pos !== 'CD');
-    }
+    console.log(`[CHEMISTRY] GK connections: ${defenders.join(', ')} (${defenders.length} defenders total)`);
     
-    // Правило 4: Остальные случаи → связь со всеми защитниками
     return defenders;
+}
+
+/**
+ * Подсчитывает количество игроков на определенной позиции в составе
+ * @param {Array} lineup - Состав команды (позиции)
+ * @param {string} position - Позиция для подсчета
+ * @returns {number} - Количество игроков на позиции
+ */
+function countPositionInLineup(lineup, position) {
+    if (!lineup) return 0;
+    
+    return lineup.filter(pos => pos === position).length;
+}
+
+/**
+ * Получает индекс конкретного CD для фланговых защитников (LD/RD)
+ * @param {Array} positions - Массив позиций в составе
+ * @param {string} playerPosition - Позиция игрока (LD или RD)
+ * @param {string} selector - Тип селектора ('min' или 'max')
+ * @returns {number} - Индекс выбранного CD или -1 если не найден
+ */
+function getSpecificCDIndex(positions, playerPosition, selector) {
+    if (!positions || (playerPosition !== 'LD' && playerPosition !== 'RD')) {
+        return -1;
+    }
+    
+    // Находим все индексы CD в составе
+    const cdIndices = [];
+    positions.forEach((pos, idx) => {
+        if (pos === 'CD') {
+            cdIndices.push(idx);
+        }
+    });
+    
+    if (cdIndices.length === 0) return -1;
+    
+    // Выбираем CD по правилу
+    const selectedIndex = selector === 'min' 
+        ? Math.min(...cdIndices) 
+        : Math.max(...cdIndices);
+    
+    return selectedIndex;
+}
+
+/**
+ * Определяет тип CD по его индексу в составе
+ * @param {Array} positions - Массив позиций в составе
+ * @param {number} cdIndex - Индекс текущего CD
+ * @returns {string} - Тип CD: 'single', 'middle', 'min', 'max', 'other'
+ */
+function getCDType(positions, cdIndex) {
+    if (!positions || cdIndex < 0) return 'other';
+    
+    // Находим все индексы CD
+    const cdIndices = [];
+    positions.forEach((pos, idx) => {
+        if (pos === 'CD') {
+            cdIndices.push(idx);
+        }
+    });
+    
+    const cdCount = cdIndices.length;
+    
+    if (cdCount === 0) return 'other';
+    if (cdCount === 1) return 'single';
+    
+    // Для 3 CD - проверяем средний
+    if (cdCount === 3 && cdIndex === cdIndices[1]) return 'middle';
+    
+    // Проверяем минимальный и максимальный
+    if (cdIndex === Math.min(...cdIndices)) return 'min';
+    if (cdIndex === Math.max(...cdIndices)) return 'max';
+    
+    return 'other';
+}
+
+/**
+ * Получает индексы CM для связи с CD
+ * @param {Array} positions - Массив позиций в составе
+ * @param {string} cdType - Тип CD ('single', 'middle', 'min', 'max')
+ * @returns {Array} - Массив индексов CM
+ */
+function getCMIndicesForCD(positions, cdType) {
+    if (!positions) return [];
+    
+    const cmIndices = [];
+    positions.forEach((pos, idx) => {
+        if (pos === 'CM') {
+            cmIndices.push(idx);
+        }
+    });
+    
+    if (cmIndices.length === 0) return [];
+    
+    switch(cdType) {
+        case 'min':
+            // Левый CD связан с левым CM (минимальный индекс)
+            return [Math.min(...cmIndices)];
+        case 'max':
+            // Правый CD связан с правым CM (максимальный индекс)
+            return [Math.max(...cmIndices)];
+        case 'middle':
+        case 'single':
+            // Средний или единственный CD связан со всеми CM
+            return cmIndices;
+        default:
+            return cmIndices;
+    }
+}
+
+/**
+ * Получает приоритетную связь с полузащитой для CD
+ * @param {Array} positions - Массив позиций в составе
+ * @param {string} cdType - Тип CD
+ * @returns {Array} - Массив индексов связанных полузащитников
+ */
+function getMidfieldConnectionsForCD(positions, cdType) {
+    if (!positions) return [];
+    
+    const connections = [];
+    
+    // Приоритет: DM > CM > FR > AM
+    
+    // 1. Проверяем DM
+    const dmIndices = [];
+    positions.forEach((pos, idx) => {
+        if (pos === 'DM') dmIndices.push(idx);
+    });
+    
+    if (dmIndices.length > 0) {
+        // Единственный CD связан со всеми DM
+        if (cdType === 'single') {
+            return dmIndices;
+        }
+        // Остальные CD связаны с первым DM
+        return [dmIndices[0]];
+    }
+    
+    // 2. Проверяем CM
+    const cmIndices = getCMIndicesForCD(positions, cdType);
+    if (cmIndices.length > 0) {
+        return cmIndices;
+    }
+    
+    // 3. Проверяем FR
+    const frIndex = positions.findIndex(pos => pos === 'FR');
+    if (frIndex !== -1) {
+        return [frIndex];
+    }
+    
+    // 4. Проверяем AM
+    const amIndex = positions.findIndex(pos => pos === 'AM');
+    if (amIndex !== -1) {
+        return [amIndex];
+    }
+    
+    return [];
+}
+
+/**
+ * Определяет тип CM по его индексу в составе
+ * @param {Array} positions - Массив позиций в составе
+ * @param {number} cmIndex - Индекс текущего CM
+ * @returns {string} - Тип CM: 'middle', 'min', 'max', 'other'
+ */
+function getCMType(positions, cmIndex) {
+    if (!positions || cmIndex < 0) return 'other';
+    
+    const cmIndices = [];
+    positions.forEach((pos, idx) => {
+        if (pos === 'CM') {
+            cmIndices.push(idx);
+        }
+    });
+    
+    const cmCount = cmIndices.length;
+    
+    if (cmCount === 0) return 'other';
+    if (cmCount === 3 && cmIndex === cmIndices[1]) return 'middle';
+    if (cmIndex === Math.min(...cmIndices)) return 'min';
+    if (cmIndex === Math.max(...cmIndices)) return 'max';
+    
+    return 'other';
+}
+
+/**
+ * Определяет является ли формация 4-2-4
+ * @param {Array} positions - Массив позиций в составе
+ * @returns {boolean} - true если формация 4-2-4
+ */
+function is424Formation(positions) {
+    if (!positions) return false;
+    
+    // Считаем защитников
+    const defenderCount = positions.filter(p => 
+        ['LD', 'LB', 'CD', 'SW', 'RD', 'RB'].includes(p)
+    ).length;
+    
+    // Считаем CM
+    const cmCount = positions.filter(p => p === 'CM').length;
+    
+    // Считаем нападающих
+    const forwardCount = positions.filter(p => 
+        ['LF', 'CF', 'RF', 'ST', 'LW', 'RW'].includes(p)
+    ).length;
+    
+    // 4-2-4: 4 защитника, 2 CM, 4 нападающих
+    return defenderCount === 4 && cmCount === 2 && forwardCount === 4;
+}
+
+/**
+ * Определяет тип CF по его индексу в составе
+ * @param {Array} positions - Массив позиций в составе
+ * @param {number} cfIndex - Индекс текущего CF
+ * @returns {string} - Тип CF: 'single', 'middle', 'min', 'max', 'other'
+ */
+function getCFType(positions, cfIndex) {
+    if (!positions || cfIndex < 0) return 'other';
+    
+    const cfIndices = [];
+    positions.forEach((pos, idx) => {
+        if (pos === 'CF') {
+            cfIndices.push(idx);
+        }
+    });
+    
+    const cfCount = cfIndices.length;
+    
+    if (cfCount === 0) return 'other';
+    if (cfCount === 1) return 'single';
+    
+    // Для 3 CF - проверяем средний
+    if (cfCount === 3 && cfIndex === cfIndices[1]) return 'middle';
+    
+    // Проверяем минимальный и максимальный
+    if (cfIndex === Math.min(...cfIndices)) return 'min';
+    if (cfIndex === Math.max(...cfIndices)) return 'max';
+    
+    return 'other';
+}
+
+/**
+ * Получает CM по "same index" с CF (соответствующий индекс)
+ * @param {Array} positions - Массив позиций в составе
+ * @param {string} cfType - Тип CF ('min', 'max')
+ * @returns {number} - Индекс CM или -1
+ */
+function getCMBySameIndex(positions, cfType) {
+    if (!positions) return -1;
+    
+    const cmIndices = [];
+    positions.forEach((pos, idx) => {
+        if (pos === 'CM') cmIndices.push(idx);
+    });
+    
+    if (cmIndices.length === 0) return -1;
+    
+    if (cfType === 'min') {
+        return Math.min(...cmIndices);
+    } else if (cfType === 'max') {
+        return Math.max(...cmIndices);
+    }
+    
+    return -1;
+}
+
+/**
+ * Подсчитывает количество позиций в составе
+ * @param {Array} positions - Массив позиций
+ * @param {string} position - Позиция для подсчета
+ * @returns {number} - Количество
+ */
+function countPositionInLineup(positions, position) {
+    if (!positions) return 0;
+    return positions.filter(p => p === position).length;
 }
 
 /**
@@ -928,15 +2500,480 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
     if (!playerPosition) return 0;
     
     // Получаем связанные позиции
-    const connectedPositions = getPositionConnections(playerPosition, positions);
+    const connectedPositions = getPositionConnections(playerPosition, positions, playerIndex);
     if (connectedPositions.length === 0) return 0;
     
     let totalModifier = 0;
     let connectionCount = 0;
     
+    // Для CD нужна специальная обработка связей
+    const isCDPlayer = playerPosition === 'CD';
+    const cdType = isCDPlayer ? getCDType(positions, playerIndex) : null;
+    
     // Рассчитываем модификатор для каждой связи
-    connectedPositions.forEach(connectedPos => {
-        const connectedPlayerIndex = positions.findIndex(pos => pos === connectedPos);
+    connectedPositions.forEach((connectedPos, idx) => {
+        let connectedPlayerIndex = -1;
+        
+        // Специальная обработка для LD/RD с CD - выбираем конкретный CD по индексу
+        if ((playerPosition === 'LD' || playerPosition === 'RD') && connectedPos === 'CD') {
+            const selector = playerPosition === 'LD' ? 'min' : 'max';
+            connectedPlayerIndex = getSpecificCDIndex(positions, playerPosition, selector);
+            console.log(`[CHEMISTRY] ${playerPosition} connecting to CD at index ${connectedPlayerIndex} (${selector})`);
+        }
+        // Специальная обработка для LB с CD - левый CD (min index)
+        else if (playerPosition === 'LB' && connectedPos === 'CD') {
+            const cdIndices = [];
+            positions.forEach((pos, i) => {
+                if (pos === 'CD') cdIndices.push(i);
+            });
+            if (cdIndices.length > 0) {
+                connectedPlayerIndex = Math.min(...cdIndices); // Левый CD
+                console.log(`[CHEMISTRY] LB connecting to CD at index ${connectedPlayerIndex} (min)`);
+            }
+        }
+        // Специальная обработка для RB с CD - правый CD (max index)
+        else if (playerPosition === 'RB' && connectedPos === 'CD') {
+            const cdIndices = [];
+            positions.forEach((pos, i) => {
+                if (pos === 'CD') cdIndices.push(i);
+            });
+            if (cdIndices.length > 0) {
+                connectedPlayerIndex = Math.max(...cdIndices); // Правый CD
+                console.log(`[CHEMISTRY] RB connecting to CD at index ${connectedPlayerIndex} (max)`);
+            }
+        }
+        // Специальная обработка для CD с другими CD
+        else if (isCDPlayer && connectedPos === 'CD') {
+            // Находим все индексы CD кроме текущего
+            const cdIndices = [];
+            positions.forEach((pos, i) => {
+                if (pos === 'CD' && i !== playerIndex) {
+                    cdIndices.push(i);
+                }
+            });
+            
+            if (cdIndices.length > 0) {
+                // Для среднего CD - берем CD по порядку из массива связей
+                if (cdType === 'middle') {
+                    // Средний CD связан со всеми остальными CD
+                    const cdConnectionIndex = Math.floor(connectionCount / 2); // Простая логика распределения
+                    connectedPlayerIndex = cdIndices[cdConnectionIndex % cdIndices.length];
+                } else if (cdType === 'min') {
+                    // Левый CD связан со следующим (index+1)
+                    connectedPlayerIndex = cdIndices[0]; // Следующий CD
+                } else if (cdType === 'max') {
+                    // Правый CD связан с предыдущим (index-1)
+                    connectedPlayerIndex = cdIndices[cdIndices.length - 1]; // Предыдущий CD
+                }
+            }
+        }
+        // Специальная обработка для CD с CM - может быть несколько CM
+        else if (isCDPlayer && connectedPos === 'CM') {
+            const cmIndices = getCMIndicesForCD(positions, cdType);
+            // Берем CM по порядку из списка связей
+            const cmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CM').length;
+            connectedPlayerIndex = cmIndices[cmConnectionIndex] || cmIndices[0];
+        }
+        // Специальная обработка для CD с DM - может быть несколько DM
+        else if (isCDPlayer && connectedPos === 'DM' && cdType === 'single') {
+            // Единственный CD может быть связан со всеми DM
+            const dmIndices = [];
+            positions.forEach((pos, i) => {
+                if (pos === 'DM') dmIndices.push(i);
+            });
+            const dmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'DM').length;
+            connectedPlayerIndex = dmIndices[dmConnectionIndex] || dmIndices[0];
+        }
+        // Специальная обработка для SW с CD - связан со всеми CD
+        else if (playerPosition === 'SW' && connectedPos === 'CD') {
+            const cdIndices = [];
+            positions.forEach((pos, i) => {
+                if (pos === 'CD') cdIndices.push(i);
+            });
+            // Берем CD по порядку из списка связей
+            const cdConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CD').length;
+            connectedPlayerIndex = cdIndices[cdConnectionIndex];
+        }
+        // Специальная обработка для CM
+        else if (playerPosition === 'CM') {
+            const cmType = getCMType(positions, playerIndex);
+            
+            // CM с другими CM
+            if (connectedPos === 'CM') {
+                const cmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CM' && i !== playerIndex) cmIndices.push(i);
+                });
+                
+                if (cmType === 'middle') {
+                    // Средний CM связан со всеми остальными CM
+                    const cmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CM').length;
+                    connectedPlayerIndex = cmIndices[cmConnectionIndex];
+                } else if (cmType === 'min' && cmIndices.length > 0) {
+                    // Левый CM связан со следующим CM (index+1)
+                    connectedPlayerIndex = cmIndices[0];
+                } else if (cmType === 'max' && cmIndices.length > 0) {
+                    // Правый CM связан с предыдущим CM (index-1)
+                    connectedPlayerIndex = cmIndices[cmIndices.length - 1];
+                }
+            }
+            // CM с CD
+            else if (connectedPos === 'CD') {
+                const cdIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CD') cdIndices.push(i);
+                });
+                
+                if (cmType === 'middle') {
+                    // Средний CM связан со всеми CD
+                    const cdConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CD').length;
+                    connectedPlayerIndex = cdIndices[cdConnectionIndex];
+                } else if (cmType === 'min' && cdIndices.length > 0) {
+                    // Левый CM связан с левым CD
+                    connectedPlayerIndex = Math.min(...cdIndices);
+                } else if (cmType === 'max' && cdIndices.length > 0) {
+                    // Правый CM связан с правым CD
+                    connectedPlayerIndex = Math.max(...cdIndices);
+                }
+            }
+            // CM с DM
+            else if (connectedPos === 'DM') {
+                const dmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'DM') dmIndices.push(i);
+                });
+                // CM связан со всеми DM (берем по порядку)
+                const dmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'DM').length;
+                connectedPlayerIndex = dmIndices[dmConnectionIndex];
+            }
+            // CM с CF
+            else if (connectedPos === 'CF') {
+                const cfIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CF') cfIndices.push(i);
+                });
+                
+                if (cmType === 'middle') {
+                    // Средний CM связан со всеми CF
+                    const cfConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CF').length;
+                    connectedPlayerIndex = cfIndices[cfConnectionIndex];
+                } else if (cmType === 'min' && cfIndices.length > 0) {
+                    // Левый CM связан с левым CF
+                    connectedPlayerIndex = Math.min(...cfIndices);
+                } else if (cmType === 'max' && cfIndices.length > 0) {
+                    // Правый CM связан с правым CF
+                    connectedPlayerIndex = Math.max(...cfIndices);
+                }
+            }
+            // Для остальных связей CM - первое вхождение
+            else {
+                connectedPlayerIndex = positions.findIndex(pos => pos === connectedPos);
+            }
+        }
+        // Специальная обработка для LM с CM - левый CM (min index)
+        else if (playerPosition === 'LM' && connectedPos === 'CM') {
+            const cmIndices = [];
+            positions.forEach((pos, i) => {
+                if (pos === 'CM') cmIndices.push(i);
+            });
+            if (cmIndices.length > 0) {
+                connectedPlayerIndex = Math.min(...cmIndices); // Левый CM
+                console.log(`[CHEMISTRY] LM connecting to CM at index ${connectedPlayerIndex} (min)`);
+            }
+        }
+        // Специальная обработка для LM с DM - левый DM (min index)
+        else if (playerPosition === 'LM' && connectedPos === 'DM') {
+            const dmIndices = [];
+            positions.forEach((pos, i) => {
+                if (pos === 'DM') dmIndices.push(i);
+            });
+            if (dmIndices.length > 0) {
+                connectedPlayerIndex = Math.min(...dmIndices); // Левый DM
+                console.log(`[CHEMISTRY] LM connecting to DM at index ${connectedPlayerIndex} (min)`);
+            }
+        }
+        // Специальная обработка для LM с CF - левый CF (min index)
+        else if (playerPosition === 'LM' && connectedPos === 'CF') {
+            const cfIndices = [];
+            positions.forEach((pos, i) => {
+                if (pos === 'CF') cfIndices.push(i);
+            });
+            if (cfIndices.length > 0) {
+                connectedPlayerIndex = Math.min(...cfIndices); // Левый CF
+                console.log(`[CHEMISTRY] LM connecting to CF at index ${connectedPlayerIndex} (min)`);
+            }
+        }
+        // Специальная обработка для RM с CM - правый CM (max index)
+        else if (playerPosition === 'RM' && connectedPos === 'CM') {
+            const cmIndices = [];
+            positions.forEach((pos, i) => {
+                if (pos === 'CM') cmIndices.push(i);
+            });
+            if (cmIndices.length > 0) {
+                connectedPlayerIndex = Math.max(...cmIndices); // Правый CM
+                console.log(`[CHEMISTRY] RM connecting to CM at index ${connectedPlayerIndex} (max)`);
+            }
+        }
+        // Специальная обработка для RM с DM - правый DM (max index)
+        else if (playerPosition === 'RM' && connectedPos === 'DM') {
+            const dmIndices = [];
+            positions.forEach((pos, i) => {
+                if (pos === 'DM') dmIndices.push(i);
+            });
+            if (dmIndices.length > 0) {
+                connectedPlayerIndex = Math.max(...dmIndices); // Правый DM
+                console.log(`[CHEMISTRY] RM connecting to DM at index ${connectedPlayerIndex} (max)`);
+            }
+        }
+        // Специальная обработка для RM с CF - правый CF (max index)
+        else if (playerPosition === 'RM' && connectedPos === 'CF') {
+            const cfIndices = [];
+            positions.forEach((pos, i) => {
+                if (pos === 'CF') cfIndices.push(i);
+            });
+            if (cfIndices.length > 0) {
+                connectedPlayerIndex = Math.max(...cfIndices); // Правый CF
+                console.log(`[CHEMISTRY] RM connecting to CF at index ${connectedPlayerIndex} (max)`);
+            }
+        }
+        // Специальная обработка для DM
+        else if (playerPosition === 'DM') {
+            // DM с CD - все CD
+            if (connectedPos === 'CD') {
+                const cdIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CD') cdIndices.push(i);
+                });
+                const cdConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CD').length;
+                connectedPlayerIndex = cdIndices[cdConnectionIndex];
+            }
+            // DM с другими DM
+            else if (connectedPos === 'DM') {
+                const dmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'DM' && i !== playerIndex) dmIndices.push(i);
+                });
+                const dmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'DM').length;
+                connectedPlayerIndex = dmIndices[dmConnectionIndex];
+            }
+            // DM с CM - все CM
+            else if (connectedPos === 'CM') {
+                const cmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CM') cmIndices.push(i);
+                });
+                const cmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CM').length;
+                connectedPlayerIndex = cmIndices[cmConnectionIndex];
+            }
+            // DM с CF - все CF
+            else if (connectedPos === 'CF') {
+                const cfIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CF') cfIndices.push(i);
+                });
+                const cfConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CF').length;
+                connectedPlayerIndex = cfIndices[cfConnectionIndex];
+            }
+            // Для остальных связей DM - первое вхождение
+            else {
+                connectedPlayerIndex = positions.findIndex(pos => pos === connectedPos);
+            }
+        }
+        // Специальная обработка для AM
+        else if (playerPosition === 'AM') {
+            // AM с CM - все CM
+            if (connectedPos === 'CM') {
+                const cmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CM') cmIndices.push(i);
+                });
+                const cmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CM').length;
+                connectedPlayerIndex = cmIndices[cmConnectionIndex];
+            }
+            // AM с DM - все DM
+            else if (connectedPos === 'DM') {
+                const dmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'DM') dmIndices.push(i);
+                });
+                const dmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'DM').length;
+                connectedPlayerIndex = dmIndices[dmConnectionIndex];
+            }
+            // AM с CF - все CF
+            else if (connectedPos === 'CF') {
+                const cfIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CF') cfIndices.push(i);
+                });
+                const cfConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CF').length;
+                connectedPlayerIndex = cfIndices[cfConnectionIndex];
+            }
+            // Для остальных связей AM - первое вхождение
+            else {
+                connectedPlayerIndex = positions.findIndex(pos => pos === connectedPos);
+            }
+        }
+        // Специальная обработка для LF
+        else if (playerPosition === 'LF') {
+            // LF с CF - левый CF (min index) для 424 или первый CF для обычной формации
+            if (connectedPos === 'CF') {
+                const cfIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CF') cfIndices.push(i);
+                });
+                if (cfIndices.length > 0) {
+                    connectedPlayerIndex = Math.min(...cfIndices); // Левый CF
+                    console.log(`[CHEMISTRY] LF connecting to CF at index ${connectedPlayerIndex} (min)`);
+                }
+            }
+            // LF с CM - левый CM (min index)
+            else if (connectedPos === 'CM') {
+                const cmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CM') cmIndices.push(i);
+                });
+                if (cmIndices.length > 0) {
+                    connectedPlayerIndex = Math.min(...cmIndices); // Левый CM
+                    console.log(`[CHEMISTRY] LF connecting to CM at index ${connectedPlayerIndex} (min)`);
+                }
+            }
+            // Для остальных связей LF - первое вхождение
+            else {
+                connectedPlayerIndex = positions.findIndex(pos => pos === connectedPos);
+            }
+        }
+        // Специальная обработка для RF
+        else if (playerPosition === 'RF') {
+            // RF с CF - правый CF (max index) для 424 или первый CF для обычной формации
+            if (connectedPos === 'CF') {
+                const cfIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CF') cfIndices.push(i);
+                });
+                if (cfIndices.length > 0) {
+                    connectedPlayerIndex = Math.max(...cfIndices); // Правый CF
+                    console.log(`[CHEMISTRY] RF connecting to CF at index ${connectedPlayerIndex} (max)`);
+                }
+            }
+            // RF с CM - правый CM (max index)
+            else if (connectedPos === 'CM') {
+                const cmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CM') cmIndices.push(i);
+                });
+                if (cmIndices.length > 0) {
+                    connectedPlayerIndex = Math.max(...cmIndices); // Правый CM
+                    console.log(`[CHEMISTRY] RF connecting to CM at index ${connectedPlayerIndex} (max)`);
+                }
+            }
+            // Для остальных связей RF - первое вхождение
+            else {
+                connectedPlayerIndex = positions.findIndex(pos => pos === connectedPos);
+            }
+        }
+        // Специальная обработка для CF
+        else if (playerPosition === 'CF') {
+            const cfType = getCFType(positions, playerIndex);
+            
+            // CF с другими CF
+            if (connectedPos === 'CF') {
+                const cfIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CF' && i !== playerIndex) cfIndices.push(i);
+                });
+                
+                if (cfType === 'min' && cfIndices.length > 0) {
+                    // Левый CF связан со следующим (index+1)
+                    connectedPlayerIndex = cfIndices[0];
+                } else if (cfType === 'max' && cfIndices.length > 0) {
+                    // Правый CF связан с предыдущим (index-1)
+                    connectedPlayerIndex = cfIndices[cfIndices.length - 1];
+                } else if (cfType === 'middle') {
+                    // Средний CF связан со всеми остальными CF
+                    const cfConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CF').length;
+                    connectedPlayerIndex = cfIndices[cfConnectionIndex];
+                } else {
+                    // Для двух CF - берем другой CF
+                    connectedPlayerIndex = cfIndices[0];
+                }
+            }
+            // CF с CM
+            else if (connectedPos === 'CM') {
+                const cmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CM') cmIndices.push(i);
+                });
+                
+                if (cfType === 'min' && cmIndices.length > 0) {
+                    // Левый CF связан с левым CM
+                    connectedPlayerIndex = Math.min(...cmIndices);
+                } else if (cfType === 'max' && cmIndices.length > 0) {
+                    // Правый CF связан с правым CM
+                    connectedPlayerIndex = Math.max(...cmIndices);
+                } else if (cfType === 'middle' && cmIndices.length > 0) {
+                    // Средний CF связан со всеми CM
+                    const cmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CM').length;
+                    connectedPlayerIndex = cmIndices[cmConnectionIndex];
+                } else if (cmIndices.length > 0) {
+                    // Для единственного CF - связан со всеми CM
+                    const cmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CM').length;
+                    connectedPlayerIndex = cmIndices[cmConnectionIndex];
+                }
+            }
+            // CF с DM
+            else if (connectedPos === 'DM') {
+                const dmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'DM') dmIndices.push(i);
+                });
+                // CF связан со всеми DM (берем по порядку)
+                const dmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'DM').length;
+                connectedPlayerIndex = dmIndices[dmConnectionIndex];
+            }
+            // Для остальных связей CF - первое вхождение
+            else {
+                connectedPlayerIndex = positions.findIndex(pos => pos === connectedPos);
+            }
+        }
+        // Специальная обработка для ST
+        else if (playerPosition === 'ST') {
+            // ST с CF - все CF
+            if (connectedPos === 'CF') {
+                const cfIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CF') cfIndices.push(i);
+                });
+                const cfConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CF').length;
+                connectedPlayerIndex = cfIndices[cfConnectionIndex];
+            }
+            // ST с CM - все CM
+            else if (connectedPos === 'CM') {
+                const cmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'CM') cmIndices.push(i);
+                });
+                const cmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CM').length;
+                connectedPlayerIndex = cmIndices[cmConnectionIndex];
+            }
+            // ST с DM - все DM
+            else if (connectedPos === 'DM') {
+                const dmIndices = [];
+                positions.forEach((pos, i) => {
+                    if (pos === 'DM') dmIndices.push(i);
+                });
+                const dmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'DM').length;
+                connectedPlayerIndex = dmIndices[dmConnectionIndex];
+            }
+            // Для остальных связей ST - первое вхождение
+            else {
+                connectedPlayerIndex = positions.findIndex(pos => pos === connectedPos);
+            }
+        }
+        else {
+            // Для остальных позиций - находим первое вхождение
+            connectedPlayerIndex = positions.findIndex(pos => pos === connectedPos);
+        }
+        
         if (connectedPlayerIndex !== -1 && connectedPlayerIndex < lineup.length) {
             const connectedPlayer = lineup[connectedPlayerIndex];
             if (connectedPlayer) {
@@ -948,6 +2985,7 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
     });
     
     // Рассчитываем базовый Chemistry (среднее арифметическое модификаторов всех линий)
+    // ВАЖНО: Больше связей = стабильнее результат, но максимальный бонус всегда 12.5%
     const baseChemistry = connectionCount > 0 ? totalModifier / connectionCount : 0;
     
     // Применяем модификатор изученности стиля игрока
@@ -3337,35 +5375,517 @@ function createMoraleSelector(team, onChange) {
 
 // Кэш стилей игроков
 const PLAYER_STYLE_CACHE_KEY = 'vs_player_styles_cache';
+const CACHE_VERSION = '1.0';
+const DEFAULT_CACHE_SETTINGS = {
+    maxAge: 24 * 60 * 60 * 1000,    // 24 часа
+    maxPlayersPerTeam: 50,          // Максимум игроков на команду
+    maxTeams: 10,                   // Максимум команд в кэше
+    autoCleanup: true               // Автоматическая очистка
+};
 
 function getPlayerStyleCache() {
     try {
         const cached = vsStorage.get(PLAYER_STYLE_CACHE_KEY);
-        return cached ? JSON.parse(cached) : {};
+        if (!cached) {
+            return createEmptyCache();
+        }
+        
+        const cache = JSON.parse(cached);
+        
+        // Проверяем версию и мигрируем если нужно
+        if (!cache.version || cache.version !== CACHE_VERSION) {
+            console.log('[CACHE] Migrating cache from version', cache.version || 'legacy', 'to', CACHE_VERSION);
+            return migrateCache(cache);
+        }
+        
+        // Автоматическая очистка при загрузке
+        if (cache.settings?.autoCleanup) {
+            return performAutoCleanup(cache);
+        }
+        
+        return cache;
     } catch (e) {
-        console.warn('[Cache] Failed to load player styles cache', e);
-        return {};
+        console.warn('[CACHE] Failed to load player styles cache, creating new', e);
+        return createEmptyCache();
     }
+}
+
+function createEmptyCache() {
+    return {
+        version: CACHE_VERSION,
+        lastCleanup: Date.now(),
+        teams: {},
+        settings: { ...DEFAULT_CACHE_SETTINGS }
+    };
+}
+
+function migrateCache(oldCache) {
+    console.log('[CACHE] Migrating legacy cache format');
+    
+    const newCache = createEmptyCache();
+    
+    // Если это старый формат (плоский объект с playerId: style)
+    if (oldCache && typeof oldCache === 'object' && !oldCache.version) {
+        // Помещаем все данные в команду "unknown"
+        newCache.teams.unknown = {
+            players: {},
+            metadata: {
+                created: Date.now(),
+                migrated: true
+            }
+        };
+        
+        let migratedCount = 0;
+        for (const [playerId, style] of Object.entries(oldCache)) {
+            if (typeof style === 'string' && /^\d+$/.test(playerId)) {
+                newCache.teams.unknown.players[playerId] = {
+                    style: style,
+                    timestamp: Date.now(),
+                    lastUsed: Date.now()
+                };
+                migratedCount++;
+            }
+        }
+        
+        console.log(`[CACHE] Migrated ${migratedCount} player styles`);
+    }
+    
+    savePlayerStyleCache(newCache);
+    return newCache;
+}
+
+function performAutoCleanup(cache) {
+    const now = Date.now();
+    const maxAge = cache.settings?.maxAge || DEFAULT_CACHE_SETTINGS.maxAge;
+    
+    // Очистка только если прошло больше часа с последней очистки
+    if (now - cache.lastCleanup < 60 * 60 * 1000) {
+        return cache;
+    }
+    
+    console.log('[CACHE_CLEANUP] Performing automatic cleanup');
+    
+    let totalCleaned = 0;
+    let teamsToRemove = [];
+    
+    // Очищаем устаревшие записи в каждой команде
+    for (const [teamId, teamData] of Object.entries(cache.teams)) {
+        let cleanedInTeam = 0;
+        const playersToRemove = [];
+        
+        for (const [playerId, playerData] of Object.entries(teamData.players)) {
+            if (now - playerData.timestamp > maxAge) {
+                playersToRemove.push(playerId);
+                cleanedInTeam++;
+            }
+        }
+        
+        // Удаляем устаревших игроков
+        playersToRemove.forEach(playerId => {
+            delete teamData.players[playerId];
+        });
+        
+        // Если команда пустая, помечаем для удаления
+        if (Object.keys(teamData.players).length === 0) {
+            teamsToRemove.push(teamId);
+        }
+        
+        totalCleaned += cleanedInTeam;
+    }
+    
+    // Удаляем пустые команды
+    teamsToRemove.forEach(teamId => {
+        delete cache.teams[teamId];
+    });
+    
+    cache.lastCleanup = now;
+    
+    if (totalCleaned > 0 || teamsToRemove.length > 0) {
+        console.log(`[CACHE_CLEANUP] Cleaned ${totalCleaned} expired players, ${teamsToRemove.length} empty teams`);
+        savePlayerStyleCache(cache);
+    }
+    
+    return cache;
 }
 
 function savePlayerStyleCache(cache) {
     try {
         vsStorage.set(PLAYER_STYLE_CACHE_KEY, JSON.stringify(cache));
     } catch (e) {
-        console.warn('[Cache] Failed to save player styles cache', e);
+        console.warn('[CACHE] Failed to save player styles cache', e);
     }
+}
+
+function getCurrentTeamId() {
+    // Пытаемся определить ID текущей команды из URL или других источников
+    const urlMatch = window.location.href.match(/team[_=](\d+)/i);
+    if (urlMatch) return urlMatch[1];
+    
+    // Пытаемся найти в данных команд
+    if (window.homeTeamId) return String(window.homeTeamId);
+    if (window.awayTeamId) return String(window.awayTeamId);
+    
+    // Fallback - используем "current"
+    return 'current';
 }
 
 function getPlayerStyleFromCache(playerId) {
     const cache = getPlayerStyleCache();
-    return cache[playerId] || 'norm';
+    const teamId = getCurrentTeamId();
+    
+    // Ищем в текущей команде
+    if (cache.teams[teamId]?.players[playerId]) {
+        const playerData = cache.teams[teamId].players[playerId];
+        
+        // Обновляем время последнего использования
+        playerData.lastUsed = Date.now();
+        savePlayerStyleCache(cache);
+        
+        console.log(`[CACHE] Hit: игрок ${playerId} → ${playerData.style} (команда ${teamId})`);
+        return playerData.style;
+    }
+    
+    // Ищем в других командах (для совместимости)
+    for (const [otherTeamId, teamData] of Object.entries(cache.teams)) {
+        if (teamData.players[playerId]) {
+            const playerData = teamData.players[playerId];
+            console.log(`[CACHE] Cross-team hit: игрок ${playerId} → ${playerData.style} (команда ${otherTeamId})`);
+            return playerData.style;
+        }
+    }
+    
+    console.log(`[CACHE] Miss: игрок ${playerId} не найден в кэше`);
+    return null; // Возвращаем null вместо 'norm' чтобы использовать hidden_style
 }
 
 function setPlayerStyleToCache(playerId, styleValue) {
+    if (!validateStyleValue(styleValue) || !validatePlayerId(playerId)) {
+        console.warn(`[CACHE] Invalid data: playerId=${playerId}, style=${styleValue}`);
+        return;
+    }
+    
     const cache = getPlayerStyleCache();
-    cache[playerId] = styleValue;
+    const teamId = getCurrentTeamId();
+    const now = Date.now();
+    
+    // Создаем команду если не существует
+    if (!cache.teams[teamId]) {
+        cache.teams[teamId] = {
+            players: {},
+            metadata: {
+                created: now,
+                teamId: teamId
+            }
+        };
+        console.log(`[CACHE] Created team cache: ${teamId}`);
+    }
+    
+    // Сохраняем данные игрока
+    cache.teams[teamId].players[playerId] = {
+        style: styleValue,
+        timestamp: now,
+        lastUsed: now
+    };
+    
+    // Проверяем лимиты и очищаем если нужно
+    enforceTeamLimits(cache, teamId);
+    enforceGlobalLimits(cache);
+    
     savePlayerStyleCache(cache);
+    console.log(`[CACHE] Saved: игрок ${playerId} → ${styleValue} (команда ${teamId})`);
 }
+
+function validateStyleValue(style) {
+    return style && (CONFIG.STYLES.VALUES.hasOwnProperty(style) || style === 'norm');
+}
+
+function validatePlayerId(playerId) {
+    return playerId && /^\d+$/.test(String(playerId));
+}
+
+function enforceTeamLimits(cache, teamId) {
+    const teamData = cache.teams[teamId];
+    const maxPlayers = cache.settings?.maxPlayersPerTeam || DEFAULT_CACHE_SETTINGS.maxPlayersPerTeam;
+    const players = Object.entries(teamData.players);
+    
+    if (players.length > maxPlayers) {
+        // Сортируем по времени последнего использования (старые первыми)
+        players.sort((a, b) => a[1].lastUsed - b[1].lastUsed);
+        
+        const toRemove = players.length - maxPlayers;
+        for (let i = 0; i < toRemove; i++) {
+            const [playerId] = players[i];
+            delete teamData.players[playerId];
+        }
+        
+        console.log(`[CACHE_CLEANUP] Removed ${toRemove} old players from team ${teamId} (limit: ${maxPlayers})`);
+    }
+}
+
+function enforceGlobalLimits(cache) {
+    const maxTeams = cache.settings?.maxTeams || DEFAULT_CACHE_SETTINGS.maxTeams;
+    const teams = Object.entries(cache.teams);
+    
+    if (teams.length > maxTeams) {
+        // Сортируем команды по времени создания (старые первыми)
+        teams.sort((a, b) => (a[1].metadata?.created || 0) - (b[1].metadata?.created || 0));
+        
+        const toRemove = teams.length - maxTeams;
+        for (let i = 0; i < toRemove; i++) {
+            const [teamId] = teams[i];
+            delete cache.teams[teamId];
+        }
+        
+        console.log(`[CACHE_CLEANUP] Removed ${toRemove} old teams (limit: ${maxTeams})`);
+    }
+}
+
+// ===== ФУНКЦИИ УПРАВЛЕНИЯ КЭШЕМ СТИЛЕЙ =====
+
+/**
+ * Очищает кэш стилей для конкретной команды
+ * @param {string} teamId - ID команды (опционально, по умолчанию текущая)
+ */
+function clearTeamStyleCache(teamId = null) {
+    const cache = getPlayerStyleCache();
+    const targetTeamId = teamId || getCurrentTeamId();
+    
+    if (cache.teams[targetTeamId]) {
+        const playersCount = Object.keys(cache.teams[targetTeamId].players).length;
+        delete cache.teams[targetTeamId];
+        savePlayerStyleCache(cache);
+        
+        console.log(`[CACHE_CLEANUP] Cleared team ${targetTeamId}: ${playersCount} players`);
+        return playersCount;
+    }
+    
+    console.log(`[CACHE_CLEANUP] Team ${targetTeamId} not found in cache`);
+    return 0;
+}
+
+/**
+ * Полная очистка кэша стилей
+ */
+function clearAllStyleCache() {
+    const cache = getPlayerStyleCache();
+    const stats = getStyleCacheStats();
+    
+    const newCache = createEmptyCache();
+    savePlayerStyleCache(newCache);
+    
+    console.log(`[CACHE_CLEANUP] Cleared all cache: ${stats.totalPlayers} players, ${stats.totalTeams} teams`);
+    return stats;
+}
+
+/**
+ * Очищает устаревшие записи из кэша
+ * @param {number} maxAge - Максимальный возраст в миллисекундах
+ */
+function cleanExpiredStyles(maxAge = null) {
+    const cache = getPlayerStyleCache();
+    const ageLimit = maxAge || cache.settings?.maxAge || DEFAULT_CACHE_SETTINGS.maxAge;
+    const now = Date.now();
+    
+    let totalCleaned = 0;
+    let teamsToRemove = [];
+    
+    for (const [teamId, teamData] of Object.entries(cache.teams)) {
+        let cleanedInTeam = 0;
+        const playersToRemove = [];
+        
+        for (const [playerId, playerData] of Object.entries(teamData.players)) {
+            if (now - playerData.timestamp > ageLimit) {
+                playersToRemove.push(playerId);
+                cleanedInTeam++;
+            }
+        }
+        
+        playersToRemove.forEach(playerId => {
+            delete teamData.players[playerId];
+        });
+        
+        if (Object.keys(teamData.players).length === 0) {
+            teamsToRemove.push(teamId);
+        }
+        
+        totalCleaned += cleanedInTeam;
+    }
+    
+    teamsToRemove.forEach(teamId => {
+        delete cache.teams[teamId];
+    });
+    
+    cache.lastCleanup = now;
+    savePlayerStyleCache(cache);
+    
+    console.log(`[CACHE_CLEANUP] Cleaned ${totalCleaned} expired players (>${Math.round(ageLimit/1000/60/60)}h), ${teamsToRemove.length} empty teams`);
+    return { playersRemoved: totalCleaned, teamsRemoved: teamsToRemove.length };
+}
+
+/**
+ * Умная очистка кэша (комбинация всех стратегий)
+ */
+function smartCleanupStyleCache() {
+    console.log('[CACHE_CLEANUP] Starting smart cleanup');
+    
+    const beforeStats = getStyleCacheStats();
+    
+    // 1. Очищаем устаревшие записи
+    const expiredResult = cleanExpiredStyles();
+    
+    // 2. Применяем лимиты
+    const cache = getPlayerStyleCache();
+    enforceGlobalLimits(cache);
+    
+    // 3. Очищаем команды без метаданных (возможно поврежденные)
+    let corruptedTeams = 0;
+    for (const [teamId, teamData] of Object.entries(cache.teams)) {
+        if (!teamData.metadata || !teamData.players) {
+            delete cache.teams[teamId];
+            corruptedTeams++;
+        }
+    }
+    
+    if (corruptedTeams > 0) {
+        console.log(`[CACHE_CLEANUP] Removed ${corruptedTeams} corrupted teams`);
+        savePlayerStyleCache(cache);
+    }
+    
+    const afterStats = getStyleCacheStats();
+    
+    console.log(`[CACHE_CLEANUP] Smart cleanup completed:`, {
+        before: beforeStats,
+        after: afterStats,
+        removed: {
+            players: beforeStats.totalPlayers - afterStats.totalPlayers,
+            teams: beforeStats.totalTeams - afterStats.totalTeams
+        }
+    });
+    
+    return {
+        before: beforeStats,
+        after: afterStats,
+        expiredResult,
+        corruptedTeams
+    };
+}
+
+/**
+ * Возвращает статистику кэша стилей
+ */
+function getStyleCacheStats() {
+    const cache = getPlayerStyleCache();
+    const now = Date.now();
+    
+    let totalPlayers = 0;
+    let totalTeams = Object.keys(cache.teams).length;
+    let oldestEntry = now;
+    let newestEntry = 0;
+    let styleDistribution = {};
+    let teamSizes = {};
+    
+    for (const [teamId, teamData] of Object.entries(cache.teams)) {
+        const playersInTeam = Object.keys(teamData.players).length;
+        teamSizes[teamId] = playersInTeam;
+        totalPlayers += playersInTeam;
+        
+        for (const [playerId, playerData] of Object.entries(teamData.players)) {
+            // Статистика по времени
+            if (playerData.timestamp < oldestEntry) {
+                oldestEntry = playerData.timestamp;
+            }
+            if (playerData.timestamp > newestEntry) {
+                newestEntry = playerData.timestamp;
+            }
+            
+            // Статистика по стилям
+            const style = playerData.style;
+            styleDistribution[style] = (styleDistribution[style] || 0) + 1;
+        }
+    }
+    
+    const cacheSize = JSON.stringify(cache).length;
+    const maxAge = cache.settings?.maxAge || DEFAULT_CACHE_SETTINGS.maxAge;
+    const expiredCount = Object.values(cache.teams).reduce((count, teamData) => {
+        return count + Object.values(teamData.players).filter(p => now - p.timestamp > maxAge).length;
+    }, 0);
+    
+    return {
+        version: cache.version,
+        totalPlayers,
+        totalTeams,
+        cacheSize,
+        cacheSizeKB: Math.round(cacheSize / 1024 * 100) / 100,
+        oldestEntry: oldestEntry === now ? null : new Date(oldestEntry),
+        newestEntry: newestEntry === 0 ? null : new Date(newestEntry),
+        lastCleanup: new Date(cache.lastCleanup),
+        expiredCount,
+        styleDistribution,
+        teamSizes,
+        settings: cache.settings
+    };
+}
+
+// Глобальные функции для консоли
+window.clearTeamStyleCache = clearTeamStyleCache;
+window.clearAllStyleCache = clearAllStyleCache;
+window.cleanExpiredStyles = cleanExpiredStyles;
+window.smartCleanupStyleCache = smartCleanupStyleCache;
+window.getStyleCacheStats = getStyleCacheStats;
+
+// Альтернативное определение для отладки
+(function() {
+    'use strict';
+    
+    // Проверяем, что функции определены локально
+    if (typeof clearAllStyleCache !== 'function') {
+        console.error('❌ clearAllStyleCache не определена локально');
+        return;
+    }
+    
+    // Принудительно устанавливаем в window
+    window.clearAllStyleCache = clearAllStyleCache;
+    window.getStyleCacheStats = getStyleCacheStats;
+    
+    console.log('🔧 Функции кэша принудительно установлены в window');
+})();
+
+// Диагностическая функция для проверки загрузки
+window.testCacheFunctions = function() {
+    console.log('🔍 Проверка функций кэша:');
+    console.log('clearTeamStyleCache:', typeof window.clearTeamStyleCache);
+    console.log('clearAllStyleCache:', typeof window.clearAllStyleCache);
+    console.log('cleanExpiredStyles:', typeof window.cleanExpiredStyles);
+    console.log('smartCleanupStyleCache:', typeof window.smartCleanupStyleCache);
+    console.log('getStyleCacheStats:', typeof window.getStyleCacheStats);
+    
+    try {
+        const stats = getStyleCacheStats();
+        console.log('✅ Функции кэша работают корректно');
+        console.log('📊 Статистика кэша:', stats);
+        return true;
+    } catch (e) {
+        console.error('❌ Ошибка при вызове функций кэша:', e);
+        return false;
+    }
+};
+
+// Простая функция для быстрой проверки
+window.cacheTest = function() {
+    console.log('🧪 Cache Test v0.941');
+    console.log('Functions available:', {
+        clearAllStyleCache: typeof clearAllStyleCache,
+        getStyleCacheStats: typeof getStyleCacheStats
+    });
+    
+    if (typeof clearAllStyleCache === 'function') {
+        console.log('✅ clearAllStyleCache доступна');
+        return true;
+    } else {
+        console.log('❌ clearAllStyleCache недоступна');
+        return false;
+    }
+};
 
 // Глобальная функция для расчета силы игрока с учетом всех модификаторов
 function calculatePlayerStrengthGlobal(player, matchPosition, physicalFormId) {
@@ -3736,6 +6256,7 @@ const PLAYER_STYLES = [{
 ];
 
 function createCustomStyleSelect(onChange) {
+    console.log(`[SELECT] Создание селектора стилей`);
     const wrapper = document.createElement('div');
     wrapper.className = 'custom-style-select';
     const selectedDiv = document.createElement('div');
@@ -3765,6 +6286,7 @@ function createCustomStyleSelect(onChange) {
             li.appendChild(placeholder);
         }
         li.addEventListener('click', () => {
+            console.log(`[SELECT] Клик по стилю: ${currentValue} → ${li.dataset.value}`);
             currentValue = li.dataset.value;
             const styleObj = PLAYER_STYLES.find(s => s.value === currentValue) || PLAYER_STYLES[0];
             if (styleObj.icon) {
@@ -3775,6 +6297,7 @@ function createCustomStyleSelect(onChange) {
             }
             wrapper.classList.remove('open');
             optionsUl.style.display = 'none';
+            console.log(`[SELECT] Вызываем onChange для стиля: ${currentValue}`);
             if (onChange) onChange(currentValue);
         });
         optionsUl.appendChild(li);
@@ -3798,13 +6321,16 @@ function createCustomStyleSelect(onChange) {
     });
     wrapper.getValue = () => currentValue;
     wrapper.setValue = (val) => {
+        console.log(`[SELECT] setValue вызван: ${currentValue} → ${val}`);
         currentValue = val;
         const styleObj = PLAYER_STYLES.find(s => s.value === currentValue) || PLAYER_STYLES[0];
         if (styleObj.icon) {
             selectedIcon.src = styleObj.icon;
             selectedIcon.style.display = '';
+            console.log(`[SELECT] Установлена иконка для стиля: ${currentValue}`);
         } else {
             selectedIcon.style.display = 'none';
+            console.log(`[SELECT] Скрыта иконка для стиля: ${currentValue}`);
         }
     };
     return wrapper;
@@ -5488,16 +8014,20 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             rendered.style.justifyContent = 'flex-start';
         }
         const styleSelect = createCustomStyleSelect((styleValue) => {
+            console.log(`[SELECT] Изменение стиля: ${styleValue}`);
+            
             slotApi.customStyleValue = styleValue;
             const playerId = slotApi.getValue && slotApi.getValue();
 
             // Сохраняем стиль игрока в кэш
             if (playerId) {
                 setPlayerStyleToCache(playerId, styleValue);
+                console.log(`[SELECT] Сохранен в кэш: игрок ${playerId} → стиль ${styleValue}`);
             }
 
             const player = players.find(p => String(p.id) === String(playerId));
             if (player) {
+                console.log(`[SELECT] Применяем стиль к игроку ${player.name}: ${styleValue}`);
                 logPlayerWeatherCoef({
                     player,
                     customStyleValue: slotApi.customStyleValue || 'norm',
@@ -5532,22 +8062,26 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                         const playerHiddenStyleNumeric = player.hidden_style;
                         const playerHiddenStyle = convertNumericStyleToString(playerHiddenStyleNumeric);
                         
-                        console.log(`[STYLE_SELECTOR] Игрок ${player.name}: hidden_style=${playerHiddenStyleNumeric} → ${playerHiddenStyle}`);
+                        console.log(`[SELECT] Выбран игрок ${player.name}: hidden_style=${playerHiddenStyleNumeric} → ${playerHiddenStyle}`);
                         
                         // Загружаем стиль игрока из кэша или используем hidden_style
                         const cachedStyle = getPlayerStyleFromCache(v);
                         const effectiveStyle = cachedStyle || playerHiddenStyle;
                         
+                        console.log(`[SELECT] Эффективный стиль для ${player.name}: кэш=${cachedStyle || 'нет'}, итого=${effectiveStyle}`);
+                        
                         if (effectiveStyle !== 'norm') {
                             slotApi.customStyleValue = effectiveStyle;
                             if (styleSelect && styleSelect.setValue) {
                                 styleSelect.setValue(effectiveStyle);
+                                console.log(`[SELECT] Установлен стиль в селектор: ${effectiveStyle}`);
                             }
                         } else {
                             // Устанавливаем norm если нет кэша и hidden_style = norm
                             slotApi.customStyleValue = 'norm';
                             if (styleSelect && styleSelect.setValue) {
                                 styleSelect.setValue('norm');
+                                console.log(`[SELECT] Установлен стиль по умолчанию: norm`);
                             }
                         }
 
@@ -5570,10 +8104,12 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     } else {
                         // Игрок не найден - очищаем данные
                         slotApi.selectedPlayer = null;  // ← ДОБАВЛЕНО
+                        console.log(`[SELECT] Игрок не найден для ID: ${v}, очищаем данные`);
                     }
                 } else {
                     // Игрок не выбран - очищаем данные
                     slotApi.selectedPlayer = null;  // ← ДОБАВЛЕНО
+                    console.log(`[SELECT] Игрок не выбран, очищаем данные`);
                 }
             },
             setOptions: (opts) => orders.setOptions(opts),
@@ -9291,7 +11827,7 @@ function getTournamentType() {
                 }
                 
                 return `
-                    <p><strong>Коллизии стилей</strong> - взаимодействие между стилями игры команд.</p>
+                    <p><strong>Коллизии стилей</strong> - взаимодействие между стилями игры команд. Часть игры, вносящий элемент непредсказуемости результата.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
                         <strong>Текущая ситуация:</strong><br>
                         Хозяева: <span style="color: #006600; font-weight: bold;">${styleNames[homeStyle]}</span><br>
@@ -9314,8 +11850,8 @@ function getTournamentType() {
                         <tr><td style="padding: 3px; border: 1px solid #ddd;">Катеначчо</td><td style="padding: 3px; border: 1px solid #ddd;">Бразильский</td><td style="padding: 3px; border: 1px solid #ddd;">+44%</td></tr>
                         <tr><td style="padding: 3px; border: 1px solid #ddd;">Британский</td><td style="padding: 3px; border: 1px solid #ddd;">Тики-така</td><td style="padding: 3px; border: 1px solid #ddd;">+40%</td></tr>
                     </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>💡 Селектор стиля подсвечивается зеленым (выигрыш) или красным (проигрыш).</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>⚠️ Бонус применяется ко всем игрокам выигрывающей команды.</em></p>
+                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Селектор стиля подсвечивается зеленым (выигрыш) или красным (проигрыш).</em></p>
+                    <p style="font-size: 10px; color: #666;"><em>Бонус применяется ко всем игрокам выигрывающей команды. В случае проигрыша коллизии - проигравшая команда не теряет силу!</em></p>
                 `;
             },
 
@@ -9331,7 +11867,7 @@ function getTournamentType() {
                 };
                 
                 return `
-                    <p><strong>Тип турнира</strong> определяет доступные физические формы игроков.</p>
+                    <p><strong>Тип турнира</strong> определяет доступные физические формы игроков. Могут быть ошибки, тк не доработано.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
                         <strong>Текущий тип:</strong><br>
                         <span style="color: #006600; font-weight: bold;">${typeNames[currentType] || currentType}</span>
@@ -9343,14 +11879,14 @@ function getTournamentType() {
                             <th style="padding: 4px; border: 1px solid #ddd;">Диапазон форм</th>
                             <th style="padding: 4px; border: 1px solid #ddd;">Особенности</th>
                         </tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Товарищеский</td><td style="padding: 4px; border: 1px solid #ddd;">100%</td><td style="padding: 4px; border: 1px solid #ddd;">Всегда стабильная форма</td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Тип C</td><td style="padding: 4px; border: 1px solid #ddd;">76-124%</td><td style="padding: 4px; border: 1px solid #ddd;">Кубки стран, кубки вызова</td></tr>
+                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Товарищеский</td><td style="padding: 4px; border: 1px solid #ddd;">100%</td><td style="padding: 4px; border: 1px solid #ddd;">Играются без учёта формы</td></tr>
+                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Тип C</td><td style="padding: 4px; border: 1px solid #ddd;">76-124%</td><td style="padding: 4px; border: 1px solid #ddd;">Кубки стран, кубки вызова - нет домашнего бонуса</td></tr>
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">Тип B</td><td style="padding: 4px; border: 1px solid #ddd;">75-125%</td><td style="padding: 4px; border: 1px solid #ddd;">Чемпионаты, межсезонье</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;"><strong>Международный</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>76-124%</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>+ бонус дома</strong></td></tr>
-                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Любительский</td><td style="padding: 4px; border: 1px solid #ddd;">75-125%</td><td style="padding: 4px; border: 1px solid #ddd;">Конференция КЛК</td></tr>
+                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;"><strong>Международный</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>76-124%</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>Есть домашний бонус</strong></td></tr>
+                        <tr><td style="padding: 4px; border: 1px solid #ddd;">Любительский</td><td style="padding: 4px; border: 1px solid #ddd;">75-125%</td><td style="padding: 4px; border: 1px solid #ddd;">Конференция КЛК - аналог чемпионата</td></tr>
                     </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>💡 Калькулятор автоматически определяет тип турнира по странице матча.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>⚠️ Изменение типа турнира пересчитывает формы всех игроков.</em></p>
+                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Калькулятор автоматически определяет тип турнира по странице матча.</em></p>
+                    <p style="font-size: 10px; color: #666;"><em>Изменение типа турнира пересчитывает формы всех игроков.</em></p>
                 `;
             },
 
@@ -10662,7 +13198,17 @@ function getTournamentType() {
     };
     
     // Показываем справку при загрузке
-    console.log('🧪 Chemistry System v0.939 загружена! ИСПРАВЛЕНА интеграция с селектором стилей. Используйте chemistryInfo() для справки.');
+    console.log('🧪 Chemistry System v0.943 загружена! ОБНОВЛЕН граф связей позиций (GK + LD). Используйте testCacheFunctions() для проверки.');
+
+// Проверяем загрузку функций кэша
+setTimeout(() => {
+    if (typeof window.getStyleCacheStats === 'function') {
+        console.log('✅ Функции управления кэшем загружены успешно');
+        console.log('📋 Доступные команды: testCacheFunctions(), getStyleCacheStats(), smartCleanupStyleCache()');
+    } else {
+        console.error('❌ Ошибка загрузки функций управления кэшем');
+    }
+}, 100);
     
     // ===== КОНЕЦ ОТЛАДОЧНЫХ ФУНКЦИЙ =====
     
