@@ -225,91 +225,53 @@ GK связан с позициями: **LD, LB, CD, SW, RD, RB** (все защ
 **Прямые связи:** (RW || RM || RB || RD), 
 (is424? ((ST & CF) || (CF max index)) : 
         ((CF || ST || (LF, ((AM || FR) || (CM (max index) || DM))))))
-        
-### CF (Центральный нападающий)
 
-```
-        CM
-         |
-        AM
-         |
-    LF ─ CF ─ RF
-     |   |   |
-    LW  ST  RW
-```
+### CF (Центральный нападающий 3 > CF > 1)
 
-**Прямые связи:** CM, AM, LF, RF, ST
+**Прямые связи:** (LF || LW || LM ), (RF || RW || RM), CF, ST 
+(is424? ((isST? (FR || CM all ) || (CF index min? LM : RM) : CM same index) || (FR || (CM same index)) : (AM || FR || CM same index || DM)))
+
+### CF (Центральный нападающий CF = 3 min index)
+
+**Прямые связи:** (LW || LM ), CF index+1, (AM || FR || CM min index || DM )
+
+### CF (Центральный нападающий CF = 3 max index)
+
+**Прямые связи:** (RW || RM ), CF index-1, (AM || FR || CM max index || DM )
+
+### CF (Центральный нападающий CF = 3 !max_index && !min_index)
+
+**Прямые связи:** CF all, (AM || FR || CM all || DM )
 
 
+### ST || CF ( (ST + CF + RF + LF) = 1)
 
-### ST (Страйкер)
+**Прямые связи:** (LW || LM ), (RW || RM), (AM || FR || CM all || DM)
 
-```
-        AM
-         |
-    LF ─ ST ─ RF
-     |       |
-    LW      RW
-```
+### ST (Страйкер когда CF+ST=2)
 
-**Прямые связи:** AM, CF, LF, RF
-**Диагональные:** CM, LW, RW
+**Прямые связи:** CF
+
+### ST (Страйкер когда CF+ST=3)
+
+**Прямые связи:** CF
+
+### ST (is424)
+
+**Прямые связи:** CF, LF, RF
+
+### ST (ST+RF+LF=3) или CF (RF + CF + LF = 3)
+
+**Прямые связи:** LF, RF, ((AM & FR) || (AM || FR || CM all || DM))
 
 ## Полная матрица связей
 
 ```
-Позиция | Прямые связи                    | Диагональные связи
---------|----------------------------------|---------------------------
-GK      | LD, LB, CD, SW, RD, RB          | -
-LD      | GK, CD, LM, DM                  | RD, CM, LW, LF
-LB      | GK, CD, LM, DM                  | RB, CM, LW, LF
-CD      | GK, LD, RD, CM, DM              | LM, RM, CF
-SW      | GK, LD, RD, CM, DM              | LM, RM, CF
-RD      | GK, CD, RM, DM                  | LD, CM, RW, RF
-RB      | GK, CD, RM, DM                  | LB, CM, RW, RF
-LM      | LD, CM, DM, LW, LF              | CD, RD, RM, CF
-LW      | LM, AM, LF, CF                  | LD, CM, RF
-CM      | CD, LM, RM, DM, AM, CF          | LD, RD, LW, RW, LF, RF
-DM      | CD, LD, RD, CM, LM, RM          | GK, AM
-AM      | CM, CF, LF, RF, ST              | DM, LM, RM
-FR      | CD, CM, DM, AM, CF              | LD, RD, LM, RM
-RM      | RD, CM, DM, RW, RF              | CD, LD, LM, CF
-RW      | RM, AM, RF, CF                  | RD, CM, LF
-LF      | LM, LW, CF, AM                  | LD, CM, RF, ST
-CF      | CM, AM, LF, RF, ST              | CD, LM, RM, LW, RW
-RF      | RM, RW, CF, AM                  | RD, CM, LF, ST
-ST      | AM, CF, LF, RF                  | CM, LW, RW
 ```
 
 ## Визуализация полного графа
 
 ```
-                    GK
-                    |
-        ┌───────────┼───────────┐
-       LD          CD          RD
-      / |           |           | \
-    LB  |           |           |  RB
-        |           |           |
-        └─────┬─────┴─────┬─────┘
-              |           |
-        ┌─────┴─────┬─────┴─────┐
-       LM          CM          RM
-      / |           |           | \
-    LW  |           |           |  RW
-        |           |           |
-        └─────┬─────┴─────┬─────┘
-              |           |
-             DM          AM
-              |           |
-              └─────┬─────┘
-                    |
-        ┌───────────┼───────────┐
-       LF          CF          RF
-        |           |           |
-        └─────┬─────┴─────┬─────┘
-              |
-             ST
 ```
 
 ## Особенности графа
@@ -318,10 +280,9 @@ ST      | AM, CF, LF, RF                  | CM, LW, RW
 
 **Максимальный Chemistry бонус всегда 12.5%** независимо от количества связей.
 
-**Больше связей = больше стабильности:**
-- 1 связь: Chemistry зависит от одной линии (может быть нестабильным)
-- 4 связи: Chemistry усредняется по 4 линиям (более стабильный результат)
-- 5 связей: Chemistry усредняется по 5 линиям (максимальная стабильность)
+- 1 связь: Chemistry зависит от одной линии
+- 4 связи: Chemistry усредняется по 4 линиям
+- 5 связей: Chemistry усредняется по 5 линиям
 
 **Формула расчета:**
 ```
@@ -331,145 +292,11 @@ FinalChemistry = BaseChemistry * StyleKnowledge
 
 Где `LineModifier` может быть от -5% до +12.5% для каждой связи.
 
-### 1. GK - динамические связи
-GK связан со **всеми защитниками** в текущем составе:
-- Если в составе LD, CD, CD, RD → 4 связи
-- Если в составе LD, CD, RD → 3 связи
-- Если в составе LD, CD, CD, CD, RD → 5 связей
-
-### 2. Защитники - связь с GK и полузащитой
-Все защитники связаны с:
-- GK (вверх)
-- Центральными полузащитниками (вниз)
-- Соседними защитниками (горизонталь)
-
-### 3. Полузащитники - связующее звено
-Полузащитники имеют больше всего связей:
-- С защитой (вверх)
-- С атакой (вниз)
-- Между собой (горизонталь)
-
-### 4. Нападающие - связь с полузащитой
-Нападающие связаны с:
-- Полузащитниками (вверх)
-- Другими нападающими (горизонталь)
-
 ## Реализация в коде
 
 ### Функция получения связей
 
-```javascript
-function getPositionConnections(position, lineup = null) {
-    // Для GK - динамические связи на основе состава
-    if (position === 'GK') {
-        if (!lineup) {
-            // Если состав не передан, возвращаем все возможные защитники
-            return {
-                direct: ['LD', 'LB', 'CD', 'SW', 'RD', 'RB'],
-                diagonal: []
-            };
-        }
-        
-        // Находим всех защитников в составе
-        const defenders = [];
-        const defenderPositions = ['LD', 'LB', 'CD', 'SW', 'RD', 'RB'];
-        
-        for (const player of lineup) {
-            if (player && player.position && defenderPositions.includes(player.position)) {
-                defenders.push(player.position);
-            }
-        }
-        
-        return {
-            direct: defenders,
-            diagonal: []
-        };
-    }
-    
-    // Для остальных позиций - статическая матрица
-    const connections = {
-        // Защитники
-        LD: {
-            direct: ['GK', 'CD', 'LM', 'DM'],
-            diagonal: ['RD', 'CM', 'LW', 'LF']
-        },
-        LB: {
-            direct: ['GK', 'CD', 'LM', 'DM'],
-            diagonal: ['RB', 'CM', 'LW', 'LF']
-        },
-        CD: {
-            direct: ['GK', 'LD', 'RD', 'CM', 'DM'],
-            diagonal: ['LM', 'RM', 'CF']
-        },
-        SW: {
-            direct: ['GK', 'LD', 'RD', 'CM', 'DM'],
-            diagonal: ['LM', 'RM', 'CF']
-        },
-        RD: {
-            direct: ['GK', 'CD', 'RM', 'DM'],
-            diagonal: ['LD', 'CM', 'RW', 'RF']
-        },
-        RB: {
-            direct: ['GK', 'CD', 'RM', 'DM'],
-            diagonal: ['LB', 'CM', 'RW', 'RF']
-        },
-        
-        // Полузащитники
-        LM: {
-            direct: ['LD', 'CM', 'DM', 'LW', 'LF'],
-            diagonal: ['CD', 'RD', 'RM', 'CF']
-        },
-        LW: {
-            direct: ['LM', 'AM', 'LF', 'CF'],
-            diagonal: ['LD', 'CM', 'RF']
-        },
-        CM: {
-            direct: ['CD', 'LM', 'RM', 'DM', 'AM', 'CF'],
-            diagonal: ['LD', 'RD', 'LW', 'RW', 'LF', 'RF']
-        },
-        DM: {
-            direct: ['CD', 'LD', 'RD', 'CM', 'LM', 'RM'],
-            diagonal: ['GK', 'AM']
-        },
-        AM: {
-            direct: ['CM', 'CF', 'LF', 'RF', 'ST'],
-            diagonal: ['DM', 'LM', 'RM']
-        },
-        FR: {
-            direct: ['CD', 'CM', 'DM', 'AM', 'CF'],
-            diagonal: ['LD', 'RD', 'LM', 'RM']
-        },
-        RM: {
-            direct: ['RD', 'CM', 'DM', 'RW', 'RF'],
-            diagonal: ['CD', 'LD', 'LM', 'CF']
-        },
-        RW: {
-            direct: ['RM', 'AM', 'RF', 'CF'],
-            diagonal: ['RD', 'CM', 'LF']
-        },
-        
-        // Нападающие
-        LF: {
-            direct: ['LM', 'LW', 'CF', 'AM'],
-            diagonal: ['LD', 'CM', 'RF', 'ST']
-        },
-        CF: {
-            direct: ['CM', 'AM', 'LF', 'RF', 'ST'],
-            diagonal: ['CD', 'LM', 'RM', 'LW', 'RW']
-        },
-        RF: {
-            direct: ['RM', 'RW', 'CF', 'AM'],
-            diagonal: ['RD', 'CM', 'LF', 'ST']
-        },
-        ST: {
-            direct: ['AM', 'CF', 'LF', 'RF'],
-            diagonal: ['CM', 'LW', 'RW']
-        }
-    };
-    
-    return connections[position] || { direct: [], diagonal: [] };
-}
-```
+``
 
 ## Примеры использования
 
