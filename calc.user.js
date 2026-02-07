@@ -9839,6 +9839,19 @@ function getTournamentType() {
             leadership: 0
         };
 
+        // Бонус Chemistry
+        try {
+            const slotEntries = window.currentSlotEntries || [];
+            const inLineupPlayers = slotEntries.map(entry => entry.player).filter(Boolean);
+            
+            if (inLineupPlayers.length > 0) {
+                const chemistryModifier = getChemistryBonus(player, inLineupPlayers, null);
+                contribution.chemistry = Math.round(calculatedStr * chemistryModifier);
+            }
+        } catch (e) {
+            console.warn('[CHEMISTRY] Ошибка расчета бонуса для field hint:', e);
+        }
+
         // Бонус капитана (если игрок капитан)
         const captainSelect = document.getElementById(`vs-${team}-captain`);
         if (captainSelect && captainSelect.value === String(player.id)) {
@@ -10004,7 +10017,7 @@ function getTournamentType() {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px;">
                     ${fullData.contribution.captain ? `<div>Капитан: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.captain}</span></div>` : ''}
                     ${fullData.contribution.synergy ? `<div>Синергия: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.synergy}</span></div>` : ''}
-                    ${fullData.contribution.chemistry ? `<div>Химия: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.chemistry}</span></div>` : ''}
+                    ${fullData.contribution.chemistry !== 0 ? `<div>⚡ Chemistry: <span style="font-weight: bold; color: ${fullData.contribution.chemistry > 0 ? '#28a745' : '#dc3545'};">${fullData.contribution.chemistry > 0 ? '+' : ''}${fullData.contribution.chemistry}</span></div>` : ''}
                     ${fullData.contribution.morale ? `<div>Настрой: <span style="font-weight: bold; color: ${fullData.contribution.morale > 0 ? '#28a745' : '#dc3545'};">${fullData.contribution.morale > 0 ? '+' : ''}${fullData.contribution.morale}</span></div>` : ''}
                     ${fullData.contribution.atmosphere ? `<div>Атмосфера: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.atmosphere}</span></div>` : ''}
                     ${fullData.contribution.defence ? `<div>Защита: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.defence}</span></div>` : ''}
