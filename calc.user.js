@@ -9579,12 +9579,19 @@ function getTournamentType() {
                                     }
                                 }
 
-                                matches.push({
+                                const matchInfo = {
                                     day: match[1],
                                     matchId: match[2],
                                     isHome: isHome,
                                     scoreText: scoreText
-                                });
+                                };
+                                
+                                matches.push(matchInfo);
+                                
+                                // Логируем первые 3 матча для отладки
+                                if (matches.length <= 3) {
+                                    console.log(`[SHIRTS] Match #${matches.length}:`, matchInfo, 'rowText:', row ? row.textContent.substring(0, 100) : 'no row');
+                                }
                             }
                         }
 

@@ -1,0 +1,100 @@
+[INIT] Инициализация VF Liga Calculator Virtual-Soccer-Strength-Analyzer.user.js:9099:17
+[SHIRTS] Initializing shirts system for home=8829, away=20632 Virtual-Soccer-Strength-Analyzer.user.js:10640:17
+[SHIRTS] Getting shirts for team 8829 Virtual-Soccer-Strength-Analyzer.user.js:9852:17
+[SHIRTS] Cache hit for team 8829, age: 7 minutes Virtual-Soccer-Strength-Analyzer.user.js:5358:25
+[SHIRTS] Getting shirts for team 20632 Virtual-Soccer-Strength-Analyzer.user.js:9852:17
+[SHIRTS] Cache hit for team 20632, age: 7 minutes Virtual-Soccer-Strength-Analyzer.user.js:5358:25
+[SHIRTS] Successfully loaded shirts: 
+Object { homeShirts: {…}, awayShirts: {…} }
+Virtual-Soccer-Strength-Analyzer.user.js:10669:21
+[SHIRTS] Displaying shirts: 
+Object { homeShirts: {…}, awayShirts: {…} }
+Virtual-Soccer-Strength-Analyzer.user.js:10518:17
+[SHIRTS] Created new shirts container Virtual-Soccer-Strength-Analyzer.user.js:10534:21
+[Shirts] Generated positions 
+Object { homeFormation: "4-4-2", awayFormation: "4-4-2", homePositions: (11) […], awayPositions: (11) […], homeCoords: 11, awayCoords: 11 }
+Virtual-Soccer-Strength-Analyzer.user.js:10563:17
+[SHIRTS] Refresh button clicked Virtual-Soccer-Strength-Analyzer.user.js:11814:21
+[SHIRTS] Clearing cache for teams: 8829 20632 Virtual-Soccer-Strength-Analyzer.user.js:11815:21
+[SHIRTS] Cache keys: 
+Object { homeKey: "vs_shirts_8829", awayKey: "vs_shirts_20632" }
+Virtual-Soccer-Strength-Analyzer.user.js:11822:25
+[SHIRTS] Before clear - home cache: exists Virtual-Soccer-Strength-Analyzer.user.js:11823:25
+[SHIRTS] Before clear - away cache: exists Virtual-Soccer-Strength-Analyzer.user.js:11824:25
+[SHIRTS] After clear - home cache: cleared Virtual-Soccer-Strength-Analyzer.user.js:11829:25
+[SHIRTS] After clear - away cache: cleared Virtual-Soccer-Strength-Analyzer.user.js:11830:25
+[SHIRTS] Re-initializing shirts system... Virtual-Soccer-Strength-Analyzer.user.js:11833:25
+[SHIRTS] Initializing shirts system for home=8829, away=20632 Virtual-Soccer-Strength-Analyzer.user.js:10640:17
+[SHIRTS] Getting shirts for team 8829 Virtual-Soccer-Strength-Analyzer.user.js:9852:17
+[SHIRTS] No cache found for team 8829 Virtual-Soccer-Strength-Analyzer.user.js:5365:21
+[SHIRTS] Fetching fresh shirts for team 8829 Virtual-Soccer-Strength-Analyzer.user.js:9860:17
+[SHIRTS] Loading match list for team 8829, preferHome=true Virtual-Soccer-Strength-Analyzer.user.js:9554:21
+[SHIRTS] Getting shirts for team 20632 Virtual-Soccer-Strength-Analyzer.user.js:9852:17
+[SHIRTS] No cache found for team 20632 Virtual-Soccer-Strength-Analyzer.user.js:5365:21
+[SHIRTS] Fetching fresh shirts for team 20632 Virtual-Soccer-Strength-Analyzer.user.js:9860:17
+[SHIRTS] Loading match list for team 20632, preferHome=true Virtual-Soccer-Strength-Analyzer.user.js:9554:21
+[SHIRTS] Found 96 match links Virtual-Soccer-Strength-Analyzer.user.js:9571:33
+[SHIRTS] Found 70 played matches Virtual-Soccer-Strength-Analyzer.user.js:9619:33
+[SHIRTS] No home match found, using last match Virtual-Soccer-Strength-Analyzer.user.js:9630:45
+[SHIRTS] Selected last match: day=25478, matchId=294625, isHome=false, score= Virtual-Soccer-Strength-Analyzer.user.js:9636:37
+[SHIRTS] Found match for team 20632: day=25478, matchId=294625, isHome=false Virtual-Soccer-Strength-Analyzer.user.js:9870:21
+[SHIRTS] Found 82 match links Virtual-Soccer-Strength-Analyzer.user.js:9571:33
+[SHIRTS] Found 55 played matches Virtual-Soccer-Strength-Analyzer.user.js:9619:33
+[SHIRTS] No home match found, using last match Virtual-Soccer-Strength-Analyzer.user.js:9630:45
+[SHIRTS] Selected last match: day=25478, matchId=294625, isHome=false, score= Virtual-Soccer-Strength-Analyzer.user.js:9636:37
+[SHIRTS] Found match for team 8829: day=25478, matchId=294625, isHome=false Virtual-Soccer-Strength-Analyzer.user.js:9870:21
+[SHIRTS] Found 2 team links in match page Virtual-Soccer-Strength-Analyzer.user.js:9674:33
+[SHIRTS] Match teams: home=8829, away=20632, looking for=20632, isHome=false Virtual-Soccer-Strength-Analyzer.user.js:9680:37
+[SHIRTS] Using prefix: gif_1_ (isHome=false) Virtual-Soccer-Strength-Analyzer.user.js:9687:33
+[SHIRTS] Trying selector: div.shirt.qf[id^="gif_1_"], found: 0 Virtual-Soccer-Strength-Analyzer.user.js:9692:33
+[SHIRTS] Trying selector: div.shirt[id^="gif_1_"], found: 0 Virtual-Soccer-Strength-Analyzer.user.js:9697:37
+[SHIRTS] Trying selector: div[id^="gif_1_"], found: 0 Virtual-Soccer-Strength-Analyzer.user.js:9703:37
+[SHIRTS] Found 0 div.shirt elements total Virtual-Soccer-Strength-Analyzer.user.js:9709:37
+[SHIRTS] Found 53 div elements total Virtual-Soccer-Strength-Analyzer.user.js:9714:41
+[SHIRTS] Found 4 table.tobl elements Virtual-Soccer-Strength-Analyzer.user.js:9718:41
+[SHIRTS] Found 0 divs with 'gif' in id Virtual-Soccer-Strength-Analyzer.user.js:9722:41
+[SHIRTS] Falling back to regex parsing of raw HTML Virtual-Soccer-Strength-Analyzer.user.js:9787:37
+[SHIRTS] HTML length: 40382, searching for prefix: gif_1_ Virtual-Soccer-Strength-Analyzer.user.js:9790:37
+[SHIRTS] Regex found 0 matches Virtual-Soccer-Strength-Analyzer.user.js:9796:37
+[SHIRTS] Found 0 occurrences of "gif_1_" in HTML Virtual-Soccer-Strength-Analyzer.user.js:9823:41
+[SHIRTS] Fetched shirts for team 20632: 
+Object {  }
+Virtual-Soccer-Strength-Analyzer.user.js:9875:21
+[SHIRTS] No GK shirt found, using default Virtual-Soccer-Strength-Analyzer.user.js:9879:25
+[SHIRTS] No field shirt found, using default Virtual-Soccer-Strength-Analyzer.user.js:9883:25
+[SHIRTS] Cached shirts for team 20632: 
+Object { gk: "pics/shirts/sh_4_sm.png", field: "pics/shirts/sh_4_sm.png" }
+Virtual-Soccer-Strength-Analyzer.user.js:5379:17
+[SHIRTS] Found 2 team links in match page Virtual-Soccer-Strength-Analyzer.user.js:9674:33
+[SHIRTS] Match teams: home=8829, away=20632, looking for=8829, isHome=true Virtual-Soccer-Strength-Analyzer.user.js:9680:37
+[SHIRTS] Using prefix: gif_0_ (isHome=true) Virtual-Soccer-Strength-Analyzer.user.js:9687:33
+[SHIRTS] Trying selector: div.shirt.qf[id^="gif_0_"], found: 0 Virtual-Soccer-Strength-Analyzer.user.js:9692:33
+[SHIRTS] Trying selector: div.shirt[id^="gif_0_"], found: 0 Virtual-Soccer-Strength-Analyzer.user.js:9697:37
+[SHIRTS] Trying selector: div[id^="gif_0_"], found: 0 Virtual-Soccer-Strength-Analyzer.user.js:9703:37
+[SHIRTS] Found 0 div.shirt elements total Virtual-Soccer-Strength-Analyzer.user.js:9709:37
+[SHIRTS] Found 53 div elements total Virtual-Soccer-Strength-Analyzer.user.js:9714:41
+[SHIRTS] Found 4 table.tobl elements Virtual-Soccer-Strength-Analyzer.user.js:9718:41
+[SHIRTS] Found 0 divs with 'gif' in id Virtual-Soccer-Strength-Analyzer.user.js:9722:41
+[SHIRTS] Falling back to regex parsing of raw HTML Virtual-Soccer-Strength-Analyzer.user.js:9787:37
+[SHIRTS] HTML length: 40382, searching for prefix: gif_0_ Virtual-Soccer-Strength-Analyzer.user.js:9790:37
+[SHIRTS] Regex found 0 matches Virtual-Soccer-Strength-Analyzer.user.js:9796:37
+[SHIRTS] Found 0 occurrences of "gif_0_" in HTML Virtual-Soccer-Strength-Analyzer.user.js:9823:41
+[SHIRTS] Fetched shirts for team 8829: 
+Object {  }
+Virtual-Soccer-Strength-Analyzer.user.js:9875:21
+[SHIRTS] No GK shirt found, using default Virtual-Soccer-Strength-Analyzer.user.js:9879:25
+[SHIRTS] No field shirt found, using default Virtual-Soccer-Strength-Analyzer.user.js:9883:25
+[SHIRTS] Cached shirts for team 8829: 
+Object { gk: "pics/shirts/sh_4_sm.png", field: "pics/shirts/sh_4_sm.png" }
+Virtual-Soccer-Strength-Analyzer.user.js:5379:17
+[SHIRTS] Successfully loaded shirts: 
+Object { homeShirts: {…}, awayShirts: {…} }
+Virtual-Soccer-Strength-Analyzer.user.js:10669:21
+[SHIRTS] Displaying shirts: 
+Object { homeShirts: {…}, awayShirts: {…} }
+Virtual-Soccer-Strength-Analyzer.user.js:10518:17
+[SHIRTS] Cleared existing shirts container Virtual-Soccer-Strength-Analyzer.user.js:10537:21
+[Shirts] Generated positions 
+Object { homeFormation: "4-4-2", awayFormation: "4-4-2", homePositions: (11) […], awayPositions: (11) […], homeCoords: 11, awayCoords: 11 }
+Virtual-Soccer-Strength-Analyzer.user.js:10563:17
+[SHIRTS] Refresh completed successfully Virtual-Soccer-Strength-Analyzer.user.js:11836:25
