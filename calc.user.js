@@ -12058,6 +12058,10 @@ function getTournamentType() {
                 // Итоговая сила
                 const finalStr = Math.round(baseStr * physicalFormModifier * fatigueModifier * realityModifier * positionModifier);
                 
+                // Получаем информацию о физической форме
+                const formInfo = CONFIG.PHYSICAL_FORM.FORMS[physicalFormId] || { label: 'Неизвестно', modifier: 1.0 };
+                const formLabel = formInfo.label || `${form}%`;
+                
                 // Определяем цвет формы
                 let formColor = '#666';
                 if (form >= 110) formColor = '#28a745';
@@ -12109,7 +12113,7 @@ function getTournamentType() {
                         </tr>
                         <tr>
                             <td style="padding: 4px; border: 1px solid #ddd;">Физ. форма</td>
-                            <td style="padding: 4px; border: 1px solid #ddd; color: ${formColor}; font-weight: bold;">${form}%</td>
+                            <td style="padding: 4px; border: 1px solid #ddd; color: ${formColor}; font-weight: bold;">${formLabel}</td>
                             <td style="padding: 4px; border: 1px solid #ddd;">×${physicalFormModifier.toFixed(3)}</td>
                         </tr>
                         <tr>
