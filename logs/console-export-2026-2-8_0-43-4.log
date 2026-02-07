@@ -1,0 +1,79 @@
+[SHIRTS] Initializing shirts system for home=122, away=262 Virtual-Soccer-Strength-Analyzer.user.js:10563:17
+[SHIRTS] Getting shirts for team 122 Virtual-Soccer-Strength-Analyzer.user.js:9775:17
+[SHIRTS] Cache hit for team 122, age: 3 minutes Virtual-Soccer-Strength-Analyzer.user.js:5358:25
+[SHIRTS] Getting shirts for team 262 Virtual-Soccer-Strength-Analyzer.user.js:9775:17
+[SHIRTS] Cache hit for team 262, age: 3 minutes Virtual-Soccer-Strength-Analyzer.user.js:5358:25
+[SHIRTS] Successfully loaded shirts: 
+Object { homeShirts: {…}, awayShirts: {…} }
+Virtual-Soccer-Strength-Analyzer.user.js:10592:21
+[SHIRTS] Displaying shirts: 
+Object { homeShirts: {…}, awayShirts: {…} }
+Virtual-Soccer-Strength-Analyzer.user.js:10441:17
+[SHIRTS] Created new shirts container Virtual-Soccer-Strength-Analyzer.user.js:10457:21
+[Shirts] Generated positions 
+Object { homeFormation: "4-4-2", awayFormation: "4-4-2", homePositions: (11) […], awayPositions: (11) […], homeCoords: 11, awayCoords: 11 }
+Virtual-Soccer-Strength-Analyzer.user.js:10486:17
+[SHIRTS] Refresh button clicked Virtual-Soccer-Strength-Analyzer.user.js:11737:21
+[SHIRTS] Clearing cache for teams: 122 262 Virtual-Soccer-Strength-Analyzer.user.js:11738:21
+[SHIRTS] Cache keys: 
+Object { homeKey: "vs_shirts_122", awayKey: "vs_shirts_262" }
+Virtual-Soccer-Strength-Analyzer.user.js:11745:25
+[SHIRTS] Before clear - home cache: exists Virtual-Soccer-Strength-Analyzer.user.js:11746:25
+[SHIRTS] Before clear - away cache: exists Virtual-Soccer-Strength-Analyzer.user.js:11747:25
+[SHIRTS] After clear - home cache: cleared Virtual-Soccer-Strength-Analyzer.user.js:11752:25
+[SHIRTS] After clear - away cache: cleared Virtual-Soccer-Strength-Analyzer.user.js:11753:25
+[SHIRTS] Re-initializing shirts system... Virtual-Soccer-Strength-Analyzer.user.js:11756:25
+[SHIRTS] Initializing shirts system for home=122, away=262 Virtual-Soccer-Strength-Analyzer.user.js:10563:17
+[SHIRTS] Getting shirts for team 122 Virtual-Soccer-Strength-Analyzer.user.js:9775:17
+[SHIRTS] No cache found for team 122 Virtual-Soccer-Strength-Analyzer.user.js:5365:21
+[SHIRTS] Fetching fresh shirts for team 122 Virtual-Soccer-Strength-Analyzer.user.js:9783:17
+[SHIRTS] Getting shirts for team 262 Virtual-Soccer-Strength-Analyzer.user.js:9775:17
+[SHIRTS] No cache found for team 262 Virtual-Soccer-Strength-Analyzer.user.js:5365:21
+[SHIRTS] Fetching fresh shirts for team 262 Virtual-Soccer-Strength-Analyzer.user.js:9783:17
+[SHIRTS] Found last match for team 262: day=25480, matchId=299424 Virtual-Soccer-Strength-Analyzer.user.js:9793:21
+[SHIRTS] Found last match for team 122: day=25467, matchId=63547 Virtual-Soccer-Strength-Analyzer.user.js:9793:21
+[SHIRTS] Trying selector: div.shirt.qf[id^="gif_1_"], found: 0 Virtual-Soccer-Strength-Analyzer.user.js:9632:33
+[SHIRTS] Trying selector: div.shirt[id^="gif_1_"], found: 0 Virtual-Soccer-Strength-Analyzer.user.js:9637:37
+[SHIRTS] Trying selector: div[id^="gif_1_"], found: 0 Virtual-Soccer-Strength-Analyzer.user.js:9643:37
+[SHIRTS] Found 0 div.shirt elements total Virtual-Soccer-Strength-Analyzer.user.js:9649:37
+[SHIRTS] Found 43 div elements total Virtual-Soccer-Strength-Analyzer.user.js:9654:41
+[SHIRTS] Found 2 table.tobl elements Virtual-Soccer-Strength-Analyzer.user.js:9658:41
+[SHIRTS] Found 0 divs with 'gif' in id Virtual-Soccer-Strength-Analyzer.user.js:9662:41
+[SHIRTS] Fetched shirts for team 262: 
+Object {  }
+Virtual-Soccer-Strength-Analyzer.user.js:9798:21
+[SHIRTS] No GK shirt found, using default Virtual-Soccer-Strength-Analyzer.user.js:9802:25
+[SHIRTS] No field shirt found, using default Virtual-Soccer-Strength-Analyzer.user.js:9806:25
+[SHIRTS] Cached shirts for team 262: 
+Object { gk: "pics/shirts/sh_4_sm.png", field: "pics/shirts/sh_4_sm.png" }
+Virtual-Soccer-Strength-Analyzer.user.js:5379:17
+[SHIRTS] Trying selector: div.shirt.qf[id^="gif_0_"], found: 11 Virtual-Soccer-Strength-Analyzer.user.js:9632:33
+[SHIRTS] Processing 11 shirt divs Virtual-Soccer-Strength-Analyzer.user.js:9683:37
+[SHIRTS] Processing div #0: 
+Object { id: "gif_0_0", position: "GK", styleLength: 206, shirtUrl: "pics/shirts/sh_2_sm.png" }
+Virtual-Soccer-Strength-Analyzer.user.js:9707:45
+[SHIRTS] Found GK shirt: pics/shirts/sh_2_sm.png Virtual-Soccer-Strength-Analyzer.user.js:9718:49
+[SHIRTS] Processing div #1: 
+Object { id: "gif_0_1", position: "LD", styleLength: 209, shirtUrl: "pics/shirts/sh_15825_sm.png" }
+Virtual-Soccer-Strength-Analyzer.user.js:9707:45
+[SHIRTS] Found field shirt: pics/shirts/sh_15825_sm.png Virtual-Soccer-Strength-Analyzer.user.js:9721:49
+[SHIRTS] Processing div #2: 
+Object { id: "gif_0_2", position: "CD", styleLength: 210, shirtUrl: "pics/shirts/sh_15825_sm.png" }
+Virtual-Soccer-Strength-Analyzer.user.js:9707:45
+[SHIRTS] Fetched shirts for team 122: 
+Object { gk: "pics/shirts/sh_2_sm.png", field: "pics/shirts/sh_15825_sm.png" }
+Virtual-Soccer-Strength-Analyzer.user.js:9798:21
+[SHIRTS] Cached shirts for team 122: 
+Object { gk: "pics/shirts/sh_2_sm.png", field: "pics/shirts/sh_15825_sm.png" }
+Virtual-Soccer-Strength-Analyzer.user.js:5379:17
+[SHIRTS] Successfully loaded shirts: 
+Object { homeShirts: {…}, awayShirts: {…} }
+Virtual-Soccer-Strength-Analyzer.user.js:10592:21
+[SHIRTS] Displaying shirts: 
+Object { homeShirts: {…}, awayShirts: {…} }
+Virtual-Soccer-Strength-Analyzer.user.js:10441:17
+[SHIRTS] Cleared existing shirts container Virtual-Soccer-Strength-Analyzer.user.js:10460:21
+[Shirts] Generated positions 
+Object { homeFormation: "4-4-2", awayFormation: "4-4-2", homePositions: (11) […], awayPositions: (11) […], homeCoords: 11, awayCoords: 11 }
+Virtual-Soccer-Strength-Analyzer.user.js:10486:17
+[SHIRTS] Refresh completed successfully Virtual-Soccer-Strength-Analyzer.user.js:11759:25

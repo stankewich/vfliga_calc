@@ -306,15 +306,16 @@ function generateFieldPositionsWithFlankPreservation(formation, side, previousFo
     const isHome = side === 'home';
 
     const zones = isHome ? {
+        // Используем те же расстояния что и в AWAY (backup)
         gk: 549,      // 566 - 17 (максимально прижат к низу)
-        def: 499,     // Скорректировано для новой рабочей области
-        semidef: 475, // Скорректировано
-        mid: 449,     // Скорректировано
-        semiatt: 424, // Скорректировано
-        att: 339      // Скорректировано
+        def: 489,     // 549 - 60 (такое же расстояние как away: 127-67=60)
+        semidef: 459, // 489 - 30 (такое же расстояние как away: 157-127=30)
+        mid: 414,     // 459 - 45 (такое же расстояние как away: 202-157=45)
+        semiatt: 384, // 414 - 30 (такое же расстояние как away: 232-202=30)
+        att: 339      // 384 - 45 (такое же расстояние как away: 277-232=45)
     } : {
         gk: 67,       // 0 + 17 (максимально прижат к верху)
-        def: 127,      // Скорректировано для новой рабочей области
+        def: 127,     // Скорректировано для новой рабочей области
         semidef: 157, // Скорректировано
         mid: 202,     // Скорректировано, расстояние по 75 px до def и att
         semiatt: 232, // Скорректировано, +50 px от mid
@@ -8918,7 +8919,7 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
 // Вспомогательные функции для определения типа турнира
 function parseMatchInfo(html) {
     // Расширенный список возможных названий турниров
-    const typeRegex = /(?:Чемпионат|Кубок межсезонья|Кубок страны|Кубок вызова|Товарищеский матч|Конференция любительских клубов|КЛК|Лига Европы|Лига европейских чемпионов|Кубок азиатской конфедерации|Лига чемпионов Азии|Кубок африканской конфедерации|Лига чемпионов Африки|Кубок Южной Америки|Кубок Либертадорес|Кубок Сев\. и Центр\. Америки|Лига чемпионов Америки|Переходные матчи|Отборочные матчи)/i;
+    const typeRegex = /(?:Чемпионат|Кубок межсезонья|Кубок страны|Кубок вызова|Товарищеский матч|Конференция любительских клубов|КЛК|Лига Европы|Лига европейских чемпионов|Кубок азиатской конфедерации|Лига чемпионов Азии|Кубок африканской конфедерации|Лига чемпионов Африки|Кубок Южной Америки|Кубок Либертадорес|Кубок Сев\. и Центр\. Америки|Кубок Северной и Центральной Америки|Лига чемпионов Америки|Переходные матчи|Отборочные матчи)/i;
     const typeMatch = html.match(typeRegex);
 
     console.log('🔍 Поиск типа турнира в HTML:');
@@ -8949,7 +8950,7 @@ function parseMatchInfo(html) {
         else if (t.includes('чемпионов африки')) tournamentType = 'african_champions_league';
         else if (t.includes('южной америки')) tournamentType = 'south_america_cup';
         else if (t.includes('либертадорес')) tournamentType = 'libertadores';
-        else if (t.includes('сев. и центр. америки')) tournamentType = 'north_central_america_cup';
+        else if (t.includes('сев. и центр. америки') || t.includes('северной и центральной америки')) tournamentType = 'north_central_america_cup';
         else if (t.includes('чемпионов америки')) tournamentType = 'americas_champions_league';
 
         console.log('  Определенный тип турнира:', tournamentType);
@@ -9519,9 +9520,11 @@ function getTournamentType() {
     }
 
 
-    function getLastMatchForTeam(teamId) {
+    function getLastMatchForTeam(teamId, preferHome = false) {
         return new Promise((resolve, reject) => {
             const url = `${SITE_CONFIG.BASE_URL}/roster_m.php?num=${teamId}`;
+            console.log(`[SHIRTS] Loading match list for team ${teamId}, preferHome=${preferHome}`);
+            
             GM_xmlhttpRequest({
                 method: "GET",
                 url: url,
@@ -9537,26 +9540,84 @@ function getTournamentType() {
 
                         // Ищем все строки матчей (только viewmatch.php - это сыгранные матчи)
                         const matchLinks = Array.from(doc.querySelectorAll('a[href*="viewmatch.php"]'));
+                        console.log(`[SHIRTS] Found ${matchLinks.length} match links`);
 
-                        // Ищем последний сыгранный матч (идем с конца списка)
+                        const matches = [];
+
+                        // Собираем все сыгранные матчи
                         for (let i = matchLinks.length - 1; i >= 0; i--) {
                             const link = matchLinks[i];
                             const scoreText = link.textContent.trim();
 
                             // Пропускаем несыгранные матчи (счет ?:?)
-                            if (scoreText === '?:?') {
+                            if (!scoreText || scoreText === "?:?") {
                                 continue;
                             }
 
                             const href = link.getAttribute('href');
                             const match = href.match(/day=(\d+)&match_id=(\d+)/);
                             if (match) {
-                                resolve({ day: match[1], matchId: match[2] });
-                                return;
+                                // Определяем, дома или в гостях
+                                // Ищем строку таблицы с этим матчем
+                                const row = link.closest('tr');
+                                let isHome = false;
+                                
+                                if (row) {
+                                    // Проверяем, есть ли "(д)" или "(г)" в строке
+                                    const rowText = row.textContent;
+                                    if (rowText.includes('Д')) {
+                                        isHome = true;
+                                    } else if (rowText.includes('Г')) {
+                                        isHome = false;
+                                    } else {
+                                        // Альтернативный способ: проверяем позицию команды в ссылках
+                                        const teamLinks = row.querySelectorAll('a[href*="roster.php"]');
+                                        if (teamLinks.length >= 2) {
+                                            const firstTeamId = new URL(teamLinks[0].href, SITE_CONFIG.BASE_URL).searchParams.get('num');
+                                            isHome = (firstTeamId === String(teamId));
+                                        }
+                                    }
+                                }
+
+                                const matchInfo = {
+                                    day: match[1],
+                                    matchId: match[2],
+                                    isHome: isHome,
+                                    scoreText: scoreText
+                                };
+                                
+                                matches.push(matchInfo);
+                                
+                                // Логируем первые 3 матча для отладки
+                                if (matches.length <= 3) {
+                                    console.log(`[SHIRTS] Match #${matches.length}:`, matchInfo, 'rowText:', row ? row.textContent.substring(0, 100) : 'no row');
+                                }
                             }
                         }
 
-                        resolve(null);
+                        console.log(`[SHIRTS] Found ${matches.length} played matches`);
+                        
+                        if (matches.length > 0) {
+                            // Если нужен домашний матч, ищем его
+                            if (preferHome) {
+                                const homeMatch = matches.find(m => m.isHome);
+                                if (homeMatch) {
+                                    console.log(`[SHIRTS] Selected home match: day=${homeMatch.day}, matchId=${homeMatch.matchId}, score=${homeMatch.scoreText}`);
+                                    resolve(homeMatch);
+                                    return;
+                                } else {
+                                    console.log(`[SHIRTS] No home match found, using last match`);
+                                }
+                            }
+                            
+                            // Возвращаем последний матч
+                            const lastMatch = matches[0];
+                            console.log(`[SHIRTS] Selected last match: day=${lastMatch.day}, matchId=${lastMatch.matchId}, isHome=${lastMatch.isHome}, score=${lastMatch.scoreText}`);
+                            resolve(lastMatch);
+                        } else {
+                            console.log(`[SHIRTS] No played matches found`);
+                            resolve(null);
+                        }
                     } catch (error) {
                         reject(error);
                     }
@@ -9567,7 +9628,6 @@ function getTournamentType() {
             });
         });
     }
-
     function getMatchLineup(day, matchId, teamId) {
         return new Promise((resolve, reject) => {
             const url = `${SITE_CONFIG.BASE_URL}/viewmatch.php?day=${day}&match_id=${matchId}`;
@@ -9733,7 +9793,7 @@ function getTournamentType() {
 
         try {
             // Получаем последний матч
-            const lastMatch = await getLastMatchForTeam(teamId);
+            const lastMatch = await getLastMatchForTeam(teamId, true);
 
             if (!lastMatch) {
 

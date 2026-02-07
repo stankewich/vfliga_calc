@@ -1,0 +1,1626 @@
+POST
+https://kraken.rambler.ru/cnt/v2/
+[HTTP/2 200  114ms]
+
+GET
+https://www.virtualsoccer.ru/previewmatch.php?day=25478&match_id=294625
+[HTTP/1.1 200 OK 585ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/jquery.ui-vfl.1.2.8.css
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/vsolmain-firefox-1.0.3.css
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/vsolmain-3.1.4.min.css
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/pnotify-3.0.2.min.css
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/jquery.theme.ui-vfl.1.2.1.css
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/jquery-3.4.1.min.js
+[HTTP/1.1 200 OK 0ms]
+
+POST
+https://kraken.rambler.ru/cnt/v2/
+[HTTP/2 200  102ms]
+
+GET
+https://top-fwz1.mail.ru/tracker?_=0.720908637986816;id=256872;u=https://www.virtualsoccer.ru/previewmatch.php?day=25478&match_id=294625;r=https://www.virtualsoccer.ru/roster.php?num=20632;title=Виртуальная Футбольная Лига: футбольный менеджер;s=1920*1080;vp=1395*922;touch=0;hds=1;sid=8040836a1ffbb178;ver=60.6.0;tz=-180/Europe/Moscow;st=1770500051244;nt=1/0/1770500050201/918/920///1/26/26/26/166/73/166/219/915/918/1043/1043/1045/1266/1266/1267;ct=3294/3295/3295/3296/3044;rt=3043/250/0/0/0/3043/3043/3043/3043/3043/3043/3043/3043/3293;gl=u;ni=;detect=0;lvid=1769948322208:1770500081871:2103:acf191c8ec5d816885365e729a9b5c86;opts=jst-ym,cnhp=h2;fpid=DSLtOatrgTE15HGH7ZJMw;visible=true;js=13;e=RT/unload;et=1770500081869;pvt=30625;vtauto=24919
+[HTTP/2 200  205ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/pnotify-2.1.1.min.js
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/jquery.ui-vfl.1.2.7.js
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/init-1.3.0.min.js
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/jquery.cookie.js
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/pnotify-2.1.1.buttons.min.js
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/menu-1.3.5.min.js
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/chat-2.1.0.min.js
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/complain-1.1.7.min.js
+[HTTP/1.1 200 OK 0ms]
+
+Unknown property ‘margin-botom’.  Declaration dropped. previewmatch.php:1:14
+GET
+https://www.virtualsoccer.ru/pics/teams32/8829.png?38950
+[HTTP/1.1 200 OK 0ms]
+
+GET
+https://www.virtualsoccer.ru/ajax/complain-1.1.7.min.js
+[HTTP/1.1 200 OK 0ms]
+
+Error: Promised response from onMessage listener went out of scope vendors.chunk.js:1:532239
+🔧 Функции кэша принудительно установлены в window Virtual-Soccer-Strength-Analyzer.user.js:5892:13
+🧪 Chemistry System v0.943 загружена! ОБНОВЛЕН граф связей позиций (GK + LD). Используйте testCacheFunctions() для проверки. Virtual-Soccer-Strength-Analyzer.user.js:13393:13
+Partitioned cookie or storage access was provided to “<URL>” because it is loaded in the third-party context and dynamic state partitioning is enabled. 5
+[INIT] Инициализация VF Liga Calculator Virtual-Soccer-Strength-Analyzer.user.js:9089:17
+Диагностика localStorage: Virtual-Soccer-Strength-Analyzer.user.js:9092:17
+vs_auto_open_calculator: true Virtual-Soccer-Strength-Analyzer.user.js:9093:17
+vs_calculator_mode: null Virtual-Soccer-Strength-Analyzer.user.js:9094:17
+vs_manual_preview_mode: null Virtual-Soccer-Strength-Analyzer.user.js:9095:17
+window.location.hash: <empty string> Virtual-Soccer-Strength-Analyzer.user.js:9096:17
+Замена иконок команд... Virtual-Soccer-Strength-Analyzer.user.js:9098:17
+Детальная проверка режима работы: Virtual-Soccer-Strength-Analyzer.user.js:9117:17
+Автоматическое открытие калькулятора: true Virtual-Soccer-Strength-Analyzer.user.js:9118:17
+Ручной режим калькулятора (hash/storage): false Virtual-Soccer-Strength-Analyzer.user.js:9119:17
+Итоговый режим: КАЛЬКУЛЯТОР Virtual-Soccer-Strength-Analyzer.user.js:9120:17
+Полный URL: https://www.virtualsoccer.ru/previewmatch.php?day=25478&match_id=294625 Virtual-Soccer-Strength-Analyzer.user.js:9121:17
+🧮 Режим калькулятора - инициализируем полный интерфейс Virtual-Soccer-Strength-Analyzer.user.js:9138:17
+[Rating] Raw text 
+Object { homeText: "3017", awayText: "2584" }
+Virtual-Soccer-Strength-Analyzer.user.js:4230:13
+[Rating] Parsed values 
+Object { home: 3017, away: 2584 }
+Virtual-Soccer-Strength-Analyzer.user.js:4235:13
+Рейтинги команд: 
+Object { home: 3017, away: 2584 }
+Virtual-Soccer-Strength-Analyzer.user.js:9142:17
+Удаляем строку: Стоимость команд
+1319 млн.+299 млн.56%
+1020 млн.44% 2 Virtual-Soccer-Strength-Analyzer.user.js:9364:25
+Удаляем строку: Рейтинг силы команд
+3017+43354%
+258446% 2 Virtual-Soccer-Strength-Analyzer.user.js:9364:25
+Удаляем строку: Сумма сил 17-ти лучших игроков
+4438+75355%
+368545% 2 Virtual-Soccer-Strength-Analyzer.user.js:9364:25
+Удаляем строку: Сумма сил 14-ти лучших игроков
+3894+53254%
+336246% 2 Virtual-Soccer-Strength-Analyzer.user.js:9364:25
+Удаляем строку: Сумма сил 11-ти лучших игроков
+3185+37053%
+281547% 2 Virtual-Soccer-Strength-Analyzer.user.js:9364:25
+🔗 Найдено ссылок на команды: 2 Virtual-Soccer-Strength-Analyzer.user.js:9149:17
+ID команды хозяев: 8829 Virtual-Soccer-Strength-Analyzer.user.js:9159:17
+ID команды гостей: 20632 Virtual-Soccer-Strength-Analyzer.user.js:9160:17
+Определение типа турнира... Virtual-Soccer-Strength-Analyzer.user.js:9170:21
+🔍 Поиск типа турнира в HTML: Virtual-Soccer-Strength-Analyzer.user.js:8926:13
+  Найденное совпадение: Кубок Северной и Центральной Америки Virtual-Soccer-Strength-Analyzer.user.js:8927:13
+  Все найденные упоминания турниров: НЕ НАЙДЕНО Virtual-Soccer-Strength-Analyzer.user.js:8931:13
+  Обработка строки: "кубок северной и центральной америки" Virtual-Soccer-Strength-Analyzer.user.js:8936:17
+  Определенный тип турнира: north_central_america_cup Virtual-Soccer-Strength-Analyzer.user.js:8957:17
+Тип турнира: north_central_america_cup Virtual-Soccer-Strength-Analyzer.user.js:9173:21
+Загрузка данных команд... Virtual-Soccer-Strength-Analyzer.user.js:9181:17
+GET
+https://www.virtualsoccer.ru/pics/favicon.ico
+[HTTP/1.1 200 OK 0ms]
+
+✅ Функции управления кэшем загружены успешно Virtual-Soccer-Strength-Analyzer.user.js:13398:17
+📋 Доступные команды: testCacheFunctions(), getStyleCacheStats(), smartCleanupStyleCache() Virtual-Soccer-Strength-Analyzer.user.js:13399:17
+[Atmosphere] Parsed for team 20632 : 0.06 Virtual-Soccer-Strength-Analyzer.user.js:9518:45
+[CHEMISTRY] Первый игрок - индексы для chemistry: 
+Object { "p[0] id": 5490359, "p[2] name": "Вивиан", "p[3] surname": "Флорент", "p[4] nat_id": 218, "p[5] nat": "Американские Виргинские о-ва", "p[33] hidden_style": 0, total_length: 82 }
+Virtual-Soccer-Strength-Analyzer.user.js:9414:21
+[CHEMISTRY] Extracted data: 
+Array(24) [ (82) […], (82) […], (82) […], (82) […], (82) […], (82) […], (82) […], (82) […], (82) […], (82) […], … ]
+Virtual-Soccer-Strength-Analyzer.user.js:9425:17
+[CHEMISTRY] Пример игрока: 
+Object { name: "Вивиан Флорент", nat_id: 218, nat: "Американские Виргинские о-ва", hidden_style: 0 }
+Virtual-Soccer-Strength-Analyzer.user.js:9471:37
+[CHEMISTRY] Первый игрок - индексы для chemistry: 
+Object { "p[0] id": 5585435, "p[2] name": "Факундо", "p[3] surname": "Сильва", "p[4] nat_id": 10, "p[5] nat": "Аргентина", "p[33] hidden_style": 0, total_length: 82 }
+Virtual-Soccer-Strength-Analyzer.user.js:9414:21
+[CHEMISTRY] Extracted data: 
+Array(23) [ (82) […], (82) […], (82) […], (82) […], (82) […], (82) […], (82) […], (82) […], (82) […], (82) […], … ]
+Virtual-Soccer-Strength-Analyzer.user.js:9425:17
+[CHEMISTRY] Пример игрока: 
+Object { name: "Факундо Сильва", nat_id: 10, nat: "Аргентина", hidden_style: 0 }
+Virtual-Soccer-Strength-Analyzer.user.js:9471:37
+[Atmosphere] Not found for team 8829 , using default 0 Virtual-Soccer-Strength-Analyzer.user.js:9525:33
+Загружено игроков хозяев: 23 Virtual-Soccer-Strength-Analyzer.user.js:9189:17
+Загружено игроков гостей: 24 Virtual-Soccer-Strength-Analyzer.user.js:9190:17
+Атмосфера хозяев: 0 Virtual-Soccer-Strength-Analyzer.user.js:9191:17
+Атмосфера гостей: 0.06 Virtual-Soccer-Strength-Analyzer.user.js:9192:17
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: GK (индекс 0) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для GK: 
+Array [ "GK" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: LD (индекс 1) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для LD: 
+Array [ "LD", "LB" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CD (индекс 2) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CD: 
+Array [ "CD", "SW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CD (индекс 3) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CD: 
+Array [ "CD" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: RD (индекс 4) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для RD: 
+Array [ "RD", "RB" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: LM (индекс 5) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === LM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6867:21
+[getAllowedMiniOptions] LM может стать LW? amAbsent: true, hasLW: false, is424: false Virtual-Soccer-Strength-Analyzer.user.js:6873:25
+[getAllowedMiniOptions] Добавляем LW для LM Virtual-Soccer-Strength-Analyzer.user.js:6875:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для LM: 
+Array [ "LM", "LW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CM (индекс 6) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === CM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6905:21
+[getAllowedMiniOptions] is424: false Virtual-Soccer-Strength-Analyzer.user.js:6906:21
+[PositionLogic] CM→DM проверка для позиции 6: 
+Object { dmCount: 0, cmCount: 2, amCount: 0, totalCentralCount: 2, cmMin1: 6, cmMax: 7, isMinCM: true, isMaxCM: false, canBecomeDM: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6934:25
+[PositionLogic] CM→AM проверка для позиции 6: 
+Object { hasLW: false, hasRW: false, amAbsent: true, isMaxMidfielder: false, maxMidfielderIndex: 7, midfielderIndices: (2) […], canBecomeAM: false }
+Virtual-Soccer-Strength-Analyzer.user.js:6954:25
+[PositionLogic] НЕ добавляем AM для CM позиции 6 Virtual-Soccer-Strength-Analyzer.user.js:6964:29
+[PositionLogic] CM→FR проверка для позиции 6: 
+Object { frCount: 0, centralFieldPlayers: 2, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6970:25
+[PositionLogic] Добавляем FR для CM позиции 6 Virtual-Soccer-Strength-Analyzer.user.js:6976:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CM: 
+Array(3) [ "CM", "DM", "FR" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CM (индекс 7) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: true, amCount: 0, frCount: 0, canBecomeAM: true, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === CM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6905:21
+[getAllowedMiniOptions] is424: false Virtual-Soccer-Strength-Analyzer.user.js:6906:21
+[PositionLogic] CM заблокирован: максимальный полузащитник при 2 полузащитниках не может стать DM Virtual-Soccer-Strength-Analyzer.user.js:6931:29
+[PositionLogic] CM→DM проверка для позиции 7: 
+Object { dmCount: 0, cmCount: 2, amCount: 0, totalCentralCount: 2, cmMin1: 6, cmMax: 7, isMinCM: false, isMaxCM: true, canBecomeDM: false }
+Virtual-Soccer-Strength-Analyzer.user.js:6934:25
+[PositionLogic] CM→AM проверка для позиции 7: 
+Object { hasLW: false, hasRW: false, amAbsent: true, isMaxMidfielder: true, maxMidfielderIndex: 7, midfielderIndices: (2) […], canBecomeAM: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6954:25
+[PositionLogic] Добавляем AM для CM позиции 7 (максимальный полузащитник) Virtual-Soccer-Strength-Analyzer.user.js:6961:29
+[PositionLogic] CM→FR проверка для позиции 7: 
+Object { frCount: 0, centralFieldPlayers: 2, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6970:25
+[PositionLogic] Добавляем FR для CM позиции 7 Virtual-Soccer-Strength-Analyzer.user.js:6976:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CM: 
+Array(3) [ "CM", "AM", "FR" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: true Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: RM (индекс 8) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === RM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6886:21
+[getAllowedMiniOptions] RM может стать RW? amAbsent: true, hasRW: false, is424: false Virtual-Soccer-Strength-Analyzer.user.js:6892:25
+[getAllowedMiniOptions] Добавляем RW для RM Virtual-Soccer-Strength-Analyzer.user.js:6894:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для RM: 
+Array [ "RM", "RW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CF (индекс 9) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CF: 
+Array(3) [ "CF", "LF", "ST" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CF (индекс 10) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CF: 
+Array(3) [ "CF", "RF", "ST" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+🔍 Поиск типа турнира в HTML: Virtual-Soccer-Strength-Analyzer.user.js:8926:13
+  Найденное совпадение: Кубок Северной и Центральной Америки Virtual-Soccer-Strength-Analyzer.user.js:8927:13
+  Все найденные упоминания турниров: НЕ НАЙДЕНО Virtual-Soccer-Strength-Analyzer.user.js:8931:13
+  Обработка строки: "кубок северной и центральной америки" Virtual-Soccer-Strength-Analyzer.user.js:8936:17
+  Определенный тип турнира: north_central_america_cup Virtual-Soccer-Strength-Analyzer.user.js:8957:17
+[SELECT] Игрок не выбран, очищаем данные 11 Virtual-Soccer-Strength-Analyzer.user.js:8160:29
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: GK (индекс 0) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для GK: 
+Array [ "GK" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: LD (индекс 1) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для LD: 
+Array [ "LD", "LB" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CD (индекс 2) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CD: 
+Array [ "CD", "SW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CD (индекс 3) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CD: 
+Array [ "CD" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: RD (индекс 4) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для RD: 
+Array [ "RD", "RB" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: LM (индекс 5) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === LM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6867:21
+[getAllowedMiniOptions] LM может стать LW? amAbsent: true, hasLW: false, is424: false Virtual-Soccer-Strength-Analyzer.user.js:6873:25
+[getAllowedMiniOptions] Добавляем LW для LM Virtual-Soccer-Strength-Analyzer.user.js:6875:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для LM: 
+Array [ "LM", "LW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CM (индекс 6) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === CM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6905:21
+[getAllowedMiniOptions] is424: false Virtual-Soccer-Strength-Analyzer.user.js:6906:21
+[PositionLogic] CM→DM проверка для позиции 6: 
+Object { dmCount: 0, cmCount: 2, amCount: 0, totalCentralCount: 2, cmMin1: 6, cmMax: 7, isMinCM: true, isMaxCM: false, canBecomeDM: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6934:25
+[PositionLogic] CM→AM проверка для позиции 6: 
+Object { hasLW: false, hasRW: false, amAbsent: true, isMaxMidfielder: false, maxMidfielderIndex: 7, midfielderIndices: (2) […], canBecomeAM: false }
+Virtual-Soccer-Strength-Analyzer.user.js:6954:25
+[PositionLogic] НЕ добавляем AM для CM позиции 6 Virtual-Soccer-Strength-Analyzer.user.js:6964:29
+[PositionLogic] CM→FR проверка для позиции 6: 
+Object { frCount: 0, centralFieldPlayers: 2, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6970:25
+[PositionLogic] Добавляем FR для CM позиции 6 Virtual-Soccer-Strength-Analyzer.user.js:6976:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CM: 
+Array(3) [ "CM", "DM", "FR" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CM (индекс 7) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: true, amCount: 0, frCount: 0, canBecomeAM: true, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === CM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6905:21
+[getAllowedMiniOptions] is424: false Virtual-Soccer-Strength-Analyzer.user.js:6906:21
+[PositionLogic] CM заблокирован: максимальный полузащитник при 2 полузащитниках не может стать DM Virtual-Soccer-Strength-Analyzer.user.js:6931:29
+[PositionLogic] CM→DM проверка для позиции 7: 
+Object { dmCount: 0, cmCount: 2, amCount: 0, totalCentralCount: 2, cmMin1: 6, cmMax: 7, isMinCM: false, isMaxCM: true, canBecomeDM: false }
+Virtual-Soccer-Strength-Analyzer.user.js:6934:25
+[PositionLogic] CM→AM проверка для позиции 7: 
+Object { hasLW: false, hasRW: false, amAbsent: true, isMaxMidfielder: true, maxMidfielderIndex: 7, midfielderIndices: (2) […], canBecomeAM: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6954:25
+[PositionLogic] Добавляем AM для CM позиции 7 (максимальный полузащитник) Virtual-Soccer-Strength-Analyzer.user.js:6961:29
+[PositionLogic] CM→FR проверка для позиции 7: 
+Object { frCount: 0, centralFieldPlayers: 2, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6970:25
+[PositionLogic] Добавляем FR для CM позиции 7 Virtual-Soccer-Strength-Analyzer.user.js:6976:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CM: 
+Array(3) [ "CM", "AM", "FR" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: true Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: RM (индекс 8) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === RM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6886:21
+[getAllowedMiniOptions] RM может стать RW? amAbsent: true, hasRW: false, is424: false Virtual-Soccer-Strength-Analyzer.user.js:6892:25
+[getAllowedMiniOptions] Добавляем RW для RM Virtual-Soccer-Strength-Analyzer.user.js:6894:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для RM: 
+Array [ "RM", "RW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CF (индекс 9) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CF: 
+Array(3) [ "CF", "LF", "ST" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CF (индекс 10) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CF: 
+Array(3) [ "CF", "RF", "ST" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Создание селектора стилей Virtual-Soccer-Strength-Analyzer.user.js:6301:13
+[SELECT] Игрок не выбран, очищаем данные 55 Virtual-Soccer-Strength-Analyzer.user.js:8160:29
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: LD (индекс 1) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для LD: 
+Array [ "LD", "LB" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CD (индекс 2) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CD: 
+Array [ "CD", "SW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CD (индекс 3) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CD: 
+Array [ "CD" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: RD (индекс 4) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для RD: 
+Array [ "RD", "RB" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: LM (индекс 5) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === LM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6867:21
+[getAllowedMiniOptions] LM может стать LW? amAbsent: true, hasLW: false, is424: false Virtual-Soccer-Strength-Analyzer.user.js:6873:25
+[getAllowedMiniOptions] Добавляем LW для LM Virtual-Soccer-Strength-Analyzer.user.js:6875:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для LM: 
+Array [ "LM", "LW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CM (индекс 6) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === CM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6905:21
+[getAllowedMiniOptions] is424: false Virtual-Soccer-Strength-Analyzer.user.js:6906:21
+[PositionLogic] CM→DM проверка для позиции 6: 
+Object { dmCount: 0, cmCount: 2, amCount: 0, totalCentralCount: 2, cmMin1: 6, cmMax: 7, isMinCM: true, isMaxCM: false, canBecomeDM: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6934:25
+[PositionLogic] CM→AM проверка для позиции 6: 
+Object { hasLW: false, hasRW: false, amAbsent: true, isMaxMidfielder: false, maxMidfielderIndex: 7, midfielderIndices: (2) […], canBecomeAM: false }
+Virtual-Soccer-Strength-Analyzer.user.js:6954:25
+[PositionLogic] НЕ добавляем AM для CM позиции 6 Virtual-Soccer-Strength-Analyzer.user.js:6964:29
+[PositionLogic] CM→FR проверка для позиции 6: 
+Object { frCount: 0, centralFieldPlayers: 2, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6970:25
+[PositionLogic] Добавляем FR для CM позиции 6 Virtual-Soccer-Strength-Analyzer.user.js:6976:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CM: 
+Array(3) [ "CM", "DM", "FR" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CM (индекс 7) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: true, amCount: 0, frCount: 0, canBecomeAM: true, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === CM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6905:21
+[getAllowedMiniOptions] is424: false Virtual-Soccer-Strength-Analyzer.user.js:6906:21
+[PositionLogic] CM заблокирован: максимальный полузащитник при 2 полузащитниках не может стать DM Virtual-Soccer-Strength-Analyzer.user.js:6931:29
+[PositionLogic] CM→DM проверка для позиции 7: 
+Object { dmCount: 0, cmCount: 2, amCount: 0, totalCentralCount: 2, cmMin1: 6, cmMax: 7, isMinCM: false, isMaxCM: true, canBecomeDM: false }
+Virtual-Soccer-Strength-Analyzer.user.js:6934:25
+[PositionLogic] CM→AM проверка для позиции 7: 
+Object { hasLW: false, hasRW: false, amAbsent: true, isMaxMidfielder: true, maxMidfielderIndex: 7, midfielderIndices: (2) […], canBecomeAM: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6954:25
+[PositionLogic] Добавляем AM для CM позиции 7 (максимальный полузащитник) Virtual-Soccer-Strength-Analyzer.user.js:6961:29
+[PositionLogic] CM→FR проверка для позиции 7: 
+Object { frCount: 0, centralFieldPlayers: 2, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6970:25
+[PositionLogic] Добавляем FR для CM позиции 7 Virtual-Soccer-Strength-Analyzer.user.js:6976:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CM: 
+Array(3) [ "CM", "AM", "FR" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: true Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: RM (индекс 8) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === RM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6886:21
+[getAllowedMiniOptions] RM может стать RW? amAbsent: true, hasRW: false, is424: false Virtual-Soccer-Strength-Analyzer.user.js:6892:25
+[getAllowedMiniOptions] Добавляем RW для RM Virtual-Soccer-Strength-Analyzer.user.js:6894:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для RM: 
+Array [ "RM", "RW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CF (индекс 9) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CF: 
+Array(3) [ "CF", "LF", "ST" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CF (индекс 10) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CF: 
+Array(3) [ "CF", "RF", "ST" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Игрок не выбран, очищаем данные 11 Virtual-Soccer-Strength-Analyzer.user.js:8160:29
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: LD (индекс 1) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для LD: 
+Array [ "LD", "LB" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CD (индекс 2) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CD: 
+Array [ "CD", "SW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CD (индекс 3) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CD: 
+Array [ "CD" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: RD (индекс 4) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для RD: 
+Array [ "RD", "RB" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: LM (индекс 5) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === LM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6867:21
+[getAllowedMiniOptions] LM может стать LW? amAbsent: true, hasLW: false, is424: false Virtual-Soccer-Strength-Analyzer.user.js:6873:25
+[getAllowedMiniOptions] Добавляем LW для LM Virtual-Soccer-Strength-Analyzer.user.js:6875:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для LM: 
+Array [ "LM", "LW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CM (индекс 6) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === CM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6905:21
+[getAllowedMiniOptions] is424: false Virtual-Soccer-Strength-Analyzer.user.js:6906:21
+[PositionLogic] CM→DM проверка для позиции 6: 
+Object { dmCount: 0, cmCount: 2, amCount: 0, totalCentralCount: 2, cmMin1: 6, cmMax: 7, isMinCM: true, isMaxCM: false, canBecomeDM: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6934:25
+[PositionLogic] CM→AM проверка для позиции 6: 
+Object { hasLW: false, hasRW: false, amAbsent: true, isMaxMidfielder: false, maxMidfielderIndex: 7, midfielderIndices: (2) […], canBecomeAM: false }
+Virtual-Soccer-Strength-Analyzer.user.js:6954:25
+[PositionLogic] НЕ добавляем AM для CM позиции 6 Virtual-Soccer-Strength-Analyzer.user.js:6964:29
+[PositionLogic] CM→FR проверка для позиции 6: 
+Object { frCount: 0, centralFieldPlayers: 2, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6970:25
+[PositionLogic] Добавляем FR для CM позиции 6 Virtual-Soccer-Strength-Analyzer.user.js:6976:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CM: 
+Array(3) [ "CM", "DM", "FR" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CM (индекс 7) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: true, amCount: 0, frCount: 0, canBecomeAM: true, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === CM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6905:21
+[getAllowedMiniOptions] is424: false Virtual-Soccer-Strength-Analyzer.user.js:6906:21
+[PositionLogic] CM заблокирован: максимальный полузащитник при 2 полузащитниках не может стать DM Virtual-Soccer-Strength-Analyzer.user.js:6931:29
+[PositionLogic] CM→DM проверка для позиции 7: 
+Object { dmCount: 0, cmCount: 2, amCount: 0, totalCentralCount: 2, cmMin1: 6, cmMax: 7, isMinCM: false, isMaxCM: true, canBecomeDM: false }
+Virtual-Soccer-Strength-Analyzer.user.js:6934:25
+[PositionLogic] CM→AM проверка для позиции 7: 
+Object { hasLW: false, hasRW: false, amAbsent: true, isMaxMidfielder: true, maxMidfielderIndex: 7, midfielderIndices: (2) […], canBecomeAM: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6954:25
+[PositionLogic] Добавляем AM для CM позиции 7 (максимальный полузащитник) Virtual-Soccer-Strength-Analyzer.user.js:6961:29
+[PositionLogic] CM→FR проверка для позиции 7: 
+Object { frCount: 0, centralFieldPlayers: 2, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6970:25
+[PositionLogic] Добавляем FR для CM позиции 7 Virtual-Soccer-Strength-Analyzer.user.js:6976:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CM: 
+Array(3) [ "CM", "AM", "FR" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: true Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: RM (индекс 8) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === RM ЛОГИКА === Virtual-Soccer-Strength-Analyzer.user.js:6886:21
+[getAllowedMiniOptions] RM может стать RW? amAbsent: true, hasRW: false, is424: false Virtual-Soccer-Strength-Analyzer.user.js:6892:25
+[getAllowedMiniOptions] Добавляем RW для RM Virtual-Soccer-Strength-Analyzer.user.js:6894:29
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для RM: 
+Array [ "RM", "RW" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CF (индекс 9) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CF: 
+Array(3) [ "CF", "LF", "ST" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[getAllowedMiniOptions] === НАЧАЛО ПРОВЕРКИ === Virtual-Soccer-Strength-Analyzer.user.js:6745:13
+[getAllowedMiniOptions] Позиция: CF (индекс 10) Virtual-Soccer-Strength-Analyzer.user.js:6746:13
+[getAllowedMiniOptions] Формация: 4-4-2 Virtual-Soccer-Strength-Analyzer.user.js:6747:13
+[getAllowedMiniOptions] Все позиции: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:6748:13
+[getAllowedMiniOptions] hasLW: false, hasRW: false Virtual-Soccer-Strength-Analyzer.user.js:6762:13
+[getAllowedMiniOptions] Подсчет позиций: 
+Object { GK: 1, indexes: {…}, LD: 1, CD: 2, RD: 1, LM: 1, CM: 2, RM: 1, CF: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6763:13
+[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ === Virtual-Soccer-Strength-Analyzer.user.js:6834:13
+[getAllowedMiniOptions] Полузащитники: 
+Object { midfielderIndices: (2) […], maxMidfielderIndex: 7, isMaxMidfielder: false, amCount: 0, frCount: 0, canBecomeAM: false, canBecomeFR: true }
+Virtual-Soccer-Strength-Analyzer.user.js:6835:13
+[getAllowedMiniOptions] Центральные позиции: 
+Object { centralIndices: (2) […], minCentralIndex: 6, maxCentralIndex: 7, totalCentralCount: 2 }
+Virtual-Soccer-Strength-Analyzer.user.js:6839:13
+[getAllowedMiniOptions] === РЕЗУЛЬТАТ === Virtual-Soccer-Strength-Analyzer.user.js:7238:13
+[getAllowedMiniOptions] Итоговые опции для CF: 
+Array(3) [ "CF", "RF", "ST" ]
+Virtual-Soccer-Strength-Analyzer.user.js:7239:13
+[getAllowedMiniOptions] AM в опциях: false Virtual-Soccer-Strength-Analyzer.user.js:7240:13
+[getAllowedMiniOptions] === КОНЕЦ ПРОВЕРКИ ===
+Virtual-Soccer-Strength-Analyzer.user.js:7241:13
+[SELECT] Игрок не выбран, очищаем данные 11 Virtual-Soccer-Strength-Analyzer.user.js:8160:29
+[Navigation] Навигация добавлена в заголовок Virtual-Soccer-Strength-Analyzer.user.js:4791:13
+Инициализация калькулятора завершена Virtual-Soccer-Strength-Analyzer.user.js:9210:17
+[FieldHints] displayShirtsOnField вызвана Virtual-Soccer-Strength-Analyzer.user.js:10428:17
+[FieldHints] homeLineup: 
+Array(11) [ {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, … ]
+Virtual-Soccer-Strength-Analyzer.user.js:10429:17
+[FieldHints] awayLineup: 
+Array(11) [ {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, … ]
+Virtual-Soccer-Strength-Analyzer.user.js:10430:17
+[FlankPositioning] Генерация позиций для home: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:300:13
+[FlankPositioning] Игрок 0: GK -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 1: LD -> фланг: left Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 2: CD -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 3: CD -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 4: RD -> фланг: right Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 5: LM -> фланг: left Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 6: CM -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 7: CM -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 8: RM -> фланг: right Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 9: CF -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 10: CF -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankDistribution] Распределение 1 игроков: 
+Array [ "GK(center)" ]
+Virtual-Soccer-Strength-Analyzer.user.js:374:17
+[FlankDistribution] Группировка: левые=0, центр=1, правые=0 Virtual-Soccer-Strength-Analyzer.user.js:381:17
+[FlankDistribution] Координаты: 
+Object { left: [], center: (1) […], right: [] }
+Virtual-Soccer-Strength-Analyzer.user.js:465:17
+[FlankDistribution] GK(center) -> x=200 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankPositioning] Линия gk: 
+Array [ "GK(center) -> x:200 -> final:200" ]
+Virtual-Soccer-Strength-Analyzer.user.js:481:17
+[FlankDistribution] Распределение 4 игроков: 
+Array(4) [ "LD(left)", "CD(center)", "CD(center)", "RD(right)" ]
+Virtual-Soccer-Strength-Analyzer.user.js:374:17
+[FlankDistribution] Группировка: левые=1, центр=2, правые=1 Virtual-Soccer-Strength-Analyzer.user.js:381:17
+[FlankDistribution] Координаты: 
+Object { left: (1) […], center: (2) […], right: (1) […] }
+Virtual-Soccer-Strength-Analyzer.user.js:465:17
+[FlankDistribution] LD(left) -> x=48 Virtual-Soccer-Strength-Analyzer.user.js:392:21
+[FlankDistribution] CD(center) -> x=143 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankDistribution] CD(center) -> x=257 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankDistribution] RD(right) -> x=352 Virtual-Soccer-Strength-Analyzer.user.js:406:21
+[FlankPositioning] Линия def: 
+Array(4) [ "LD(left) -> x:48 -> final:48", "CD(center) -> x:143 -> final:143", "CD(center) -> x:257 -> final:257", "RD(right) -> x:352 -> final:352" ]
+Virtual-Soccer-Strength-Analyzer.user.js:481:17
+[FlankDistribution] Распределение 4 игроков: 
+Array(4) [ "LM(left)", "CM(center)", "CM(center)", "RM(right)" ]
+Virtual-Soccer-Strength-Analyzer.user.js:374:17
+[FlankDistribution] Группировка: левые=1, центр=2, правые=1 Virtual-Soccer-Strength-Analyzer.user.js:381:17
+[FlankDistribution] Координаты: 
+Object { left: (1) […], center: (2) […], right: (1) […] }
+Virtual-Soccer-Strength-Analyzer.user.js:465:17
+[FlankDistribution] LM(left) -> x=48 Virtual-Soccer-Strength-Analyzer.user.js:392:21
+[FlankDistribution] CM(center) -> x=143 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankDistribution] CM(center) -> x=257 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankDistribution] RM(right) -> x=352 Virtual-Soccer-Strength-Analyzer.user.js:406:21
+[FlankPositioning] Линия mid: 
+Array(4) [ "LM(left) -> x:48 -> final:48", "CM(center) -> x:143 -> final:143", "CM(center) -> x:257 -> final:257", "RM(right) -> x:352 -> final:352" ]
+Virtual-Soccer-Strength-Analyzer.user.js:481:17
+[FlankDistribution] Распределение 2 игроков: 
+Array [ "CF(center)", "CF(center)" ]
+Virtual-Soccer-Strength-Analyzer.user.js:374:17
+[FlankDistribution] Группировка: левые=0, центр=2, правые=0 Virtual-Soccer-Strength-Analyzer.user.js:381:17
+[FlankDistribution] Координаты: 
+Object { left: [], center: (2) […], right: [] }
+Virtual-Soccer-Strength-Analyzer.user.js:465:17
+[FlankDistribution] CF(center) -> x=143 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankDistribution] CF(center) -> x=257 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankPositioning] Линия att: 
+Array [ "CF(center) -> x:143 -> final:143", "CF(center) -> x:257 -> final:257" ]
+Virtual-Soccer-Strength-Analyzer.user.js:481:17
+[FlankPositioning] Итоговые позиции для home: 
+Array(11) [ {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, … ]
+Virtual-Soccer-Strength-Analyzer.user.js:498:13
+[FlankPositioning] Позиции после ограничений для home: 
+Array(11) [ {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, … ]
+Virtual-Soccer-Strength-Analyzer.user.js:517:13
+[FlankPositioning] Генерация позиций для away: 
+Array(11) [ "GK", "LD", "CD", "CD", "RD", "LM", "CM", "CM", "RM", "CF", … ]
+Virtual-Soccer-Strength-Analyzer.user.js:300:13
+[FlankPositioning] Игрок 0: GK -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 1: LD -> фланг: left Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 2: CD -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 3: CD -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 4: RD -> фланг: right Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 5: LM -> фланг: left Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 6: CM -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 7: CM -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 8: RM -> фланг: right Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 9: CF -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankPositioning] Игрок 10: CF -> фланг: center Virtual-Soccer-Strength-Analyzer.user.js:346:17
+[FlankDistribution] Распределение 1 игроков: 
+Array [ "GK(center)" ]
+Virtual-Soccer-Strength-Analyzer.user.js:374:17
+[FlankDistribution] Группировка: левые=0, центр=1, правые=0 Virtual-Soccer-Strength-Analyzer.user.js:381:17
+[FlankDistribution] Координаты: 
+Object { left: [], center: (1) […], right: [] }
+Virtual-Soccer-Strength-Analyzer.user.js:465:17
+[FlankDistribution] GK(center) -> x=200 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankPositioning] Линия gk: 
+Array [ "GK(center) -> x:200 -> final:200" ]
+Virtual-Soccer-Strength-Analyzer.user.js:481:17
+[FlankDistribution] Распределение 4 игроков: 
+Array(4) [ "LD(left)", "CD(center)", "CD(center)", "RD(right)" ]
+Virtual-Soccer-Strength-Analyzer.user.js:374:17
+[FlankDistribution] Группировка: левые=1, центр=2, правые=1 Virtual-Soccer-Strength-Analyzer.user.js:381:17
+[FlankDistribution] Координаты: 
+Object { left: (1) […], center: (2) […], right: (1) […] }
+Virtual-Soccer-Strength-Analyzer.user.js:465:17
+[FlankDistribution] LD(left) -> x=48 Virtual-Soccer-Strength-Analyzer.user.js:392:21
+[FlankDistribution] CD(center) -> x=143 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankDistribution] CD(center) -> x=257 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankDistribution] RD(right) -> x=352 Virtual-Soccer-Strength-Analyzer.user.js:406:21
+[FlankPositioning] Линия def: 
+Array(4) [ "LD(left) -> x:48 -> final:352", "CD(center) -> x:143 -> final:257", "CD(center) -> x:257 -> final:143", "RD(right) -> x:352 -> final:48" ]
+Virtual-Soccer-Strength-Analyzer.user.js:481:17
+[FlankDistribution] Распределение 4 игроков: 
+Array(4) [ "LM(left)", "CM(center)", "CM(center)", "RM(right)" ]
+Virtual-Soccer-Strength-Analyzer.user.js:374:17
+[FlankDistribution] Группировка: левые=1, центр=2, правые=1 Virtual-Soccer-Strength-Analyzer.user.js:381:17
+[FlankDistribution] Координаты: 
+Object { left: (1) […], center: (2) […], right: (1) […] }
+Virtual-Soccer-Strength-Analyzer.user.js:465:17
+[FlankDistribution] LM(left) -> x=48 Virtual-Soccer-Strength-Analyzer.user.js:392:21
+[FlankDistribution] CM(center) -> x=143 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankDistribution] CM(center) -> x=257 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankDistribution] RM(right) -> x=352 Virtual-Soccer-Strength-Analyzer.user.js:406:21
+[FlankPositioning] Линия mid: 
+Array(4) [ "LM(left) -> x:48 -> final:352", "CM(center) -> x:143 -> final:257", "CM(center) -> x:257 -> final:143", "RM(right) -> x:352 -> final:48" ]
+Virtual-Soccer-Strength-Analyzer.user.js:481:17
+[FlankDistribution] Распределение 2 игроков: 
+Array [ "CF(center)", "CF(center)" ]
+Virtual-Soccer-Strength-Analyzer.user.js:374:17
+[FlankDistribution] Группировка: левые=0, центр=2, правые=0 Virtual-Soccer-Strength-Analyzer.user.js:381:17
+[FlankDistribution] Координаты: 
+Object { left: [], center: (2) […], right: [] }
+Virtual-Soccer-Strength-Analyzer.user.js:465:17
+[FlankDistribution] CF(center) -> x=143 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankDistribution] CF(center) -> x=257 Virtual-Soccer-Strength-Analyzer.user.js:399:21
+[FlankPositioning] Линия att: 
+Array [ "CF(center) -> x:143 -> final:257", "CF(center) -> x:257 -> final:143" ]
+Virtual-Soccer-Strength-Analyzer.user.js:481:17
+[FlankPositioning] Итоговые позиции для away: 
+Array(11) [ {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, … ]
+Virtual-Soccer-Strength-Analyzer.user.js:498:13
+[FlankPositioning] Позиции после ограничений для away: 
+Array(11) [ {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, … ]
+Virtual-Soccer-Strength-Analyzer.user.js:517:13
+[Shirts] Generated positions 
+Object { homeFormation: "4-4-2", awayFormation: "4-4-2", homePositions: (11) […], awayPositions: (11) […], homeCoords: 11, awayCoords: 11 }
+Virtual-Soccer-Strength-Analyzer.user.js:10473:17
+[FieldHints] Домашняя команда - позиция GK: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10505:29
+[FieldHints] Создание футболки: ID=shirt-home-GK-trsqfhqma, позиция=GK, команда=home, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Домашняя команда - позиция LD: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10505:29
+[FieldHints] Создание футболки: ID=shirt-home-LD-s7h5bev15, позиция=LD, команда=home, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Домашняя команда - позиция CD: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10505:29
+[FieldHints] Создание футболки: ID=shirt-home-CD-pl2gm8a9e, позиция=CD, команда=home, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Домашняя команда - позиция CD: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10505:29
+[FieldHints] Создание футболки: ID=shirt-home-CD-iui0zuvuq, позиция=CD, команда=home, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Домашняя команда - позиция RD: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10505:29
+[FieldHints] Создание футболки: ID=shirt-home-RD-63a2m7gpg, позиция=RD, команда=home, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Домашняя команда - позиция LM: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10505:29
+[FieldHints] Создание футболки: ID=shirt-home-LM-gnqy8saj3, позиция=LM, команда=home, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Домашняя команда - позиция CM: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10505:29
+[FieldHints] Создание футболки: ID=shirt-home-CM-qs5ot1qzu, позиция=CM, команда=home, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Домашняя команда - позиция CM: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10505:29
+[FieldHints] Создание футболки: ID=shirt-home-CM-exffr5nwi, позиция=CM, команда=home, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Домашняя команда - позиция RM: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10505:29
+[FieldHints] Создание футболки: ID=shirt-home-RM-w61eqxifj, позиция=RM, команда=home, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Домашняя команда - позиция CF: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10505:29
+[FieldHints] Создание футболки: ID=shirt-home-CF-daingwtxp, позиция=CF, команда=home, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Домашняя команда - позиция CF: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10505:29
+[FieldHints] Создание футболки: ID=shirt-home-CF-ofw1n2iqn, позиция=CF, команда=home, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Гостевая команда - позиция GK: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10538:29
+[FieldHints] Создание футболки: ID=shirt-away-GK-ei2oh749a, позиция=GK, команда=away, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Гостевая команда - позиция LD: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10538:29
+[FieldHints] Создание футболки: ID=shirt-away-LD-926p2fozg, позиция=LD, команда=away, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Гостевая команда - позиция CD: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10538:29
+[FieldHints] Создание футболки: ID=shirt-away-CD-luvo4e8se, позиция=CD, команда=away, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Гостевая команда - позиция CD: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10538:29
+[FieldHints] Создание футболки: ID=shirt-away-CD-rs7bywi2n, позиция=CD, команда=away, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Гостевая команда - позиция RD: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10538:29
+[FieldHints] Создание футболки: ID=shirt-away-RD-ii7mgz7wm, позиция=RD, команда=away, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Гостевая команда - позиция LM: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10538:29
+[FieldHints] Создание футболки: ID=shirt-away-LM-0mtoejk73, позиция=LM, команда=away, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Гостевая команда - позиция CM: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10538:29
+[FieldHints] Создание футболки: ID=shirt-away-CM-8wnnvvqbj, позиция=CM, команда=away, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Гостевая команда - позиция CM: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10538:29
+[FieldHints] Создание футболки: ID=shirt-away-CM-12rh8qckq, позиция=CM, команда=away, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Гостевая команда - позиция RM: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10538:29
+[FieldHints] Создание футболки: ID=shirt-away-RM-o1rwgdyio, позиция=RM, команда=away, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Гостевая команда - позиция CF: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10538:29
+[FieldHints] Создание футболки: ID=shirt-away-CF-jnrv1a9gu, позиция=CF, команда=away, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+[FieldHints] Гостевая команда - позиция CF: игрок не выбран (playerId: ) Virtual-Soccer-Strength-Analyzer.user.js:10538:29
+[FieldHints] Создание футболки: ID=shirt-away-CF-0hmb7zena, позиция=CF, команда=away, игрок=null, есть данные=false Virtual-Soccer-Strength-Analyzer.user.js:10383:17
+GET
+https://github.com/stankewich/vfliga_calc/blob/main/img/field_01.webp?raw=true
+[HTTP/2 302  137ms]
+
+Cookie “_gh_sess” has been rejected because it is in a cross-site context and its “SameSite” is “Lax” or “Strict”. field_01.webp
+Cookie “_octo” has been rejected because it is in a cross-site context and its “SameSite” is “Lax” or “Strict”. field_01.webp
+Cookie “logged_in” has been rejected because it is in a cross-site context and its “SameSite” is “Lax” or “Strict”. field_01.webp
+GET
+https://github.com/stankewich/vfliga_calc/raw/refs/heads/main/img/field_01.webp
+[HTTP/2 302  128ms]
+
+GET
+https://raw.githubusercontent.com/stankewich/vfliga_calc/refs/heads/main/img/field_01.webp
+[HTTP/2 200  0ms]
+
+GET
+https://mc.yandex.ru/metrika/tag.js
+[HTTP/2 200  0ms]
+
+InstallTrigger is deprecated and will be removed in the future. tag.js:16:165
+XHRGET
+https://mc.yandex.ru/watch/219873?wmode=7&page-url=https://www.virtualsoccer.ru/previewmatch.php?day=25478&match_id=294625&page-ref=https://www.virtualsoccer.ru/roster.php?num=20632&charset=utf-8&uah=che 0&browser-info=pv:1:vf:6g20vg83qczfar2vlrtnm4g2oun6j:fu:0:en:utf-8:la:en-US:v:2360:cn:1:dp:0:ls:252291987412:hid:538186455:z:180:i:20260208003443:et:1770500083:c:1:rn:1051484135:rqn:1058:u:1769948321352613738:w:1395x922:s:1920x1080x24:sk:1:fp:691:wv:2:ds:0,0,410,175,1,0,,207,2,1025,1025,0,816:co:0:cpf:1:ns:1770500081256:gi:R0ExLjEuMTk0MDQ2NTg2OS4xNzY5OTczNzc4:adb:2:rqnl:1:st:1770500083:t:Виртуальная Футбольная Лига: футбольный менеджер&t=gdpr(14)clc(0-0-0)rqnt(1)aw(1)rcm(0)cdl(na)eco(83952132)ti(1)
+[HTTP/2 200  101ms]
+
+[MoraleBonus] Calculating bounds 
+Object { sideLabel: "home", homeRating: 3017, awayRating: 2584 }
+Virtual-Soccer-Strength-Analyzer.user.js:3405:13
+[MoraleBonus] Home is stronger or equal Virtual-Soccer-Strength-Analyzer.user.js:3427:21
+[MoraleBonus] Result 
+Object { ratio: "1.17", superBonus: "0.270", restBonus: "-0.142" }
+Virtual-Soccer-Strength-Analyzer.user.js:3443:13
+[MoraleBonus] Calculating bounds 
+Object { sideLabel: "away", homeRating: 3017, awayRating: 2584 }
+Virtual-Soccer-Strength-Analyzer.user.js:3405:13
+[MoraleBonus] Away is weaker Virtual-Soccer-Strength-Analyzer.user.js:3433:21
+[MoraleBonus] Result 
+Object { ratio: "1.17", superBonus: "0.354", restBonus: "-0.100" }
+Virtual-Soccer-Strength-Analyzer.user.js:3443:13
+[Calc] Team total 
+Object { side: "home", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11646:25
+[Calc] Team total 
+Object { side: "away", total: 0, moraleMode: "normal", moraleBounds: {…}, totalTeamIBonus: 0, totalCaptainBonus: 0, totalCollisionWinBonus: 0, totalSynergyBonus: 0, totalChemistryBonus: 0, totalHomeBonus: 0, … }
+Virtual-Soccer-Strength-Analyzer.user.js:11646:25
+GET
+https://top-fwz1.mail.ru/js/code.js
+[HTTP/2 200  0ms]
+
+GET
+https://st.top100.ru/top100/top100.js
+[HTTP/2 200  0ms]
+
+GET
+https://counter.yadro.ru/hit?rhttps%3A//www.virtualsoccer.ru/roster.php%3Fnum%3D20632;s1920*1080*24;uhttps%3A//www.virtualsoccer.ru/previewmatch.php%3Fday%3D25478%26match_id%3D294625;h%u0412%u0438%u0440%u0442%u0443%u0430%u043B%u044C%u043D%u0430%u044F%20%u0424%u0443%u0442%u0431%u043E%u043B%u044C%u043D%u0430%u044F%20%u041B%u0438%u0433%u0430%3A%20%u0444%u0443%u0442%u0431%u043E%u043B%u044C%u043D%u044B%u0439%20%u043C%u0435%u043D%u0435%u0434%u0436%u0435%u0440;0.20144668717159175
+[HTTP/1.1 200 OK 1196ms]
+
+GET
+https://top-fwz1.mail.ru/js/dyn-goal-config.js?ids=256872
+[HTTP/2 200  0ms]
+
+GET
+https://top-fwz1.mail.ru/tracker?_=0.7413430679675467;id=256872;u=https://www.virtualsoccer.ru/previewmatch.php?day=25478&match_id=294625;r=https://www.virtualsoccer.ru/roster.php?num=20632;title=Виртуальная Футбольная Лига: футбольный менеджер;s=1920*1080;vp=1395*922;touch=0;hds=1;sid=aa2eb5ccf21980ba;ver=60.6.0;tz=-180/Europe/Moscow;st=1770500082072;nt=1/0/1770500081256/613/616///1/1/1/1/1/1/24/433/609/613/816/816/818/1025/1025/1025;ct=2825/2825/2825//2817;rt=2816/7/0/0/0/2816/2816/2816/2816/2816/2816/2816/2816/2823;gl=u;ni=;detect=0;lvid=1769948322208:1770500084083:2105:acf191c8ec5d816885365e729a9b5c86;opts=jst-ym,cnhp=h2;fpid=DSLtOatrgTE15HGH7ZJMw;visible=true;js=13;e=RT/load;et=1770500084082
+[HTTP/2 200  299ms]
+
+GET
+https://top-fwz1.mail.ru/counter?_=0.6455816341574432;id=256872;u=https://www.virtualsoccer.ru/previewmatch.php?day=25478&match_id=294625;r=https://www.virtualsoccer.ru/roster.php?num=20632;title=Виртуальная Футбольная Лига: футбольный менеджер;s=1920*1080;vp=1395*922;touch=0;hds=1;sid=aa2eb5ccf21980ba;ver=60.6.0;tz=-180/Europe/Moscow;st=1770500082072;ct=2825/2825/2825//2817;rt=2816/7/0/0/0/2816/2816/2816/2816/2816/2816/2816/2816/2823;gl=u;ni=;detect=0;lvid=1769948322208:1770500084082:2104:acf191c8ec5d816885365e729a9b5c86;opts=jst-ym,cnhp=h2;fpid=DSLtOatrgTE15HGH7ZJMw;visible=true;js=13
+[HTTP/2 200  299ms]
+
+WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER. top100.js:1:31245
+XHRPOST
+https://kraken.rambler.ru/cnt/v2/
+[HTTP/2 200  267ms]
+
+Cookie warnings 9
+XHRPOST
+https://kraken.rambler.ru/cnt/v2/
+[HTTP/2 200  106ms]
+
+GET
+https://top-fwz1.mail.ru/tracker?_=0.5372568030934144;id=256872;u=https://www.virtualsoccer.ru/previewmatch.php?day=25478&match_id=294625;r=https://www.virtualsoccer.ru/roster.php?num=20632;title=Виртуальная Футбольная Лига: футбольный менеджер;s=1920*1080;vp=1395*922;touch=0;hds=1;sid=aa2eb5ccf21980ba;ver=60.6.0;tz=-180/Europe/Moscow;st=1770500082072;ct=2825/2825/2825/2827/2817;rt=2816/7/0/0/0/2816/2816/2816/2816/2816/2816/2816/2816/2823;gl=u;ni=;detect=0;lvid=1769948322208:1770500097284:2106:acf191c8ec5d816885365e729a9b5c86;opts=jst-ym,cnhp=h2;fpid=DSLtOatrgTE15HGH7ZJMw;visible=true;js=13;e=PVT/15
+[HTTP/2 200  220ms]
+
+XHRPOST
+https://kraken.rambler.ru/cnt/v2/
+[HTTP/2 200  150ms]
+
+POST
+https://kraken.rambler.ru/cnt/v2/
+[HTTP/2 200  126ms]
+
+XHRPOST
+https://kraken.rambler.ru/cnt/v2/
+[HTTP/2 200  123ms]
+
