@@ -8040,6 +8040,12 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     strength: Number(player.realStr) || 0
                 });
             }
+            
+            // Пересчитываем Chemistry и силу команды при изменении стиля
+            if (typeof saveAllStates === 'function') {
+                saveAllStates();
+                console.log(`[SELECT] Пересчет Chemistry после изменения стиля`);
+            }
         });
         styleSelect.style.display = 'block';
         const styleSelSelected = styleSelect.querySelector('.selected');
