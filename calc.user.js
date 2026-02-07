@@ -814,24 +814,30 @@ function calculateLineModifier(player1, player2) {
         return 0;
     }
     
-    // 2. Проверка на коллизию стилей (приоритет!)
+    // 2. Проверка на неизвестный стиль (norm)
+    // Если хотя бы один игрок имеет norm - нет бонуса
+    if (player1.hidden_style === 'norm' || player2.hidden_style === 'norm') {
+        return 0;
+    }
+    
+    // 3. Проверка на коллизию стилей (приоритет!)
     if (areStylesInCollision(player1.hidden_style, player2.hidden_style)) {
         return -0.05; // -5%
     }
     
-    // 3. Проверка на совпадение стилей
+    // 4. Проверка на совпадение стилей (только для известных стилей)
     if (player1.hidden_style === player2.hidden_style) {
         // TODO: Добавить логику изученности стиля когда будут доступны данные
         // Пока используем максимальный бонус для совпадающих стилей
         return 0.125; // 12.5%
     }
     
-    // 4. Проверка на совпадение национальностей
+    // 5. Проверка на совпадение национальностей
     if (player1.nat_id && player2.nat_id && player1.nat_id === player2.nat_id) {
         return 0.05; // минимум 5%
     }
     
-    // 5. Все остальные случаи (разные нац, разные стили без коллизии)
+    // 6. Все остальные случаи (разные нац, разные стили без коллизии)
     return 0;
 }
 
@@ -11717,8 +11723,8 @@ function getTournamentType() {
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">10 игроков</td><td style="padding: 4px; border: 1px solid #ddd;">+1.00%</td><td style="padding: 4px; border: 1px solid #ddd;">+25.00%</td></tr>
                         <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;"><strong>11+ игроков</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>+1.25%</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>+31.25%</strong></td></tr>
                     </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>💡 Совет: Используйте кнопку "Пересчитать сыгранность" для автоматического расчета на основе текущего состава.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>⚠️ Товарищеские матчи не учитываются в расчете сыгранности.</em></p>
+                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Можете отредактировать бонус.</em></p>
+                    <p style="font-size: 10px; color: #666;"><em>Товарищеские матчи не учитываются в расчете сыгранности.</em></p>
                 `;
             },
             
@@ -11746,7 +11752,7 @@ function getTournamentType() {
                             </div>
                         </div>
                     </div>
-                    <p><strong>Типы лидерства:</strong></p>
+                    <p><strong>Три линии:</strong></p>
                     <ul style="margin: 8px 0; padding-left: 16px; font-size: 10px;">
                         <li><strong>Защита:</strong> GK, LD, LB, SW, CD, RD, RB</li>
                         <li><strong>Полузащита:</strong> LM, DM, CM, FR, RM</li>
@@ -11764,8 +11770,8 @@ function getTournamentType() {
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">Л3</td><td style="padding: 4px; border: 1px solid #ddd;">9%</td><td style="padding: 4px; border: 1px solid #ddd;">+9.0</td></tr>
                         <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;"><strong>Л4</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>12%</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>+12.0</strong></td></tr>
                     </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>⚠️ Условие: В каждой линии должен быть ровно 1 лидер для получения бонуса.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>💡 Формула: Сила лидера × Коэффициент уровня = Бонус для всех игроков линии</em></p>
+                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>В каждой линии должен быть ровно 1 лидер для получения бонуса, иначе бонус нивеллируется.</em></p>
+                    <p style="font-size: 10px; color: #666;"><em>Формула: Сила лидера × Коэффициент уровня = Бонус для всех игроков линии</em></p>
                 `;
             },
             
@@ -11775,7 +11781,7 @@ function getTournamentType() {
                 const currentTemp = weatherUI ? weatherUI.temperature : 'не выбрано';
                 
                 return `
-                    <p><strong>Влияние погоды</strong> на силу игроков зависит от их адаптации к климатическим условиям.</p>
+                    <p><strong>Влияние погоды</strong> на силу игроков зависит от собственной силы игрока - чем сильнее игрок тем больше он подвержен влиянию погоды.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
                         <strong>Текущие условия:</strong><br>
                         Погода: <span style="color: #006600; font-weight: bold;">${currentWeather}</span><br>
@@ -11796,8 +11802,8 @@ function getTournamentType() {
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">Дождь</td><td style="padding: 4px; border: 1px solid #ddd;">1-15°</td><td style="padding: 4px; border: 1px solid #ddd;">Умеренное</td></tr>
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">Снег</td><td style="padding: 4px; border: 1px solid #ddd;">0-4°</td><td style="padding: 4px; border: 1px solid #ddd;">Сильное</td></tr>
                     </table>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>💡 Калькулятор использует интерполяцию для точного расчета между табличными значениями.</em></p>
-                    <p style="font-size: 10px; color: #666;"><em>⚠️ Влияние зависит от стиля игры игрока и его базовой силы.</em></p>
+                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Влияние зависит от стиля игры игрока и его базовой силы.</em></p>
+                    <p style="font-size: 10px; color: #666;"><em>В плохую погоды силы выравниваются!</em></p>
                 `;
             },
             
@@ -11935,13 +11941,9 @@ function getTournamentType() {
                             <th style="padding: 4px; border: 1px solid #ddd;">Значение</th>
                             <th style="padding: 4px; border: 1px solid #ddd;">Влияние</th>
                         </tr>
-                        <tr style="background: #f8d7da;"><td style="padding: 4px; border: 1px solid #ddd;">Очень плохая</td><td style="padding: 4px; border: 1px solid #ddd;">-3%</td><td style="padding: 4px; border: 1px solid #ddd;">Сильное снижение</td></tr>
-                        <tr style="background: #f8d7da;"><td style="padding: 4px; border: 1px solid #ddd;">Плохая</td><td style="padding: 4px; border: 1px solid #ddd;">-2%</td><td style="padding: 4px; border: 1px solid #ddd;">Умеренное снижение</td></tr>
-                        <tr style="background: #fff3cd;"><td style="padding: 4px; border: 1px solid #ddd;">Слабая</td><td style="padding: 4px; border: 1px solid #ddd;">-1%</td><td style="padding: 4px; border: 1px solid #ddd;">Слабое снижение</td></tr>
+                        <tr style="background: #f8d7da;"><td style="padding: 4px; border: 1px solid #ddd;">Очень плохая</td><td style="padding: 4px; border: 1px solid #ddd;">любая -%</td><td style="padding: 4px; border: 1px solid #ddd;">Наносит штраф!</td></tr>
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">Нейтральная</td><td style="padding: 4px; border: 1px solid #ddd;">0%</td><td style="padding: 4px; border: 1px solid #ddd;">Без влияния</td></tr>
-                        <tr style="background: #d1ecf1;"><td style="padding: 4px; border: 1px solid #ddd;">Хорошая</td><td style="padding: 4px; border: 1px solid #ddd;">+1%</td><td style="padding: 4px; border: 1px solid #ddd;">Слабое улучшение</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;">Отличная</td><td style="padding: 4px; border: 1px solid #ddd;">+2%</td><td style="padding: 4px; border: 1px solid #ddd;">Умеренное улучшение</td></tr>
-                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;">Превосходная</td><td style="padding: 4px; border: 1px solid #ddd;">+3%</td><td style="padding: 4px; border: 1px solid #ddd;">Сильное улучшение</td></tr>
+                        <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;">Превосходная</td><td style="padding: 4px; border: 1px solid #ddd;">любая +%</td><td style="padding: 4px; border: 1px solid #ddd;">Даёт бонус!</td></tr>
                     </table>
                     <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Данные загружаются автоматически со страницы состава команды.</em></p>
                     <p style="font-size: 10px; color: #666;"><em>Бонус применяется ко всем игрокам в составе по аналогии с остальными прибавками (спецумения, например).</em></p>
@@ -11951,25 +11953,14 @@ function getTournamentType() {
             // Новые подсказки для составов и игроков
             player_selection: () => {
                 return `
-                    <p><strong>Выбор игроков</strong> - рекомендации по составлению оптимального состава.</p>
+                    <p><strong>Выбор игроков</strong> - сила считается автоматически для выбранных игроков.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
-                        <strong>Советы по выбору:</strong>
+                        <strong>БУДЕТ ДОРАБАТЫВАТЬСЯ</strong>
                     </div>
                     <ul style="margin: 8px 0; padding-left: 16px; font-size: 10px;">
                         <li><strong>Сила:</strong>Выбирайте игроков, чтобы посчитать силу состава</li>
                     </ul>
-                    <p><strong>Модификаторы позиций:</strong></p>
-                    <table style="width: 100%; font-size: 9px; border-collapse: collapse; margin: 8px 0;">
-                        <tr style="background: #e9ecef;">
-                            <th style="padding: 3px; border: 1px solid #ddd;">Соответствие</th>
-                            <th style="padding: 3px; border: 1px solid #ddd;">Модификатор</th>
-                            <th style="padding: 3px; border: 1px solid #ddd;">Пример</th>
-                        </tr>
-                        <tr style="background: #d4edda;"><td style="padding: 3px; border: 1px solid #ddd;">Основная позиция</td><td style="padding: 3px; border: 1px solid #ddd;">100%</td><td style="padding: 3px; border: 1px solid #ddd;">CD на CD</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Близкая позиция</td><td style="padding: 3px; border: 1px solid #ddd;">90-95%</td><td style="padding: 3px; border: 1px solid #ddd;">CD на LD/RD</td></tr>
-                        <tr><td style="padding: 3px; border: 1px solid #ddd;">Смежная позиция</td><td style="padding: 3px; border: 1px solid #ddd;">80-85%</td><td style="padding: 3px; border: 1px solid #ddd;">CD на DM</td></tr>
-                        <tr style="background: #f8d7da;"><td style="padding: 3px; border: 1px solid #ddd;">Чужая позиция</td><td style="padding: 3px; border: 1px solid #ddd;">70%</td><td style="padding: 3px; border: 1px solid #ddd;">CD на ST</td></tr>
-                    </table>
+
                     <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Наведите курсор на селектор игрока для детальной информации.</em></p>
                     <p style="font-size: 10px; color: #666;"><em>Калькулятор автоматически сортирует игроков по силе для позиции.</em></p>
                 `;
@@ -12192,11 +12183,11 @@ function getTournamentType() {
                     <p><strong>Специальные способности:</strong></p>
                     <ul style="margin: 8px 0; padding-left: 16px; font-size: 10px;">
                         <li><strong>Лидерство (Л):</strong> Дает бонус всей линии (3-12%)</li>
-                        <li><strong>Интуиция (И):</strong> Командная игра (0.5-3%)</li>
-                        <li><strong>Капитанство (Ка):</strong> Улучшает капитанские бонусы</li>
+                        <li><strong>Командная игра (И):</strong> Даёт бонус всей команде (0.5-3%)</li>
+                        <li><strong>Капитанство (Ка):</strong> Капитан даёт бонус всем, кроме себя</li>
                         <li><strong>Вратарские (В, Р):</strong> Зависят от наличия SW в защите</li>
                     </ul>
-                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Подбирайте игроков с способностями, подходящими под стиль команды.</em></p>
+                    <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Подбирайте игроков с способностями, подходящими под стиль команды. Но есть нюансы, конечно!</em></p>
                 `;
             }
         };
