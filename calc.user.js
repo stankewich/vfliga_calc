@@ -9914,6 +9914,12 @@ function getTournamentType() {
                 fatigue: fatigueModifier,
                 reality: realityModifier,
                 position: positionModifier
+            },
+            details: {
+                form: Number(player.form) || 0,
+                fatigue: Number(player.fatigue) || 0,
+                physicalFormId: physicalFormId,
+                matchPosition: matchPosition
             }
         };
     }
@@ -10005,8 +10011,20 @@ function getTournamentType() {
             <div style="background: #f8f9fa; padding: 8px; border-radius: 6px; margin-bottom: 12px;">
                 <div style="font-weight: bold; color: #495057; margin-bottom: 6px; font-size: 11px;">Модификаторы силы:</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px;">
-                    <div>Физ. форма: <span style="font-weight: bold;">×${fullData.modifiers.physicalForm.toFixed(3)}</span></div>
-                    <div>Усталость: <span style="font-weight: bold;">×${fullData.modifiers.fatigue.toFixed(3)}</span></div>
+                    <div>
+                        Физ. форма: 
+                        <span style="font-weight: bold; color: ${fullData.details.form >= 110 ? '#28a745' : fullData.details.form >= 95 ? '#ffc107' : fullData.details.form >= 85 ? '#fd7e14' : '#dc3545'};">
+                            ${CONFIG.PHYSICAL_FORM.FORMS[fullData.details.physicalFormId]?.label || fullData.details.form + '%'}
+                        </span>
+                        <span style="color: #6c757d;"> (×${fullData.modifiers.physicalForm.toFixed(3)})</span>
+                    </div>
+                    <div>
+                        Усталость: 
+                        <span style="font-weight: bold; color: ${fullData.details.fatigue <= 25 ? '#28a745' : fullData.details.fatigue <= 50 ? '#ffc107' : fullData.details.fatigue <= 75 ? '#fd7e14' : '#dc3545'};">
+                            ${fullData.details.fatigue}%
+                        </span>
+                        <span style="color: #6c757d;"> (×${fullData.modifiers.fatigue.toFixed(3)})</span>
+                    </div>
                     <div>Позиция: <span style="font-weight: bold;">×${fullData.modifiers.position.toFixed(3)}</span></div>
                     <div>Реальность: <span style="font-weight: bold;">×${fullData.modifiers.reality.toFixed(3)}</span></div>
                 </div>
