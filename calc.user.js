@@ -8477,6 +8477,19 @@ function showPlayerDetailHint(element, player, matchPosition, physicalFormId, cu
     
     if (!player) return;
     
+    // Рассчитываем Chemistry бонус для игрока
+    let chemistryBonus = 0;
+    try {
+        const slotEntries = window.currentSlotEntries || [];
+        const inLineupPlayers = slotEntries.map(entry => entry.player).filter(Boolean);
+        
+        if (inLineupPlayers.length > 0) {
+            chemistryBonus = getChemistryBonus(player, inLineupPlayers, null);
+        }
+    } catch (e) {
+        console.warn('[CHEMISTRY] Ошибка расчета бонуса для подсказки:', e);
+    }
+    
     // Создаем контейнер подсказки
     const hint = document.createElement('div');
     hint.className = 'vs-player-detail-hint';
@@ -8516,7 +8529,8 @@ function showPlayerDetailHint(element, player, matchPosition, physicalFormId, cu
         player,
         matchPosition,
         physicalFormId,
-        customStyle
+        customStyle,
+        chemistryBonus
     });
     hint.appendChild(content);
     
@@ -12019,7 +12033,7 @@ function getTournamentType() {
 
             // Детальная подсказка для конкретного игрока
             player_details: (context) => {
-                const { player, matchPosition, physicalFormId, customStyle } = context;
+                const { player, matchPosition, physicalFormId, customStyle, chemistryBonus } = context;
                 if (!player) return '<p>Игрок не найден.</p>';
                 
                 const baseStr = Number(player.baseStrength) || Number(player.realStr) || 0;
@@ -12057,6 +12071,16 @@ function getTournamentType() {
                 else if (fatigue <= 50) fatigueColor = '#ffc107';
                 else if (fatigue <= 75) fatigueColor = '#fd7e14';
                 else fatigueColor = '#dc3545';
+                
+                // Определяем цвет Chemistry
+                let chemistryColor = '#666';
+                let chemistrySign = '';
+                if (chemistryBonus > 0) {
+                    chemistryColor = '#28a745';
+                    chemistrySign = '+';
+                } else if (chemistryBonus < 0) {
+                    chemistryColor = '#dc3545';
+                }
                 
                 return `
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin-bottom: 8px;">
@@ -12102,6 +12126,11 @@ function getTournamentType() {
                             <td style="padding: 4px; border: 1px solid #ddd;">Реальность</td>
                             <td style="padding: 4px; border: 1px solid #ddd;">${player.real_status || 'нет'}</td>
                             <td style="padding: 4px; border: 1px solid #ddd;">×${realityModifier.toFixed(3)}</td>
+                        </tr>
+                        <tr style="background: #fff3cd;">
+                            <td style="padding: 4px; border: 1px solid #ddd;"><strong>⚡ Chemistry</strong></td>
+                            <td style="padding: 4px; border: 1px solid #ddd; color: ${chemistryColor}; font-weight: bold;">${chemistrySign}${(chemistryBonus * 100).toFixed(1)}%</td>
+                            <td style="padding: 4px; border: 1px solid #ddd; color: ${chemistryColor}; font-weight: bold;">${chemistrySign}${(finalStr * chemistryBonus).toFixed(1)}</td>
                         </tr>
                     </table>
                     
