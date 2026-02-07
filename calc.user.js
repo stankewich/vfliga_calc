@@ -9550,7 +9550,7 @@ function getTournamentType() {
                             const scoreText = link.textContent.trim();
 
                             // Пропускаем несыгранные матчи (счет ?:?)
-                            if (scoreText === '?:?') {
+                            if (!scoreText || scoreText === "?:?") {
                                 continue;
                             }
 
@@ -9565,9 +9565,9 @@ function getTournamentType() {
                                 if (row) {
                                     // Проверяем, есть ли "(д)" или "(г)" в строке
                                     const rowText = row.textContent;
-                                    if (rowText.includes('(д)')) {
+                                    if (rowText.includes('Д')) {
                                         isHome = true;
-                                    } else if (rowText.includes('(г)')) {
+                                    } else if (rowText.includes('Г')) {
                                         isHome = false;
                                     } else {
                                         // Альтернативный способ: проверяем позицию команды в ссылках
