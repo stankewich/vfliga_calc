@@ -3060,7 +3060,17 @@ function getChemistryBonus(player, inLineupPlayers, teamStyleId) {
     });
     
     // Рассчитываем модификатор Chemistry
-    const modifier = calculatePlayerChemistryModifier(modifiedPlayer, modifiedLineup, positions);
+    let modifier = calculatePlayerChemistryModifier(modifiedPlayer, modifiedLineup, positions);
+    
+    // Добавляем бонус/штраф за совпадение/коллизию стиля игрока со стилем команды
+    if (teamStyleId && effectiveStyle && effectiveStyle !== 'norm') {
+        const teamStyleBonus = getFavoriteStyleBonus(teamStyleId, effectiveStyle);
+        modifier += teamStyleBonus;
+        
+        if (teamStyleBonus !== 0) {
+            console.log(`[CHEMISTRY] ${player.name}: team style bonus ${(teamStyleBonus * 100).toFixed(1)}% (team: ${teamStyleId}, player: ${effectiveStyle})`);
+        }
+    }
     
     // Логирование для отладки (только если есть модификатор)
     if (modifier !== 0) {
@@ -3827,7 +3837,7 @@ function getFavoriteStyleBonus(teamStyleId, playerStyleId) {
     const oppWins = collision_bonuses[playerStyleId] || null;
     const teamBeatsPlayer = !!(teamWins && teamWins[playerStyleId]);
     const playerBeatsTeam = !!(oppWins && oppWins[teamStyleId]);
-    if (teamBeatsPlayer || playerBeatsTeam) return -0.01;
+    if (teamBeatsPlayer || playerBeatsTeam) return -0.025; // Изменено с -0.01 на -0.025 для Chemistry
     return 0;
 }
 
@@ -4890,6 +4900,7 @@ const SYNERGY_MATRIX_CONFIG = {
     MAX_MATCHES: 25,
     FORCE_REGENERATE_ON_DAY_CHANGE: true,
     EXCLUDE_FRIENDLY_MATCHES: true,
+    EXCLUDE_NATIONAL_TEAM_MATCHES: true,
 
     // Бонусы сыгранности по количеству игроков (официальные правила)
     SYNERGY_BONUSES: {
@@ -5007,6 +5018,7 @@ async function loadPlayerMatchHistoryForMatrix(playerId) {
                         const matches = [];
                         const tables = doc.querySelectorAll('table');
                         const excludeFriendly = SYNERGY_MATRIX_CONFIG.EXCLUDE_FRIENDLY_MATCHES;
+                        const excludeNationalTeam = SYNERGY_MATRIX_CONFIG.EXCLUDE_NATIONAL_TEAM_MATCHES;
 
                         tables.forEach(table => {
                             const rows = table.querySelectorAll('tr');
@@ -5026,19 +5038,34 @@ async function loadPlayerMatchHistoryForMatrix(playerId) {
                                             if (dayMatch) {
                                                 const day = parseInt(dayMatch[1]);
                                                 if (day && !isNaN(day)) {
-                                                    const isFriendly = tournamentCell.toLowerCase().includes('товарищеский') ||
-                                                                     tournamentCell.toLowerCase().includes('friendly');
+                                                    const tournamentLower = tournamentCell.toLowerCase();
+                                                    
+                                                    const isFriendly = tournamentLower.includes('товарищеский') ||
+                                                                     tournamentLower.includes('friendly');
+                                                    
+                                                    // Проверяем, является ли это матчем сборной
+                                                    const isNationalTeam = tournamentLower.includes('сборн') ||
+                                                                         tournamentLower.includes('отборочные') ||
+                                                                         tournamentLower.includes('чемпионат мира') ||
+                                                                         tournamentLower.includes('кубок конфедераций') ||
+                                                                         tournamentLower.includes('continental cup') ||
+                                                                         tournamentLower.includes('world cup');
 
                                                     // Проверяем, играл ли игрок (минуты > 0)
                                                     const minutes = parseInt(minutesCell);
                                                     const played = !isNaN(minutes) && minutes > 0;
 
-                                                    if (!excludeFriendly || !isFriendly) {
+                                                    // Исключаем товарищеские и матчи сборных, если настроено
+                                                    const shouldExclude = (excludeFriendly && isFriendly) || 
+                                                                        (excludeNationalTeam && isNationalTeam);
+
+                                                    if (!shouldExclude) {
                                                         matches.push({
                                                             day: day,
                                                             tournament: tournamentCell,
                                                             played: played,
                                                             isFriendly: isFriendly,
+                                                            isNationalTeam: isNationalTeam,
                                                             minutes: played ? minutes : 0
                                                         });
                                                     }
@@ -5053,6 +5080,13 @@ async function loadPlayerMatchHistoryForMatrix(playerId) {
                         const uniqueMatches = matches.filter((match, index, self) =>
                             index === self.findIndex(m => m.day === match.day && m.tournament === match.tournament)
                         ).sort((a, b) => b.day - a.day);
+
+                        // Логирование исключенных матчей
+                        const totalParsed = tables.length > 0 ? Array.from(tables[0].querySelectorAll('tr')).length - 1 : 0;
+                        const excluded = totalParsed - uniqueMatches.length;
+                        if (excluded > 0) {
+                            console.log(`[SynergyMatrix] Исключено матчей: ${excluded} (товарищеские: ${excludeFriendly ? 'да' : 'нет'}, сборные: ${excludeNationalTeam ? 'да' : 'нет'})`);
+                        }
 
                         resolve(uniqueMatches);
                     } catch (parseError) {
@@ -8040,6 +8074,12 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     strength: Number(player.realStr) || 0
                 });
             }
+            
+            // Пересчитываем Chemistry и силу команды при изменении стиля
+            if (typeof saveAllStates === 'function') {
+                saveAllStates();
+                console.log(`[SELECT] Пересчет Chemistry после изменения стиля`);
+            }
         });
         styleSelect.style.display = 'block';
         const styleSelSelected = styleSelect.querySelector('.selected');
@@ -8464,12 +8504,34 @@ function createDefenceTypeSelector(team, onChange) {
  * @param {string} matchPosition - Позиция в матче
  * @param {string} physicalFormId - ID физической формы
  * @param {string} customStyle - Пользовательский стиль
+ * @param {string} teamStyleId - Стиль команды (опционально)
  */
-function showPlayerDetailHint(element, player, matchPosition, physicalFormId, customStyle) {
+function showPlayerDetailHint(element, player, matchPosition, physicalFormId, customStyle, teamStyleId = null) {
     // Удаляем существующие подсказки
     removeExistingHints();
     
     if (!player) return;
+    
+    // Пытаемся определить стиль команды, если не передан
+    if (!teamStyleId) {
+        // Проверяем, есть ли доступ к селекторам стилей команд
+        if (window.homeTeam && window.homeTeam._styleSelector) {
+            teamStyleId = window.homeTeam._styleSelector.value;
+        }
+    }
+    
+    // Рассчитываем Chemistry бонус для игрока
+    let chemistryBonus = 0;
+    try {
+        const slotEntries = window.currentSlotEntries || [];
+        const inLineupPlayers = slotEntries.map(entry => entry.player).filter(Boolean);
+        
+        if (inLineupPlayers.length > 0) {
+            chemistryBonus = getChemistryBonus(player, inLineupPlayers, teamStyleId);
+        }
+    } catch (e) {
+        console.warn('[CHEMISTRY] Ошибка расчета бонуса для подсказки:', e);
+    }
     
     // Создаем контейнер подсказки
     const hint = document.createElement('div');
@@ -8510,7 +8572,8 @@ function showPlayerDetailHint(element, player, matchPosition, physicalFormId, cu
         player,
         matchPosition,
         physicalFormId,
-        customStyle
+        customStyle,
+        chemistryBonus
     });
     hint.appendChild(content);
     
@@ -9798,6 +9861,14 @@ function getTournamentType() {
     function getPlayerFullData(player, matchPosition, physicalFormId, team, playerIndex) {
         if (!player) return null;
 
+        // Получаем стиль команды
+        let teamStyleId = null;
+        if (team === 'home' && window.homeTeam && window.homeTeam._styleSelector) {
+            teamStyleId = window.homeTeam._styleSelector.value;
+        } else if (team === 'away' && window.awayTeam && window.awayTeam._styleSelector) {
+            teamStyleId = window.awayTeam._styleSelector.value;
+        }
+
         // Базовые расчеты силы
         const baseStr = Number(player.baseStrength) || Number(player.realStr) || 0;
         const physicalFormModifier = getPhysicalFormModifier(physicalFormId);
@@ -9819,6 +9890,49 @@ function getTournamentType() {
             leadership: 0
         };
 
+        // Бонус Chemistry
+        let chemistryModifier = 0;
+        try {
+            let slotEntries = window.currentSlotEntries || [];
+            
+            // Если currentSlotEntries пустой, пытаемся использовать currentFieldLineups
+            if (slotEntries.length === 0 && window.currentFieldLineups) {
+                const lineup = window.currentFieldLineups[team];
+                if (lineup && lineup.length > 0) {
+                    console.log('[CHEMISTRY] Field hint - используем currentFieldLineups для', team);
+                    slotEntries = lineup.map((slot, idx) => {
+                        if (!slot.selectedPlayer) return null;
+                        return {
+                            player: slot.selectedPlayer,
+                            matchPos: slot.posValue || '',
+                            customStyleValue: slot.customStyleValue || slot.selectedPlayer.hidden_style || 'norm',
+                            playerIndex: idx
+                        };
+                    }).filter(Boolean);
+                    
+                    // Временно устанавливаем currentSlotEntries для getChemistryBonus
+                    window.currentSlotEntries = slotEntries;
+                }
+            }
+            
+            const inLineupPlayers = slotEntries.map(entry => entry.player).filter(Boolean);
+            
+            console.log('[CHEMISTRY] Field hint - slotEntries:', slotEntries.length);
+            console.log('[CHEMISTRY] Field hint - inLineupPlayers:', inLineupPlayers.length);
+            console.log('[CHEMISTRY] Field hint - player:', player.name);
+            
+            if (inLineupPlayers.length > 0) {
+                chemistryModifier = getChemistryBonus(player, inLineupPlayers, teamStyleId);
+                contribution.chemistry = Math.round(calculatedStr * chemistryModifier);
+                console.log('[CHEMISTRY] Field hint - modifier:', chemistryModifier);
+                console.log('[CHEMISTRY] Field hint - contribution:', contribution.chemistry);
+            } else {
+                console.warn('[CHEMISTRY] Field hint - нет игроков в составе');
+            }
+        } catch (e) {
+            console.error('[CHEMISTRY] Ошибка расчета бонуса для field hint:', e);
+        }
+
         // Бонус капитана (если игрок капитан)
         const captainSelect = document.getElementById(`vs-${team}-captain`);
         if (captainSelect && captainSelect.value === String(player.id)) {
@@ -9826,12 +9940,13 @@ function getTournamentType() {
         }
 
         // Бонус синергии
-        const synergyInputs = document.querySelectorAll(`#vs-${team}-synergy input`);
-        let synergyTotal = 0;
-        synergyInputs.forEach(input => {
-            synergyTotal += Number(input.value) || 0;
-        });
-        contribution.synergy = Math.round(synergyTotal * 0.1);
+        let synergyBonus = 0;
+        if (team === 'home') {
+            synergyBonus = getSynergyPercentHome() / 100;
+        } else if (team === 'away') {
+            synergyBonus = getSynergyPercentAway() / 100;
+        }
+        contribution.synergy = Math.round(calculatedStr * synergyBonus);
 
         // Бонус морали
         const moraleSelect = document.getElementById(`vs-${team}-morale`);
@@ -9880,7 +9995,14 @@ function getTournamentType() {
                 physicalForm: physicalFormModifier,
                 fatigue: fatigueModifier,
                 reality: realityModifier,
-                position: positionModifier
+                position: positionModifier,
+                chemistry: chemistryModifier
+            },
+            details: {
+                form: Number(player.form) || 0,
+                fatigue: Number(player.fatigue) || 0,
+                physicalFormId: physicalFormId,
+                matchPosition: matchPosition
             }
         };
     }
@@ -9972,8 +10094,20 @@ function getTournamentType() {
             <div style="background: #f8f9fa; padding: 8px; border-radius: 6px; margin-bottom: 12px;">
                 <div style="font-weight: bold; color: #495057; margin-bottom: 6px; font-size: 11px;">Модификаторы силы:</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px;">
-                    <div>Физ. форма: <span style="font-weight: bold;">×${fullData.modifiers.physicalForm.toFixed(3)}</span></div>
-                    <div>Усталость: <span style="font-weight: bold;">×${fullData.modifiers.fatigue.toFixed(3)}</span></div>
+                    <div>
+                        Физ. форма: 
+                        <span style="font-weight: bold; color: ${fullData.details.form >= 110 ? '#28a745' : fullData.details.form >= 95 ? '#ffc107' : fullData.details.form >= 85 ? '#fd7e14' : '#dc3545'};">
+                            ${CONFIG.PHYSICAL_FORM.FORMS[fullData.details.physicalFormId]?.label || fullData.details.form + '%'}
+                        </span>
+                        <span style="color: #6c757d;"> (×${fullData.modifiers.physicalForm.toFixed(3)})</span>
+                    </div>
+                    <div>
+                        Усталость: 
+                        <span style="font-weight: bold; color: ${fullData.details.fatigue <= 25 ? '#28a745' : fullData.details.fatigue <= 50 ? '#ffc107' : fullData.details.fatigue <= 75 ? '#fd7e14' : '#dc3545'};">
+                            ${fullData.details.fatigue}%
+                        </span>
+                        <span style="color: #6c757d;"> (×${fullData.modifiers.fatigue.toFixed(3)})</span>
+                    </div>
                     <div>Позиция: <span style="font-weight: bold;">×${fullData.modifiers.position.toFixed(3)}</span></div>
                     <div>Реальность: <span style="font-weight: bold;">×${fullData.modifiers.reality.toFixed(3)}</span></div>
                 </div>
@@ -9984,7 +10118,7 @@ function getTournamentType() {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px;">
                     ${fullData.contribution.captain ? `<div>Капитан: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.captain}</span></div>` : ''}
                     ${fullData.contribution.synergy ? `<div>Синергия: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.synergy}</span></div>` : ''}
-                    ${fullData.contribution.chemistry ? `<div>Химия: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.chemistry}</span></div>` : ''}
+                    <div>Взаимопонимание: <span style="font-weight: bold; color: ${fullData.contribution.chemistry > 0 ? '#28a745' : fullData.contribution.chemistry < 0 ? '#dc3545' : '#6c757d'};">${fullData.contribution.chemistry > 0 ? '+' : ''}${fullData.contribution.chemistry}</span> <span style="color: #6c757d;">(${(fullData.modifiers.chemistry * 100).toFixed(1)}%)</span></div>
                     ${fullData.contribution.morale ? `<div>Настрой: <span style="font-weight: bold; color: ${fullData.contribution.morale > 0 ? '#28a745' : '#dc3545'};">${fullData.contribution.morale > 0 ? '+' : ''}${fullData.contribution.morale}</span></div>` : ''}
                     ${fullData.contribution.atmosphere ? `<div>Атмосфера: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.atmosphere}</span></div>` : ''}
                     ${fullData.contribution.defence ? `<div>Защита: <span style="font-weight: bold; color: #28a745;">+${fullData.contribution.defence}</span></div>` : ''}
@@ -10254,6 +10388,12 @@ function getTournamentType() {
         console.log('[FieldHints] displayShirtsOnField вызвана');
         console.log('[FieldHints] homeLineup:', homeLineup);
         console.log('[FieldHints] awayLineup:', awayLineup);
+        
+        // Сохраняем lineups глобально для использования в field hints
+        window.currentFieldLineups = {
+            home: homeLineup,
+            away: awayLineup
+        };
         
         // Создаём или очищаем контейнер для футболок
         let shirtsContainer = fieldCol.querySelector('.shirts-container');
@@ -12013,7 +12153,7 @@ function getTournamentType() {
 
             // Детальная подсказка для конкретного игрока
             player_details: (context) => {
-                const { player, matchPosition, physicalFormId, customStyle } = context;
+                const { player, matchPosition, physicalFormId, customStyle, chemistryBonus } = context;
                 if (!player) return '<p>Игрок не найден.</p>';
                 
                 const baseStr = Number(player.baseStrength) || Number(player.realStr) || 0;
@@ -12028,15 +12168,21 @@ function getTournamentType() {
                 
                 // Усталость
                 let fatigueModifier;
+                let displayFatigue = fatigue; // Усталость для отображения
                 const tournamentType = getTournamentType();
                 if (tournamentType === 'friendly') {
                     fatigueModifier = 1 - (25 / 100);
+                    displayFatigue = 25; // В товарищеских всегда 25%
                 } else {
                     fatigueModifier = getFatigueBonus(fatigue);
                 }
                 
                 // Итоговая сила
                 const finalStr = Math.round(baseStr * physicalFormModifier * fatigueModifier * realityModifier * positionModifier);
+                
+                // Получаем информацию о физической форме
+                const formInfo = CONFIG.PHYSICAL_FORM.FORMS[physicalFormId] || { label: 'Неизвестно', modifier: 1.0 };
+                const formLabel = formInfo.label || `${form}%`;
                 
                 // Определяем цвет формы
                 let formColor = '#666';
@@ -12047,10 +12193,20 @@ function getTournamentType() {
                 
                 // Определяем цвет усталости
                 let fatigueColor = '#666';
-                if (fatigue <= 25) fatigueColor = '#28a745';
-                else if (fatigue <= 50) fatigueColor = '#ffc107';
-                else if (fatigue <= 75) fatigueColor = '#fd7e14';
+                if (displayFatigue <= 25) fatigueColor = '#28a745';
+                else if (displayFatigue <= 50) fatigueColor = '#ffc107';
+                else if (displayFatigue <= 75) fatigueColor = '#fd7e14';
                 else fatigueColor = '#dc3545';
+                
+                // Определяем цвет Chemistry
+                let chemistryColor = '#666';
+                let chemistrySign = '';
+                if (chemistryBonus > 0) {
+                    chemistryColor = '#28a745';
+                    chemistrySign = '+';
+                } else if (chemistryBonus < 0) {
+                    chemistryColor = '#dc3545';
+                }
                 
                 return `
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin-bottom: 8px;">
@@ -12079,12 +12235,12 @@ function getTournamentType() {
                         </tr>
                         <tr>
                             <td style="padding: 4px; border: 1px solid #ddd;">Физ. форма</td>
-                            <td style="padding: 4px; border: 1px solid #ddd; color: ${formColor}; font-weight: bold;">${form}%</td>
+                            <td style="padding: 4px; border: 1px solid #ddd; color: ${formColor}; font-weight: bold;">${formLabel}</td>
                             <td style="padding: 4px; border: 1px solid #ddd;">×${physicalFormModifier.toFixed(3)}</td>
                         </tr>
                         <tr>
                             <td style="padding: 4px; border: 1px solid #ddd;">Усталость</td>
-                            <td style="padding: 4px; border: 1px solid #ddd; color: ${fatigueColor}; font-weight: bold;">${fatigue}%</td>
+                            <td style="padding: 4px; border: 1px solid #ddd; color: ${fatigueColor}; font-weight: bold;">${displayFatigue}%${tournamentType === 'friendly' ? ' (товарищ.)' : ''}</td>
                             <td style="padding: 4px; border: 1px solid #ddd;">×${fatigueModifier.toFixed(3)}</td>
                         </tr>
                         <tr>
@@ -12096,6 +12252,11 @@ function getTournamentType() {
                             <td style="padding: 4px; border: 1px solid #ddd;">Реальность</td>
                             <td style="padding: 4px; border: 1px solid #ddd;">${player.real_status || 'нет'}</td>
                             <td style="padding: 4px; border: 1px solid #ddd;">×${realityModifier.toFixed(3)}</td>
+                        </tr>
+                        <tr style="background: #fff3cd;">
+                            <td style="padding: 4px; border: 1px solid #ddd;"><strong>⚡ Chemistry</strong></td>
+                            <td style="padding: 4px; border: 1px solid #ddd; color: ${chemistryColor}; font-weight: bold;">${chemistrySign}${(chemistryBonus * 100).toFixed(1)}%</td>
+                            <td style="padding: 4px; border: 1px solid #ddd; color: ${chemistryColor}; font-weight: bold;">${chemistrySign}${(finalStr * chemistryBonus).toFixed(1)}</td>
                         </tr>
                     </table>
                     
