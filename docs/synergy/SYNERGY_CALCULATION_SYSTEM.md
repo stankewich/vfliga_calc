@@ -494,3 +494,91 @@ ui.insertBefore(buttonsContainer, ui.firstChild);
 3. В калькуляторе нажимает "Загрузить состав"
 4. Состав загружается и сразу применяется
 5. Пользователь видит результат в интерфейсе калькулятора
+
+
+## ФИЛЬТРАЦИЯ МАТЧЕЙ ПО КОМАНДЕ (v0.945)
+
+### Дата: 2026-02-14
+
+### Проблема
+Игроки могут переходить между командами (трансферы, аренды), и их история матчей включает игры за разные команды. Для корректного расчета сыгранности нужно учитывать только матчи, сыгранные за текущую команду.
+
+### Примеры ситуаций
+1. **Трансфер**: Игрок был куплен недавно и часть матчей сыграл за предыдущую команду
+2. **Аренда**: Игрок был в аренде и часть матчей сыграл за другую команду
+3. **Возврат из аренды**: Игрок вернулся из аренды и снова играет за свою команду
+
+### Решение
+При построении матрицы сыгранности из данных игроков (`buildSynergyMatrixFromPlayersForCalc`):
+1. Функция принимает параметр `teamId` - ID команды для фильтрации
+2. При загрузке истории матчей игрока (`loadPlayerMatchHistoryForMatrix`) извлекается ID команды из каждого матча
+3. Матчи фильтруются: учитываются только те, где `matchTeamId === teamId`
+4. В лог выводится информация о количестве исключенных матчей
+
+### Технические детали
+
+#### Извлечение ID команды из матча
+```javascript
+// Колонка 5 содержит ссылку на команду: roster.php?num=TEAM_ID
+const teamCell = cells[5];
+const teamLink = teamCell.querySelector('a[href*="roster.php"]');
+const teamHref = teamLink.getAttribute('href');
+const teamIdMatch = teamHref.match(/num=(\d+)/);
+const matchTeamId = teamIdMatch[1];
+```
+
+#### Фильтрация матчей
+```javascript
+// Фильтруем по команде, если teamId указан
+const teamMatches = !teamId || !matchTeamId || String(matchTeamId) === String(teamId);
+
+if (!shouldExclude && teamMatches) {
+    matches.push({
+        day: day,
+        tournament: tournamentCell,
+        played: played,
+        teamId: matchTeamId  // Сохраняем ID команды для отладки
+    });
+}
+```
+
+#### Логирование
+```javascript
+if (excluded > 0) {
+    const reasons = [];
+    if (excludeFriendly) reasons.push('товарищеские');
+    if (excludeNationalTeam) reasons.push('сборные');
+    if (teamId) reasons.push(`другие команды (фильтр: ${teamId})`);
+    console.log(`[SynergyMatrix] Игрок ${playerId}: исключено ${excluded} матчей (${reasons.join(', ')})`);
+}
+```
+
+### Обновленные сигнатуры функций
+
+```javascript
+// Построение матрицы с фильтрацией по команде
+async function buildSynergyMatrixFromPlayersForCalc(playerIds, maxMatches = 25, teamId = null)
+
+// Загрузка истории с фильтрацией по команде
+async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null)
+
+// Обновление сыгранности с указанием команды
+async function updateTeamSynergy(teamType, lineup, teamId = null)
+```
+
+### Пример использования
+```javascript
+// ID команд сохраняются в глобальных переменных
+window.homeTeamId = homeTeamId;
+window.awayTeamId = awayTeamId;
+
+// При обновлении сыгранности передаем ID команды
+updateTeamSynergy('home', homeLineupBlock.lineup, window.homeTeamId);
+updateTeamSynergy('away', awayLineupBlock.lineup, window.awayTeamId);
+```
+
+### Результат
+- ✅ Учитываются только матчи, сыгранные за текущую команду
+- ✅ Исключаются матчи за другие команды (трансферы, аренды)
+- ✅ Более точный расчет сыгранности для команд с недавно купленными игроками
+- ✅ Подробное логирование исключенных матчей для отладки

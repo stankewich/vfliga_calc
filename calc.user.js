@@ -4992,8 +4992,10 @@ function generatePlayerIdsHashForMatrix(playerIds) {
 
 /**
  * Загрузка истории матчей игрока для матрицы
+ * @param {string|number} playerId - ID игрока
+ * @param {string|number} teamId - ID команды для фильтрации (опционально)
  */
-async function loadPlayerMatchHistoryForMatrix(playerId) {
+async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
     try {
         const url = `${SITE_CONFIG.BASE_URL}/player.php?num=${playerId}`;
 
@@ -5026,11 +5028,24 @@ async function loadPlayerMatchHistoryForMatrix(playerId) {
                             rows.forEach(row => {
                                 const cells = row.querySelectorAll('td');
                                 if (cells.length >= 16) { // Убеждаемся что есть все колонки включая минуты
+                                    const dateCell = cells[0]?.textContent?.trim(); // Колонка с датой
+                                    const teamsCell = cells[1]; // Колонка с командами (ссылки на roster.php)
+                                    const scoreCell = cells[3]; // Колонка со счетом и ссылкой на матч
                                     const tournamentCell = cells[4]?.textContent?.trim(); // Колонка с турниром
-                                    const scoreCell = cells[3]; // Колонка со счетом и ссылкой
                                     const minutesCell = cells[cells.length - 1]?.textContent?.trim(); // Последняя колонка - минуты
 
-                                    if (tournamentCell && scoreCell && minutesCell) {
+                                    // Отладочное логирование структуры таблицы (только для первой строки)
+                                    if (teamId && matches.length === 0 && dateCell) {
+                                        console.log(`[SynergyMatrix] Структура таблицы для игрока ${playerId}:`);
+                                        cells.forEach((cell, idx) => {
+                                            const text = cell.textContent?.trim().substring(0, 30);
+                                            const links = cell.querySelectorAll('a');
+                                            const linkInfo = links.length > 0 ? ` [${links.length} ссылок: ${Array.from(links).map(l => l.href.substring(0, 50)).join(', ')}]` : '';
+                                            console.log(`  [${idx}]: "${text}"${linkInfo}`);
+                                        });
+                                    }
+
+                                    if (tournamentCell && scoreCell && minutesCell && teamsCell) {
                                         // Извлекаем день из ссылки на матч
                                         const matchLink = scoreCell.querySelector('a[href*="day="]');
                                         if (matchLink) {
@@ -5056,18 +5071,38 @@ async function loadPlayerMatchHistoryForMatrix(playerId) {
                                                     const minutes = parseInt(minutesCell);
                                                     const played = !isNaN(minutes) && minutes > 0;
 
+                                                    // Извлекаем ID команды игрока из ссылки
+                                                    // В teamsCell есть две ссылки: первая (жирная) - команда игрока, вторая - соперник
+                                                    let matchTeamId = null;
+                                                    if (teamsCell) {
+                                                        const teamLinks = teamsCell.querySelectorAll('a[href*="roster.php"]');
+                                                        if (teamLinks.length > 0) {
+                                                            // Берем первую ссылку - это команда игрока
+                                                            const firstTeamLink = teamLinks[0];
+                                                            const teamHref = firstTeamLink.getAttribute('href');
+                                                            const teamIdMatch = teamHref.match(/num=(\d+)/);
+                                                            if (teamIdMatch) {
+                                                                matchTeamId = teamIdMatch[1];
+                                                            }
+                                                        }
+                                                    }
+
                                                     // Исключаем товарищеские и матчи сборных, если настроено
                                                     const shouldExclude = (excludeFriendly && isFriendly) || 
                                                                         (excludeNationalTeam && isNationalTeam);
 
-                                                    if (!shouldExclude) {
+                                                    // Фильтруем по команде, если teamId указан
+                                                    const teamMatches = !teamId || !matchTeamId || String(matchTeamId) === String(teamId);
+
+                                                    if (!shouldExclude && teamMatches) {
                                                         matches.push({
                                                             day: day,
                                                             tournament: tournamentCell,
                                                             played: played,
                                                             isFriendly: isFriendly,
                                                             isNationalTeam: isNationalTeam,
-                                                            minutes: played ? minutes : 0
+                                                            minutes: played ? minutes : 0,
+                                                            teamId: matchTeamId
                                                         });
                                                     }
                                                 }
@@ -5086,7 +5121,11 @@ async function loadPlayerMatchHistoryForMatrix(playerId) {
                         const totalParsed = tables.length > 0 ? Array.from(tables[0].querySelectorAll('tr')).length - 1 : 0;
                         const excluded = totalParsed - uniqueMatches.length;
                         if (excluded > 0) {
-                            console.log(`[SynergyMatrix] Исключено матчей: ${excluded} (товарищеские: ${excludeFriendly ? 'да' : 'нет'}, сборные: ${excludeNationalTeam ? 'да' : 'нет'})`);
+                            const reasons = [];
+                            if (excludeFriendly) reasons.push('товарищеские');
+                            if (excludeNationalTeam) reasons.push('сборные');
+                            if (teamId) reasons.push(`другие команды (фильтр: ${teamId})`);
+                            console.log(`[SynergyMatrix] Игрок ${playerId}: исключено ${excluded} матчей (${reasons.join(', ')})`);
                         }
 
                         resolve(uniqueMatches);
@@ -5106,9 +5145,15 @@ async function loadPlayerMatchHistoryForMatrix(playerId) {
 
 /**
  * Построение матрицы сыгранности из данных игроков
+ * @param {Array} playerIds - Массив ID игроков
+ * @param {number} maxMatches - Максимальное количество матчей для анализа
+ * @param {string|number} teamId - ID команды для фильтрации матчей (опционально)
  */
-async function buildSynergyMatrixFromPlayersForCalc(playerIds, maxMatches = SYNERGY_MATRIX_CONFIG.MAX_MATCHES) {
+async function buildSynergyMatrixFromPlayersForCalc(playerIds, maxMatches = SYNERGY_MATRIX_CONFIG.MAX_MATCHES, teamId = null) {
     console.log('[SynergyMatrix] Построение матрицы для', playerIds.length, 'игроков');
+    if (teamId) {
+        console.log('[SynergyMatrix] Фильтрация по команде ID:', teamId);
+    }
 
     try {
         const startTime = Date.now();
@@ -5118,7 +5163,7 @@ async function buildSynergyMatrixFromPlayersForCalc(playerIds, maxMatches = SYNE
         // Загружаем историю матчей для всех игроков
         const playerHistories = {};
         const loadPromises = playerIds.map(async (playerId) => {
-            const history = await loadPlayerMatchHistoryForMatrix(playerId);
+            const history = await loadPlayerMatchHistoryForMatrix(playerId, teamId);
             if (history && history.length > 0) {
                 playerHistories[playerId] = history;
             }
@@ -5205,7 +5250,7 @@ function extractPlayerIdsFromLineup(lineup) {
 /**
  * Автоматический расчет и обновление сыгранности для команды
  */
-async function updateTeamSynergy(teamType, lineup) {
+async function updateTeamSynergy(teamType, lineup, teamId = null) {
     try {
         const playerIds = extractPlayerIdsFromLineup(lineup);
 
@@ -5216,9 +5261,12 @@ async function updateTeamSynergy(teamType, lineup) {
 
         console.log(`[AutoSynergy] Расчет сыгранности для ${teamType}, игроков:`, playerIds.length);
         console.log(`[AutoSynergy] ID игроков:`, playerIds);
+        if (teamId) {
+            console.log(`[AutoSynergy] ID команды:`, teamId);
+        }
 
-        // Строим матрицу сыгранности
-        const synergyMatrix = await buildSynergyMatrixFromPlayersForCalc(playerIds);
+        // Строим матрицу сыгранности с учетом команды
+        const synergyMatrix = await buildSynergyMatrixFromPlayersForCalc(playerIds, SYNERGY_MATRIX_CONFIG.MAX_MATCHES, teamId);
 
         if (!synergyMatrix) {
             console.warn(`[AutoSynergy] Не удалось построить матрицу для ${teamType}`);
@@ -10715,6 +10763,10 @@ function getTournamentType() {
     function createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere = 0, awayAtmosphere = 0) {
         const parsedWeather = parseWeatherFromPreview();
         const stadiumCapacity = parseStadiumCapacity() || 0;
+        
+        // Сохраняем ID команд в глобальные переменные для использования в других функциях
+        window.homeTeamId = homeTeamId;
+        window.awayTeamId = awayTeamId;
         const weatherUI = createWeatherUI(parsedWeather?.weather, parsedWeather?.temperature, parsedWeather?.icon, stadiumCapacity);
         const container = document.createElement('div');
         container.id = 'vsol-calculator-ui';
@@ -10791,11 +10843,11 @@ function getTournamentType() {
 
                     // Обновляем сыгранность для обеих команд если есть достаточно игроков
                     if (homePlayerIds.length >= 4) {
-                        updateTeamSynergy('home', homeLineupBlock.lineup);
+                        updateTeamSynergy('home', homeLineupBlock.lineup, window.homeTeamId);
                     }
 
                     if (awayPlayerIds.length >= 4) {
-                        updateTeamSynergy('away', awayLineupBlock.lineup);
+                        updateTeamSynergy('away', awayLineupBlock.lineup, window.awayTeamId);
                     }
                 } catch (error) {
                     console.error('[AutoSynergy] Ошибка автоматического расчета:', error);
