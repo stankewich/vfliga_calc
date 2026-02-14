@@ -8371,28 +8371,36 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
 
     function updateRoleSelectors() {
         // Обновляем селекторы штрафных, угловых и пенальти
-        const shtSelect = document.getElementById('sht');
-        const uglovSelect = document.getElementById('uglov');
-        const penaltySelect = document.getElementById('penalty');
+        // Используем ссылки из lineupBlock вместо getElementById
+        const shtSelect = lineupBlockObj.shtSelect;
+        const uglovSelect = lineupBlockObj.uglovSelect;
+        const penaltySelect = lineupBlockObj.penaltySelect;
 
         if (shtSelect || uglovSelect || penaltySelect) {
-            // Получаем игроков из текущего состава
+            // Получаем игроков из текущего состава (только полевые, без вратарей)
             const availablePlayers = [];
             lineup.forEach(slot => {
                 const playerId = slot.getValue();
-                if (playerId && playerId !== '-1') {
+                const position = slot.posValue;
+                
+                // Исключаем вратарей из списка исполнителей стандартов
+                if (playerId && playerId !== '-1' && position !== 'GK') {
                     const player = players.find(p => String(p.id) === playerId);
                     if (player) {
                         availablePlayers.push({
                             id: playerId,
-                            name: `${player.name} (${slot.posValue})`
+                            name: `${player.name} (${position})`
                         });
                     }
                 }
             });
 
             // Обновляем каждый селектор
-            [shtSelect, uglovSelect, penaltySelect].forEach(select => {
+            [
+                { select: shtSelect, type: 'sht', label: 'некому исполнять штрафные' },
+                { select: uglovSelect, type: 'uglov', label: 'некому исполнять угловые' },
+                { select: penaltySelect, type: 'penalty', label: 'некому исполнять пенальти' }
+            ].forEach(({ select, type, label }) => {
                 if (select) {
                     const currentValue = select.value;
                     select.innerHTML = '';
@@ -8401,9 +8409,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     const defaultOption = document.createElement('option');
                     defaultOption.value = '-1';
                     defaultOption.className = 'grD';
-                    if (select.id === 'sht') defaultOption.textContent = 'некому исполнять штрафные';
-                    else if (select.id === 'uglov') defaultOption.textContent = 'некому исполнять угловые';
-                    else if (select.id === 'penalty') defaultOption.textContent = 'некому исполнять пенальти';
+                    defaultOption.textContent = label;
                     select.appendChild(defaultOption);
 
                     // Добавляем игроков
@@ -8426,7 +8432,8 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
     }
 
     updatePlayerSelectOptions();
-    return {
+    
+    const lineupBlockObj = {
         block: table,
         lineup,
         updatePlayerSelectOptions,
@@ -8435,8 +8442,14 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         applyFormation,
         getFormationName() {
             return formationName;
-        }
+        },
+        // Ссылки на селекторы стандартных положений (будут установлены позже)
+        shtSelect: null,
+        uglovSelect: null,
+        penaltySelect: null
     };
+    
+    return lineupBlockObj;
 }
 
 // --- CAPTAIN AND HELPERS ---
@@ -13218,11 +13231,19 @@ function getTournamentType() {
 
         const penaltyPlayerCell = document.createElement('td');
         penaltyPlayerCell.className = 'txtl';
-        penaltyPlayerCell.innerHTML = `
-            <select tabindex="-1" id="sht" name="sht" style="width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;">
-                <option value="-1" class="grD">некому исполнять штрафные</option>
-            </select>
-        `;
+        
+        // Создаем селектор штрафных напрямую
+        const shtSelect = document.createElement('select');
+        shtSelect.tabIndex = -1;
+        shtSelect.style.cssText = 'width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
+        
+        const shtDefaultOption = document.createElement('option');
+        shtDefaultOption.value = '-1';
+        shtDefaultOption.className = 'grD';
+        shtDefaultOption.textContent = 'некому исполнять штрафные';
+        shtSelect.appendChild(shtDefaultOption);
+        
+        penaltyPlayerCell.appendChild(shtSelect);
 
         penaltyRow.appendChild(penaltyRoleCell);
         penaltyRow.appendChild(penaltyPlayerCell);
@@ -13245,11 +13266,19 @@ function getTournamentType() {
 
         const cornerPlayerCell = document.createElement('td');
         cornerPlayerCell.className = 'txtl';
-        cornerPlayerCell.innerHTML = `
-            <select tabindex="-1" id="uglov" name="uglov" style="width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;">
-                <option value="-1" class="grD">некому исполнять угловые</option>
-            </select>
-        `;
+        
+        // Создаем селектор угловых напрямую
+        const uglovSelect = document.createElement('select');
+        uglovSelect.tabIndex = -1;
+        uglovSelect.style.cssText = 'width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
+        
+        const uglovDefaultOption = document.createElement('option');
+        uglovDefaultOption.value = '-1';
+        uglovDefaultOption.className = 'grD';
+        uglovDefaultOption.textContent = 'некому исполнять угловые';
+        uglovSelect.appendChild(uglovDefaultOption);
+        
+        cornerPlayerCell.appendChild(uglovSelect);
 
         cornerRow.appendChild(cornerRoleCell);
         cornerRow.appendChild(cornerPlayerCell);
@@ -13272,11 +13301,19 @@ function getTournamentType() {
 
         const penPlayerCell = document.createElement('td');
         penPlayerCell.className = 'txtl';
-        penPlayerCell.innerHTML = `
-            <select tabindex="-1" id="penalty" name="penalty" style="width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;">
-                <option value="-1" class="grD">некому исполнять пенальти</option>
-            </select>
-        `;
+        
+        // Создаем селектор пенальти напрямую
+        const penaltySelect = document.createElement('select');
+        penaltySelect.tabIndex = -1;
+        penaltySelect.style.cssText = 'width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
+        
+        const penaltyDefaultOption = document.createElement('option');
+        penaltyDefaultOption.value = '-1';
+        penaltyDefaultOption.className = 'grD';
+        penaltyDefaultOption.textContent = 'некому исполнять пенальти';
+        penaltySelect.appendChild(penaltyDefaultOption);
+        
+        penPlayerCell.appendChild(penaltySelect);
 
         penRow.appendChild(penRoleCell);
         penRow.appendChild(penPlayerCell);
@@ -13285,6 +13322,18 @@ function getTournamentType() {
         rolesTable.appendChild(rolesTbody);
         rolesSection.appendChild(rolesHeaderTable);
         rolesSection.appendChild(rolesTable);
+
+        // Сохраняем ссылки на селекторы стандартных положений в lineupBlock
+        if (lineupBlock) {
+            lineupBlock.shtSelect = shtSelect;
+            lineupBlock.uglovSelect = uglovSelect;
+            lineupBlock.penaltySelect = penaltySelect;
+            
+            // Инициализируем селекторы с игроками из текущего состава
+            if (lineupBlock.updateRoleSelectors) {
+                lineupBlock.updateRoleSelectors();
+            }
+        }
 
         // Собираем все секции
         content.appendChild(tacticsSection);
