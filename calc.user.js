@@ -5028,24 +5028,10 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                             rows.forEach(row => {
                                 const cells = row.querySelectorAll('td');
                                 if (cells.length >= 16) { // Убеждаемся что есть все колонки включая минуты
-                                    const dateCell = cells[0]?.textContent?.trim(); // Колонка с датой
                                     const teamsCell = cells[1]; // Колонка с командами (ссылки на roster.php)
                                     const scoreCell = cells[3]; // Колонка со счетом и ссылкой на матч
                                     const tournamentCell = cells[4]?.textContent?.trim(); // Колонка с турниром
                                     const minutesCell = cells[cells.length - 1]?.textContent?.trim(); // Последняя колонка - минуты
-
-                                    // Отладочное логирование структуры таблицы (только для первой строки)
-                                    if (teamId && matches.length === 0 && dateCell) {
-                                        console.log(`[SynergyMatrix] Структура таблицы для игрока ${playerId}:`);
-                                        console.log(`[SynergyMatrix] Количество ячеек в строке: ${cells.length}`);
-                                        cells.forEach((cell, idx) => {
-                                            const text = cell.textContent?.trim().substring(0, 30);
-                                            const links = cell.querySelectorAll('a');
-                                            const linkInfo = links.length > 0 ? ` [${links.length} ссылок]` : '';
-                                            console.log(`  [${idx}]: "${text}"${linkInfo}`);
-                                        });
-                                        console.log(`[SynergyMatrix] Минуты (последняя ячейка): "${minutesCell}"`);
-                                    }
 
                                     if (tournamentCell && scoreCell && minutesCell && teamsCell) {
                                         // Извлекаем день из ссылки на матч
@@ -5074,46 +5060,55 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                     const playedMinutes = !isNaN(minutes) && minutes > 0;
 
                                                     // Извлекаем ID команды игрока из ссылки
-                                                    // В teamsCell есть две ссылки: первая (жирная) - команда игрока, вторая - соперник
+                                                    // В teamsCell есть две ссылки на команды (домашняя и гостевая)
+                                                    // Жирная ссылка - это команда игрока (может быть первой или второй)
                                                     // Ссылка может быть roster.php?num=XXX или managerzone.php (команда менеджера)
                                                     let matchTeamId = null;
                                                     if (teamsCell) {
                                                         // Ищем все ссылки на команды (roster.php или managerzone.php)
+                                                        const teamLinks = [];
                                                         const allLinks = teamsCell.querySelectorAll('a');
-                                                        let firstTeamLink = null;
                                                         
-                                                        // Находим первую ссылку на команду (roster.php или managerzone.php)
+                                                        // Собираем все ссылки на команды
                                                         for (const link of allLinks) {
                                                             const href = link.getAttribute('href');
                                                             if (href && (href.includes('roster.php') || href.includes('managerzone.php'))) {
-                                                                firstTeamLink = link;
-                                                                break;
+                                                                teamLinks.push(link);
                                                             }
                                                         }
                                                         
-                                                        // Отладка: выводим HTML первой строки для первого игрока
-                                                        if (i === 0 && rowIndex === 0) {
-                                                            console.log('[SynergyMatrix] HTML ячейки команд (первая строка):', teamsCell.innerHTML);
-                                                            console.log('[SynergyMatrix] Найдено всех ссылок:', allLinks.length);
-                                                            if (firstTeamLink) {
-                                                                console.log('[SynergyMatrix] Первая ссылка на команду href:', firstTeamLink.getAttribute('href'));
-                                                                console.log('[SynergyMatrix] Первая ссылка текст:', firstTeamLink.textContent);
-                                                            }
-                                                        }
-                                                        
-                                                        if (firstTeamLink) {
-                                                            const teamHref = firstTeamLink.getAttribute('href');
-                                                            
-                                                            // Если это ссылка на managerzone.php - используем переданный teamId
-                                                            if (teamHref.includes('managerzone.php')) {
-                                                                matchTeamId = teamId; // Это команда менеджера
+                                                        // Извлекаем ID обеих команд
+                                                        const teamIds = [];
+                                                        for (const link of teamLinks) {
+                                                            const href = link.getAttribute('href');
+                                                            if (href.includes('managerzone.php')) {
+                                                                teamIds.push(teamId); // Команда менеджера
                                                             } else {
-                                                                // Иначе извлекаем ID из roster.php?num=XXX
-                                                                const teamIdMatch = teamHref.match(/num=(\d+)/);
-                                                                if (teamIdMatch) {
-                                                                    matchTeamId = teamIdMatch[1];
+                                                                const idMatch = href.match(/num=(\d+)/);
+                                                                if (idMatch) {
+                                                                    teamIds.push(idMatch[1]);
                                                                 }
                                                             }
+                                                        }
+                                                        
+                                                        // Проверяем, есть ли среди команд нужная нам
+                                                        if (teamId && teamIds.length > 0) {
+                                                            // Ищем совпадение с нашим teamId
+                                                            if (teamIds.includes(String(teamId))) {
+                                                                matchTeamId = teamId;
+                                                            }
+                                                        } else if (teamIds.length > 0) {
+                                                            // Если фильтр не задан, берем первую команду
+                                                            matchTeamId = teamIds[0];
+                                                        }
+                                                        
+                                                        // Логирование для первого матча
+                                                        if (teamId && matches.length === 0) {
+                                                            console.log(`[SynergyMatrix] Игрок ${playerId}, первый матч (день ${day}):`);
+                                                            console.log(`  Команды в матче: [${teamIds.join(', ')}]`);
+                                                            console.log(`  Фильтр teamId: "${teamId}"`);
+                                                            console.log(`  matchTeamId: "${matchTeamId}"`);
+                                                            console.log(`  Минуты: ${minutes}, playedMinutes: ${playedMinutes}`);
                                                         }
                                                     }
 
@@ -5123,9 +5118,6 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
 
                                                     if (!shouldExclude) {
                                                         // Определяем, играл ли игрок за нужную команду
-                                                        // Если teamId не указан - считаем что играл за свою команду
-                                                        // Если matchTeamId не найден - не можем определить, считаем что НЕ играл за команду
-                                                        // Если оба ID есть - сравниваем
                                                         let playedForTeam = false;
                                                         if (!teamId) {
                                                             // Если фильтр по команде не задан - считаем все матчи
@@ -5134,19 +5126,18 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                             // Если ID команды найден - сравниваем
                                                             playedForTeam = String(matchTeamId) === String(teamId);
                                                         }
-                                                        // Если matchTeamId === null, то playedForTeam остается false
                                                         
                                                         const played = playedMinutes && playedForTeam;
 
                                                         matches.push({
                                                             day: day,
                                                             tournament: tournamentCell,
-                                                            played: played, // true только если играл минуты И за нужную команду
+                                                            played: played,
                                                             isFriendly: isFriendly,
                                                             isNationalTeam: isNationalTeam,
-                                                            minutes: playedMinutes ? minutes : 0, // реальные минуты (даже за другую команду)
+                                                            minutes: playedMinutes ? minutes : 0,
                                                             teamId: matchTeamId,
-                                                            playedForTeam: playedForTeam // для отладки
+                                                            playedForTeam: playedForTeam
                                                         });
                                                     }
                                                 }

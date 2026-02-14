@@ -511,7 +511,9 @@ ui.insertBefore(buttonsContainer, ui.firstChild);
 ### Решение
 При построении матрицы сыгранности из данных игроков (`buildSynergyMatrixFromPlayersForCalc`):
 1. Функция принимает параметр `teamId` - ID команды для фильтрации
-2. При загрузке истории матчей игрока (`loadPlayerMatchHistoryForMatrix`) извлекается ID команды из каждого матча
+2. При загрузке истории матчей игрока (`loadPlayerMatchHistoryForMatrix`) извлекается ID команды из каждого матча:
+   - Из ссылки `roster.php?num=XXX` - извлекается ID из параметра `num`
+   - Из ссылки `managerzone.php` (команда менеджера) - используется переданный `teamId`
 3. **Все матчи включаются в матрицу** (не исключаются полностью)
 4. Для каждого матча проверяется: `played = playedMinutes && (matchTeamId === teamId)`
 5. Если игрок играл за другую команду - в матрице ставится 0 (не played)
