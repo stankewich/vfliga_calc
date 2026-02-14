@@ -5075,27 +5075,44 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
 
                                                     // Извлекаем ID команды игрока из ссылки
                                                     // В teamsCell есть две ссылки: первая (жирная) - команда игрока, вторая - соперник
+                                                    // Ссылка может быть roster.php?num=XXX или managerzone.php (команда менеджера)
                                                     let matchTeamId = null;
                                                     if (teamsCell) {
-                                                        const teamLinks = teamsCell.querySelectorAll('a[href*="roster.php"]');
+                                                        // Ищем все ссылки на команды (roster.php или managerzone.php)
+                                                        const allLinks = teamsCell.querySelectorAll('a');
+                                                        let firstTeamLink = null;
+                                                        
+                                                        // Находим первую ссылку на команду (roster.php или managerzone.php)
+                                                        for (const link of allLinks) {
+                                                            const href = link.getAttribute('href');
+                                                            if (href && (href.includes('roster.php') || href.includes('managerzone.php'))) {
+                                                                firstTeamLink = link;
+                                                                break;
+                                                            }
+                                                        }
                                                         
                                                         // Отладка: выводим HTML первой строки для первого игрока
                                                         if (i === 0 && rowIndex === 0) {
                                                             console.log('[SynergyMatrix] HTML ячейки команд (первая строка):', teamsCell.innerHTML);
-                                                            console.log('[SynergyMatrix] Найдено ссылок на команды:', teamLinks.length);
-                                                            if (teamLinks.length > 0) {
-                                                                console.log('[SynergyMatrix] Первая ссылка href:', teamLinks[0].getAttribute('href'));
-                                                                console.log('[SynergyMatrix] Первая ссылка текст:', teamLinks[0].textContent);
+                                                            console.log('[SynergyMatrix] Найдено всех ссылок:', allLinks.length);
+                                                            if (firstTeamLink) {
+                                                                console.log('[SynergyMatrix] Первая ссылка на команду href:', firstTeamLink.getAttribute('href'));
+                                                                console.log('[SynergyMatrix] Первая ссылка текст:', firstTeamLink.textContent);
                                                             }
                                                         }
                                                         
-                                                        if (teamLinks.length > 0) {
-                                                            // Берем первую ссылку - это команда игрока
-                                                            const firstTeamLink = teamLinks[0];
+                                                        if (firstTeamLink) {
                                                             const teamHref = firstTeamLink.getAttribute('href');
-                                                            const teamIdMatch = teamHref.match(/num=(\d+)/);
-                                                            if (teamIdMatch) {
-                                                                matchTeamId = teamIdMatch[1];
+                                                            
+                                                            // Если это ссылка на managerzone.php - используем переданный teamId
+                                                            if (teamHref.includes('managerzone.php')) {
+                                                                matchTeamId = teamId; // Это команда менеджера
+                                                            } else {
+                                                                // Иначе извлекаем ID из roster.php?num=XXX
+                                                                const teamIdMatch = teamHref.match(/num=(\d+)/);
+                                                                if (teamIdMatch) {
+                                                                    matchTeamId = teamIdMatch[1];
+                                                                }
                                                             }
                                                         }
                                                     }
