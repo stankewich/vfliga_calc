@@ -8329,16 +8329,19 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         const penaltySelect = lineupBlockObj.penaltySelect;
 
         if (shtSelect || uglovSelect || penaltySelect) {
-            // Получаем игроков из текущего состава
+            // Получаем игроков из текущего состава (только полевые, без вратарей)
             const availablePlayers = [];
             lineup.forEach(slot => {
                 const playerId = slot.getValue();
-                if (playerId && playerId !== '-1') {
+                const position = slot.posValue;
+                
+                // Исключаем вратарей из списка исполнителей стандартов
+                if (playerId && playerId !== '-1' && position !== 'GK') {
                     const player = players.find(p => String(p.id) === playerId);
                     if (player) {
                         availablePlayers.push({
                             id: playerId,
-                            name: `${player.name} (${slot.posValue})`
+                            name: `${player.name} (${position})`
                         });
                     }
                 }
