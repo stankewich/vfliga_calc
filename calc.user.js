@@ -5037,12 +5037,14 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                     // Отладочное логирование структуры таблицы (только для первой строки)
                                     if (teamId && matches.length === 0 && dateCell) {
                                         console.log(`[SynergyMatrix] Структура таблицы для игрока ${playerId}:`);
+                                        console.log(`[SynergyMatrix] Количество ячеек в строке: ${cells.length}`);
                                         cells.forEach((cell, idx) => {
                                             const text = cell.textContent?.trim().substring(0, 30);
                                             const links = cell.querySelectorAll('a');
-                                            const linkInfo = links.length > 0 ? ` [${links.length} ссылок: ${Array.from(links).map(l => l.href.substring(0, 50)).join(', ')}]` : '';
+                                            const linkInfo = links.length > 0 ? ` [${links.length} ссылок]` : '';
                                             console.log(`  [${idx}]: "${text}"${linkInfo}`);
                                         });
+                                        console.log(`[SynergyMatrix] Минуты (последняя ячейка): "${minutesCell}"`);
                                     }
 
                                     if (tournamentCell && scoreCell && minutesCell && teamsCell) {
@@ -5076,6 +5078,17 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                     let matchTeamId = null;
                                                     if (teamsCell) {
                                                         const teamLinks = teamsCell.querySelectorAll('a[href*="roster.php"]');
+                                                        
+                                                        // Отладка: выводим HTML первой строки для первого игрока
+                                                        if (i === 0 && rowIndex === 0) {
+                                                            console.log('[SynergyMatrix] HTML ячейки команд (первая строка):', teamsCell.innerHTML);
+                                                            console.log('[SynergyMatrix] Найдено ссылок на команды:', teamLinks.length);
+                                                            if (teamLinks.length > 0) {
+                                                                console.log('[SynergyMatrix] Первая ссылка href:', teamLinks[0].getAttribute('href'));
+                                                                console.log('[SynergyMatrix] Первая ссылка текст:', teamLinks[0].textContent);
+                                                            }
+                                                        }
+                                                        
                                                         if (teamLinks.length > 0) {
                                                             // Берем первую ссылку - это команда игрока
                                                             const firstTeamLink = teamLinks[0];
@@ -5093,9 +5106,19 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
 
                                                     if (!shouldExclude) {
                                                         // Определяем, играл ли игрок за нужную команду
-                                                        // Если teamId указан, проверяем совпадение
-                                                        // Если не совпадает - игрок играл за другую команду (аренда/трансфер)
-                                                        const playedForTeam = !teamId || !matchTeamId || String(matchTeamId) === String(teamId);
+                                                        // Если teamId не указан - считаем что играл за свою команду
+                                                        // Если matchTeamId не найден - не можем определить, считаем что НЕ играл за команду
+                                                        // Если оба ID есть - сравниваем
+                                                        let playedForTeam = false;
+                                                        if (!teamId) {
+                                                            // Если фильтр по команде не задан - считаем все матчи
+                                                            playedForTeam = true;
+                                                        } else if (matchTeamId) {
+                                                            // Если ID команды найден - сравниваем
+                                                            playedForTeam = String(matchTeamId) === String(teamId);
+                                                        }
+                                                        // Если matchTeamId === null, то playedForTeam остается false
+                                                        
                                                         const played = playedMinutes && playedForTeam;
 
                                                         matches.push({
@@ -5104,7 +5127,7 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                             played: played, // true только если играл минуты И за нужную команду
                                                             isFriendly: isFriendly,
                                                             isNationalTeam: isNationalTeam,
-                                                            minutes: played ? minutes : 0,
+                                                            minutes: playedMinutes ? minutes : 0, // реальные минуты (даже за другую команду)
                                                             teamId: matchTeamId,
                                                             playedForTeam: playedForTeam // для отладки
                                                         });
