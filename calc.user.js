@@ -5135,10 +5135,16 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                 console.log(`[SynergyMatrix] Детали первых 3 матчей игрока ${playerId}:`);
                                 const first3 = uniqueMatches.slice(0, 3);
                                 console.log(`[SynergyMatrix] Количество матчей для вывода: ${first3.length}`);
-                                first3.forEach((m, idx) => {
-                                    console.log(`  [${idx}] День ${m.day}: teamId=${m.teamId}, minutes=${m.minutes}, playedForTeam=${m.playedForTeam}, played=${m.played}, tournament=${m.tournament}`);
-                                    console.log(`  [${idx}] Полный объект:`, JSON.stringify(m));
-                                });
+                                
+                                if (first3.length > 0) {
+                                    console.log(`[SynergyMatrix] Матч 0:`, first3[0]);
+                                }
+                                if (first3.length > 1) {
+                                    console.log(`[SynergyMatrix] Матч 1:`, first3[1]);
+                                }
+                                if (first3.length > 2) {
+                                    console.log(`[SynergyMatrix] Матч 2:`, first3[2]);
+                                }
                             }
                         }
 
