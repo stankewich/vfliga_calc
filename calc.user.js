@@ -5069,7 +5069,7 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
 
                                                     // Проверяем, играл ли игрок (минуты > 0)
                                                     const minutes = parseInt(minutesCell);
-                                                    const played = !isNaN(minutes) && minutes > 0;
+                                                    const playedMinutes = !isNaN(minutes) && minutes > 0;
 
                                                     // Извлекаем ID команды игрока из ссылки
                                                     // В teamsCell есть две ссылки: первая (жирная) - команда игрока, вторая - соперник
@@ -5091,18 +5091,22 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                     const shouldExclude = (excludeFriendly && isFriendly) || 
                                                                         (excludeNationalTeam && isNationalTeam);
 
-                                                    // Фильтруем по команде, если teamId указан
-                                                    const teamMatches = !teamId || !matchTeamId || String(matchTeamId) === String(teamId);
+                                                    if (!shouldExclude) {
+                                                        // Определяем, играл ли игрок за нужную команду
+                                                        // Если teamId указан, проверяем совпадение
+                                                        // Если не совпадает - игрок играл за другую команду (аренда/трансфер)
+                                                        const playedForTeam = !teamId || !matchTeamId || String(matchTeamId) === String(teamId);
+                                                        const played = playedMinutes && playedForTeam;
 
-                                                    if (!shouldExclude && teamMatches) {
                                                         matches.push({
                                                             day: day,
                                                             tournament: tournamentCell,
-                                                            played: played,
+                                                            played: played, // true только если играл минуты И за нужную команду
                                                             isFriendly: isFriendly,
                                                             isNationalTeam: isNationalTeam,
                                                             minutes: played ? minutes : 0,
-                                                            teamId: matchTeamId
+                                                            teamId: matchTeamId,
+                                                            playedForTeam: playedForTeam // для отладки
                                                         });
                                                     }
                                                 }
@@ -5117,15 +5121,14 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                             index === self.findIndex(m => m.day === match.day && m.tournament === match.tournament)
                         ).sort((a, b) => b.day - a.day);
 
-                        // Логирование исключенных матчей
-                        const totalParsed = tables.length > 0 ? Array.from(tables[0].querySelectorAll('tr')).length - 1 : 0;
-                        const excluded = totalParsed - uniqueMatches.length;
-                        if (excluded > 0) {
-                            const reasons = [];
-                            if (excludeFriendly) reasons.push('товарищеские');
-                            if (excludeNationalTeam) reasons.push('сборные');
-                            if (teamId) reasons.push(`другие команды (фильтр: ${teamId})`);
-                            console.log(`[SynergyMatrix] Игрок ${playerId}: исключено ${excluded} матчей (${reasons.join(', ')})`);
+                        // Логирование статистики матчей
+                        if (teamId && uniqueMatches.length > 0) {
+                            const totalMatches = uniqueMatches.length;
+                            const playedForTeam = uniqueMatches.filter(m => m.playedForTeam && m.played).length;
+                            const playedForOther = uniqueMatches.filter(m => !m.playedForTeam && m.minutes > 0).length;
+                            const notPlayed = uniqueMatches.filter(m => m.minutes === 0).length;
+                            
+                            console.log(`[SynergyMatrix] Игрок ${playerId}: всего ${totalMatches} матчей, за команду ${teamId}: ${playedForTeam}, за другие команды: ${playedForOther}, не играл: ${notPlayed}`);
                         }
 
                         resolve(uniqueMatches);
