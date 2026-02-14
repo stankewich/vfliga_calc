@@ -8448,19 +8448,20 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
 
             // Обновляем каждый селектор
             [
-                { select: shtSelect, type: 'sht', label: 'некому исполнять штрафные' },
-                { select: uglovSelect, type: 'uglov', label: 'некому исполнять угловые' },
-                { select: penaltySelect, type: 'penalty', label: 'некому исполнять пенальти' }
-            ].forEach(({ select, type, label }) => {
+                { select: shtSelect, type: 'sht', emptyLabel: 'некому исполнять штрафные', defaultLabel: 'выберите игрока для штрафных' },
+                { select: uglovSelect, type: 'uglov', emptyLabel: 'некому исполнять угловые', defaultLabel: 'выберите игрока для угловых' },
+                { select: penaltySelect, type: 'penalty', emptyLabel: 'некому исполнять пенальти', defaultLabel: 'выберите игрока для пенальти' }
+            ].forEach(({ select, type, emptyLabel, defaultLabel }) => {
                 if (select) {
                     const currentValue = select.value;
                     select.innerHTML = '';
 
-                    // Добавляем опцию по умолчанию
+                    // Добавляем опцию по умолчанию с динамическим текстом
                     const defaultOption = document.createElement('option');
                     defaultOption.value = '-1';
                     defaultOption.className = 'grD';
-                    defaultOption.textContent = label;
+                    // Если есть доступные игроки - "выберите игрока", иначе - "некому исполнять"
+                    defaultOption.textContent = availablePlayers.length > 0 ? defaultLabel : emptyLabel;
                     select.appendChild(defaultOption);
 
                     // Добавляем игроков
