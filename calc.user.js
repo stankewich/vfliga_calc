@@ -4498,15 +4498,8 @@ function calculateSynergyFromMatrix(synergyData, lineupPlayerIds = null) {
             break;
         }
 
-        // Рассчитываем бонус по конфигурации
-        let matchBonus = 0;
-        if (playersInMatch >= 11) {
-            // Для 11+ игроков используем бонус для 11
-            matchBonus = SYNERGY_MATRIX_CONFIG.SYNERGY_BONUSES[11];
-        } else if (SYNERGY_MATRIX_CONFIG.SYNERGY_BONUSES[playersInMatch] !== undefined) {
-            // Для остальных используем точное значение
-            matchBonus = SYNERGY_MATRIX_CONFIG.SYNERGY_BONUSES[playersInMatch];
-        }
+        // Рассчитываем бонус по конфигурации (для 11+ игроков используем бонус для 11)
+        const matchBonus = SYNERGY_MATRIX_CONFIG.SYNERGY_BONUSES[Math.min(playersInMatch, 11)] || 0;
 
         console.log(`[SynergyCalc] День ${matchDay}: бонус ${matchBonus}%`);
 
@@ -12056,11 +12049,19 @@ function getTournamentType() {
                     const isAvg = variant === 'avg';
                     const bgColor = isAvg ? ' bgcolor="#fff9db"' : '';
                     
+                    // Динамическая ширина колонок на основе процентов
+                    const homeWidth = Math.round(331 * (homePercent / 100));
+                    const awayWidth = 331 - homeWidth;
+                    
+                    // Разница показывается только у выигрывающей команды
+                    const homeDiff = diff > 0 ? `<span class="lh12 up" style="padding-left:2px">+${Math.round(diff)}</span>` : '';
+                    const awayDiff = diff < 0 ? `<span class="lh12 up" style="padding-left:2px">+${Math.round(Math.abs(diff))}</span>` : '';
+                    
                     tableHTML += `
                         <tr${bgColor}>
                             <td class="lh18 txt" width="240">${variantData.weather}, ${variantData.temperature}°</td>
-                            <td class="rdl" width="331">${Math.round(homeStr)}<span class="lh12 up" style="padding-left:2px">${diff > 0 ? '+' + Math.round(diff) : ''}</span><div style="float:right; padding-right:5px"><b>${homePercent}%</b></div></td>
-                            <td class="gdl">${Math.round(awayStr)}<div style="float:left; padding-left:5px"><b>${awayPercent}%</b></div></td>
+                            <td class="rdl" width="${homeWidth}">${Math.round(homeStr)}${homeDiff}<div style="float:right; padding-right:5px"><b>${homePercent}%</b></div></td>
+                            <td class="gdl" width="${awayWidth}">${Math.round(awayStr)}${awayDiff}<div style="float:left; padding-left:5px"><b>${awayPercent}%</b></div></td>
                         </tr>
                     `;
                 });
