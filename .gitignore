@@ -3,3 +3,6 @@ shirts-system.js
 
 # Примеры и тестовые файлы
 examples/
+
+# Логи
+logs/
