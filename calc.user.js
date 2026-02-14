@@ -2,7 +2,7 @@
 // @name         Virtual Soccer Strength Analyzer
 // @namespace    http://tampermonkey.net/
 // @license MIT
-// @version      0.946
+// @version      0.9465
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        *://*.virtualsoccer.ru/previewmatch.php*
@@ -3316,8 +3316,10 @@ function parseAbilities(abilitiesStr) {
         return [];
     }
     const res = [];
-    const singleFlags = abilitiesStr.match(/\b[А-ЯЁA-Z]\b/gi) || [];
-    singleFlags.forEach(f => {
+    // Ищем одиночные буквы (окруженные пробелами или в начале/конце строки)
+    const singleFlags = abilitiesStr.match(/(?:^|\s)([А-ЯЁA-Z])(?:\s|$)/gi) || [];
+    singleFlags.forEach(match => {
+        const f = match.trim();
         const up = f.replace('ё', 'е').replace('Ё', 'Е').toUpperCase();
         if (up === 'Л') {
             res.push({
@@ -6261,6 +6263,7 @@ function createDummySelect() {
     }
     #vsol-calculator-ui .orders-option { padding: 2px 4px; height: 20px; line-height: 16px; font-size: 11px; text-align: left; cursor: pointer; color: rgb(68, 68, 68); }
     #vsol-calculator-ui .orders-option:hover { background: rgb(240, 240, 240); }
+    #vsol-calculator-ui .orders-option.selected { background: rgb(220, 235, 255); font-weight: bold; }
     #vsol-calculator-ui .orders-option.disabled { color: rgb(187, 187, 187); cursor: default; }
     #vsol-calculator-ui .orders-placeholder { color: rgb(163,163,163); }
 
@@ -6760,7 +6763,10 @@ function createOrdersSelect({
         dropdown.innerHTML = '';
         opts.forEach(opt => {
             const div = document.createElement('div');
-            div.className = 'orders-option' + (opt.disabled ? ' disabled' : '');
+            const isSelected = String(opt.value || '') === String(currentValue);
+            div.className = 'orders-option' + 
+                (opt.disabled ? ' disabled' : '') + 
+                (isSelected ? ' selected' : '');
             div.textContent = opt.label;
             div.dataset.value = opt.value;
             if (!opt.disabled) {
@@ -7848,16 +7854,59 @@ function parseWeatherFromPreview() {
     const weatherMatch = text.match(/Прогноз погоды:.*?([а-яё\- ]+),/i);
     const weather = weatherMatch ? weatherMatch[1].trim() : '';
     const tempMatch = text.match(/, ([\d\-]+)[°]/);
+    let minTemp = null;
+    let maxTemp = null;
     let temperature = '';
     if (tempMatch) {
         const tempStr = tempMatch[1].trim();
-        if (tempStr.includes('-')) temperature = parseInt(tempStr.split('-')[0]);
-        else temperature = parseInt(tempStr);
+        if (tempStr.includes('-')) {
+            const parts = tempStr.split('-');
+            minTemp = parseInt(parts[0]);
+            maxTemp = parseInt(parts[1]);
+            temperature = minTemp; // для обратной совместимости
+        } else {
+            minTemp = maxTemp = parseInt(tempStr);
+            temperature = minTemp;
+        }
     }
     return {
         weather,
         temperature,
+        minTemp,
+        maxTemp,
         icon: weatherDiv.querySelector('img')?.src || ''
+    };
+}
+
+function getWeatherVariants(currentWeather, minTemp, maxTemp) {
+    const WEATHER_SCALE = [
+        "очень жарко", "жарко", "солнечно", 
+        "облачно", "пасмурно", "дождь", "снег"
+    ];
+    
+    const currentIndex = WEATHER_SCALE.indexOf(currentWeather);
+    if (currentIndex === -1 || minTemp === null || maxTemp === null) {
+        return null;
+    }
+    
+    const avgTemp = Math.round((minTemp + maxTemp) / 2);
+    
+    return {
+        min: {
+            weather: WEATHER_SCALE[Math.min(currentIndex + 1, WEATHER_SCALE.length - 1)],
+            temperature: minTemp,
+            label: 'Минимум'
+        },
+        avg: {
+            weather: currentWeather,
+            temperature: avgTemp,
+            label: 'Средний'
+        },
+        max: {
+            weather: WEATHER_SCALE[Math.max(currentIndex - 1, 0)],
+            temperature: maxTemp,
+            label: 'Максимум'
+        }
     };
 }
 class FormationManager {
@@ -7990,8 +8039,14 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             const matchPosition = slot.posValue;
             const currentSlotFormId = slot.physicalFormValue;  // Может быть null - это нормально
 
+            // Добавляем первую опцию для очистки выбора
+            const emptyOption = {
+                value: '',
+                label: placeholder
+            };
+
             // Для каждого игрока в dropdown используем его собственную форму
-            const opts = pool.map(p => {
+            const playerOpts = pool.map(p => {
                 // Находим слот, в котором находится этот игрок (если он выбран где-то)
                 const playerSlot = lineup.find(s => s.getValue() === String(p.id));
                 const playerFormId = playerSlot ? playerSlot.physicalFormValue : null;
@@ -8001,6 +8056,9 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     label: toOptionLabel(p, matchPosition, playerFormId)
                 };
             });
+            
+            // Объединяем: сначала пустая опция, потом игроки
+            const opts = [emptyOption, ...playerOpts];
             slot.setOptions(opts);
 
             // Обновляем label выбранного игрока с его собственной формой
@@ -8254,7 +8312,24 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     }
                 } else {
                     // Игрок не выбран - очищаем данные
-                    slotApi.selectedPlayer = null;  // ← ДОБАВЛЕНО
+                    slotApi.selectedPlayer = null;
+                    
+                    // Очищаем физическую форму
+                    if (slotApi.physicalFormSelect) {
+                        slotApi.physicalFormSelect.setValue(null);
+                        slotApi.physicalFormValue = null;
+                    }
+                    
+                    // Очищаем модифицированную силу
+                    slotApi.modifiedRealStr = null;
+                    
+                    // Сбрасываем стиль на обычный
+                    slotApi.customStyleValue = 'norm';
+                    if (styleSelect && styleSelect.setValue) {
+                        styleSelect.setValue('norm');
+                        console.log(`[SELECT] Сброшен стиль на norm при очистке (setValue)`);
+                    }
+                    
                     console.log(`[SELECT] Игрок не выбран, очищаем данные`);
                 }
             },
@@ -8305,7 +8380,26 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                 }
             } else {
                 // Игрок не выбран - очищаем данные
-                slotApi.selectedPlayer = null;  // ← ДОБАВЛЕНО
+                slotApi.selectedPlayer = null;
+                
+                // Очищаем физическую форму
+                if (slotApi.physicalFormSelect) {
+                    slotApi.physicalFormSelect.setValue(null);
+                    slotApi.physicalFormValue = null;
+                }
+                
+                // Очищаем модифицированную силу
+                slotApi.modifiedRealStr = null;
+                
+                // Сбрасываем стиль на обычный
+                slotApi.customStyleValue = 'norm';
+                if (styleSelect && styleSelect.setValue) {
+                    styleSelect.setValue('norm');
+                    console.log(`[SELECT] Сброшен стиль на norm при очистке игрока`);
+                }
+                
+                // Обновляем селекторы после очистки
+                updatePlayerSelectOptions();
             }
         };
         const origSetOptions = slotApi.setOptions.bind(slotApi);
@@ -8315,11 +8409,10 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             if (dropdown) {
                 dropdown.querySelectorAll('.orders-option').forEach(div => {
                     const val = div.dataset.value;
-                    if (val) {
-                        div.addEventListener('click', () => onChangePlayer(val), {
-                            once: true
-                        });
-                    }
+                    // Вызываем onChangePlayer для всех опций, включая пустую
+                    div.addEventListener('click', () => onChangePlayer(val || ''), {
+                        once: true
+                    });
                 });
             }
         };
@@ -8447,10 +8540,11 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             });
 
             // Обновляем каждый селектор
+            console.log('[RoleSelectors] Обновление селекторов, доступно игроков:', availablePlayers.length);
             [
-                { select: shtSelect, type: 'sht', emptyLabel: 'некому исполнять штрафные', defaultLabel: 'выберите игрока для штрафных' },
-                { select: uglovSelect, type: 'uglov', emptyLabel: 'некому исполнять угловые', defaultLabel: 'выберите игрока для угловых' },
-                { select: penaltySelect, type: 'penalty', emptyLabel: 'некому исполнять пенальти', defaultLabel: 'выберите игрока для пенальти' }
+                { select: shtSelect, type: 'sht', emptyLabel: 'некому исполнять штрафные', defaultLabel: 'выберите игрока' },
+                { select: uglovSelect, type: 'uglov', emptyLabel: 'некому исполнять угловые', defaultLabel: 'выберите игрока' },
+                { select: penaltySelect, type: 'penalty', emptyLabel: 'некому исполнять пенальти', defaultLabel: 'выберите игрока' }
             ].forEach(({ select, type, emptyLabel, defaultLabel }) => {
                 if (select) {
                     const currentValue = select.value;
@@ -8461,7 +8555,9 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     defaultOption.value = '-1';
                     defaultOption.className = 'grD';
                     // Если есть доступные игроки - "выберите игрока", иначе - "некому исполнять"
-                    defaultOption.textContent = availablePlayers.length > 0 ? defaultLabel : emptyLabel;
+                    const labelText = availablePlayers.length > 0 ? defaultLabel : emptyLabel;
+                    defaultOption.textContent = labelText;
+                    console.log(`[RoleSelectors] ${type}: текст="${labelText}"`);
                     select.appendChild(defaultOption);
 
                     // Добавляем игроков
@@ -10132,24 +10228,6 @@ function getTournamentType() {
             }
         }
 
-        // Бонус атмосферы (для домашней команды)
-        if (team === 'home') {
-            const atmosphereSelect = document.getElementById('vs-home-atmosphere');
-            if (atmosphereSelect) {
-                const atmosphereValue = Number(atmosphereSelect.value) || 0;
-                if (atmosphereValue >= 100) {
-                    contribution.atmosphere = Math.round(calculatedStr * 0.15);
-                } else if (atmosphereValue >= 90) {
-                    contribution.atmosphere = Math.round(calculatedStr * 0.10);
-                } else if (atmosphereValue >= 80) {
-                    contribution.atmosphere = Math.round(calculatedStr * 0.05);
-                } else {
-                    contribution.atmosphere = Math.round(calculatedStr * 0.025);
-                }
-            }
-        }
-
-        // Общий вклад
         contribution.total = calculatedStr + 
             contribution.captain + 
             contribution.synergy + 
@@ -10949,18 +11027,29 @@ function getTournamentType() {
         function extractTeamNames() {
             const matchHeader = document.querySelector('tr[bgcolor="#006600"] td.txtw');
             if (matchHeader) {
-                const teamLinks = matchHeader.querySelectorAll('a.mnuw b');
+                const teamLinks = matchHeader.querySelectorAll('a.mnuw');
                 if (teamLinks.length >= 2) {
+                    // Извлекаем эмблемы команд
+                    const homeEmblem = teamLinks[0].querySelector('img')?.src || '';
+                    const awayEmblem = teamLinks[1].querySelector('img')?.src || '';
+                    
+                    // Извлекаем названия команд
+                    const teamNames = matchHeader.querySelectorAll('a.mnuw b');
+                    
                     return {
-                        home: teamLinks[0].textContent.trim(),
-                        away: teamLinks[1].textContent.trim()
+                        home: teamNames[0]?.textContent.trim() || 'Команда хозяев',
+                        away: teamNames[1]?.textContent.trim() || 'Команда гостей',
+                        homeEmblem,
+                        awayEmblem
                     };
                 }
             }
             // Fallback к заглушкам если не найдено
             return {
                 home: 'Команда хозяев',
-                away: 'Команда гостей'
+                away: 'Команда гостей',
+                homeEmblem: '',
+                awayEmblem: ''
             };
         }
 
@@ -11354,10 +11443,20 @@ function getTournamentType() {
         container.appendChild(clearBtn);
 
         // Функция для пересчета силы команд
+        let isCalculating = false;
         window.__vs_recalculateStrength = async () => {
+            // Защита от повторного вызова
+            if (isCalculating) {
+                console.log('[Calc] Already calculating, skipping...');
+                return;
+            }
+            
+            isCalculating = true;
+            
             const wt = getCurrentWeatherFromUI();
             if (!wt) {
                 alert('Не найдены элементы UI погоды');
+                isCalculating = false;
                 return;
             }
             const stadiumCapacityLocal = stadiumCapacity;
@@ -11371,7 +11470,7 @@ function getTournamentType() {
             const homeTeamStyleId = mapCustomStyleToStyleId(homeStyle.value);
             const awayTeamStyleId = mapCustomStyleToStyleId(awayStyle.value);
             async function computeTeamStrength(lineup, players, teamStyleId, sideLabel, opponentTeamStyleId,
-                homeBonusPercent = -1, userSynergy = 0, atmosphereValue = 0) {
+                homeBonusPercent = -1, userSynergy = 0, atmosphereValue = 0, weatherOverride = null, temperatureOverride = null) {
                 const teamRatings = window.cachedTeamRatings || parseTeamsRatingFromPage() || {
                     home: 0,
                     away: 0
@@ -11418,6 +11517,11 @@ function getTournamentType() {
                     teamStatus,
                     teamBonus
                 } = getCollisionInfo(myStyleId, oppStyleId);
+                
+                // Используем переданные значения погоды или берем из UI
+                const actualWeather = weatherOverride !== null ? weatherOverride : wt.weather;
+                const actualTemperature = temperatureOverride !== null ? temperatureOverride : wt.temperature;
+                
                 const tasks = lineup.map(slot => new Promise(resolve => {
                     const playerId = slot.getValue && slot.getValue();
                     if (!playerId) return resolve(null);
@@ -11428,7 +11532,7 @@ function getTournamentType() {
                         playerCustomStyle : 'norm';
                     const styleNumeric = STYLE_VALUES[playerStyleId] ?? 0;
                     const requestedStrength = Number(player.baseStrength) || 0;
-                    getWeatherStrengthValueCached(styleNumeric, wt.temperature, wt.weather,
+                    getWeatherStrengthValueCached(styleNumeric, actualTemperature, actualWeather,
                         requestedStrength, (res) => {
                             if (!res || !res.found) {
                                 console.warn('[Calc] WeatherStrength not found', {
@@ -11436,8 +11540,8 @@ function getTournamentType() {
                                     player: player?.name,
                                     playerStyleId,
                                     teamStyleId: myStyleId,
-                                    weather: wt.weather,
-                                    temperature: wt.temperature,
+                                    weather: actualWeather,
+                                    temperature: actualTemperature,
                                     strengthRow: requestedStrength,
                                     error: res?.error
                                 });
@@ -11455,8 +11559,8 @@ function getTournamentType() {
                             console.log('[Weather] Player WS calculated', {
                                 player: player.name,
                                 baseStr: player.baseStrength,
-                                temperature: wt.temperature,
-                                weather: wt.weather,
+                                temperature: actualTemperature,
+                                weather: actualWeather,
                                 weatherStr: res.weatherStr,
                                 ws: ws,
                                 method: res.details?.method,
@@ -11549,20 +11653,35 @@ function getTournamentType() {
                 };
                 slotEntries.forEach(entry => {
                     const line = getLineByMatchPos(entry.matchPos);
-                    if (!line) return;
+                    if (!line) {
+                        console.log(`[LEADERSHIP] Игрок ${entry.player.name} (${entry.matchPos}): линия не определена, пропускаем`);
+                        return;
+                    }
+                    console.log(`[LEADERSHIP] Проверка игрока: ${entry.player.name} (${entry.matchPos}), линия: ${line}, abilities: "${entry.player.abilities}"`);
                     const abilities = parseAbilities(entry.player.abilities);
+                    console.log(`[LEADERSHIP] Распарсенные способности:`, abilities);
                     const leaderAb = abilities.find(a => a.type === 'Л');
-                    if (!leaderAb) return;
+                    if (!leaderAb) {
+                        console.log(`[LEADERSHIP] У игрока ${entry.player.name} нет способности Л`);
+                        return;
+                    }
                     const lvl = Math.max(1, Math.min(4, Number(leaderAb.level) || 1));
+                    console.log(`[LEADERSHIP] Найден лидер: ${entry.player.name} (ID: ${entry.player.id}), позиция: ${entry.matchPos}, линия: ${line}, уровень Л: ${lvl}`);
                     leadersByLine[line].push({
                         entry,
                         level: lvl
                     });
                 });
                 const leadershipBonusByPlayerId = new Map();
+                console.log(`[LEADERSHIP] Лидеры по линиям для команды ${sideLabel}:`, {
+                    DEF: leadersByLine.DEF.map(l => `${l.entry.player.name} (${l.entry.matchPos}, Л${l.level})`),
+                    MID: leadersByLine.MID.map(l => `${l.entry.player.name} (${l.entry.matchPos}, Л${l.level})`),
+                    ATT: leadersByLine.ATT.map(l => `${l.entry.player.name} (${l.entry.matchPos}, Л${l.level})`)
+                });
                 ['DEF', 'MID', 'ATT'].forEach(line => {
                     const leaders = leadersByLine[line];
                     if (!leaders || leaders.length !== 1) {
+                        console.log(`[LEADERSHIP] Линия ${line}: бонус НЕ применяется (лидеров: ${leaders ? leaders.length : 0}, требуется ровно 1)`);
                         return;
                     }
                     const leader = leaders[0];
@@ -11582,6 +11701,7 @@ function getTournamentType() {
 
                     const coeff = LEADERSHIP_LEVEL_COEFF[leader.level] || 0;
                     const perPlayerBonus = leaderCalculatedStr * coeff;
+                    console.log(`[LEADERSHIP] Линия ${line}: лидер ${leader.entry.player.name}, сила: ${leaderCalculatedStr.toFixed(2)}, коэфф: ${coeff}, бонус на игрока: ${perPlayerBonus.toFixed(2)}`);
                     slotEntries.forEach(entry => {
                         const l = getLineByMatchPos(entry.matchPos);
                         if (l !== line) {
@@ -11589,6 +11709,7 @@ function getTournamentType() {
                         }
                         const prev = leadershipBonusByPlayerId.get(String(entry.player.id)) || 0;
                         leadershipBonusByPlayerId.set(String(entry.player.id), prev + perPlayerBonus);
+                        console.log(`[LEADERSHIP] Применен бонус к игроку ${entry.player.name} (${entry.matchPos}): +${perPlayerBonus.toFixed(2)}`);
                     });
                 });
                 results.forEach(entry => {
@@ -11737,6 +11858,7 @@ function getTournamentType() {
                     const roughBonusForPlayer = getRoughBonusForPlayer(calculatedRealStr, roughMode);
 
                     const leadershipBonusForPlayer = leadershipBonusByPlayerId.get(String(entry.player.id)) || 0;
+                    console.log(`[LEADERSHIP] Игрок ${entry.player.name} (ID: ${entry.player.id}): бонус лидерства = ${leadershipBonusForPlayer.toFixed(2)}`);
                     totalLeadershipBonus += leadershipBonusForPlayer;
 
                     // teamIBonus добавляется к каждому игроку
@@ -11815,24 +11937,158 @@ function getTournamentType() {
                 return total
             }
             try {
-                const [homeStrength, awayStrength] = await Promise.all([
-                    computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
-                        'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere),
-                    computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
-                        'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere)
-                ]);
+                // Удаляем предыдущий результат
                 const oldResult = container.querySelector('.vsol-result');
                 if (oldResult) oldResult.remove();
+                
+                // Проверяем, есть ли игроки в составах
+                const homeHasPlayers = homeLineupBlock.lineup.some(slot => slot.getValue && slot.getValue());
+                const awayHasPlayers = awayLineupBlock.lineup.some(slot => slot.getValue && slot.getValue());
+                
+                // Если составы пусты, показываем сообщение
+                if (!homeHasPlayers || !awayHasPlayers) {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'vsol-result';
+                    resultDiv.style.marginTop = '15px';
+                    resultDiv.innerHTML = `
+                        <table style="width:100%; border-collapse:collapse;">
+                            <tbody>
+                                <tr bgcolor="#fff9db">
+                                    <td class="lh18 txt" style="text-align:center;">
+                                        <strong>⚠️ Составы не заполнены</strong><br>
+                                        <span style="font-size:11px;">Добавьте игроков в составы обеих команд для расчета силы</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    `;
+                    container.appendChild(resultDiv);
+                    return;
+                }
+                
+                // Получаем варианты погоды
+                const weatherData = parseWeatherFromPreview();
+                const weatherVariants = weatherData && weatherData.minTemp !== null && weatherData.maxTemp !== null
+                    ? getWeatherVariants(weatherData.weather, weatherData.minTemp, weatherData.maxTemp)
+                    : null;
+                
+                // Если нет вариантов погоды, делаем один расчет
+                if (!weatherVariants) {
+                    const [homeStrength, awayStrength] = await Promise.all([
+                        computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
+                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere),
+                        computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
+                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere)
+                    ]);
+                    
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'vsol-result';
+                    resultDiv.style.marginTop = '15px';
+                    resultDiv.style.fontWeight = 'bold';
+                    resultDiv.innerHTML =
+                        `<div>Сила хозяев: <b>${Math.round(homeStrength)}</b></div><div>Сила гостей: <b>${Math.round(awayStrength)}</b></div>`;
+                    container.appendChild(resultDiv);
+                    return;
+                }
+                
+                // Делаем 3 расчета для разных погодных условий
+                const calculations = await Promise.all([
+                    // Минимум
+                    Promise.all([
+                        computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
+                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere,
+                            weatherVariants.min.weather, weatherVariants.min.temperature),
+                        computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
+                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere,
+                            weatherVariants.min.weather, weatherVariants.min.temperature)
+                    ]),
+                    // Средний
+                    Promise.all([
+                        computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
+                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere,
+                            weatherVariants.avg.weather, weatherVariants.avg.temperature),
+                        computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
+                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere,
+                            weatherVariants.avg.weather, weatherVariants.avg.temperature)
+                    ]),
+                    // Максимум
+                    Promise.all([
+                        computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
+                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere,
+                            weatherVariants.max.weather, weatherVariants.max.temperature),
+                        computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
+                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere,
+                            weatherVariants.max.weather, weatherVariants.max.temperature)
+                    ])
+                ]);
+                
+                const teamNames = extractTeamNames();
+                
+                // Создаем таблицу с результатами
                 const resultDiv = document.createElement('div');
                 resultDiv.className = 'vsol-result';
                 resultDiv.style.marginTop = '15px';
-                resultDiv.style.fontWeight = 'bold';
-                resultDiv.innerHTML =
-                    `<div>Сила хозяев: <b>${Math.round(homeStrength)}</b></div><div>Сила гостей: <b>${Math.round(awayStrength)}</b></div>`;
+                
+                let tableHTML = `<table style="width:100%; border-collapse:collapse;"><tbody>`;
+                
+                // Заголовок с названиями команд
+                tableHTML += `
+                    <tr bgcolor="#006600">
+                        <td class="lh20 txtw" colspan="3" style="text-align:center;">
+                            ${teamNames.homeEmblem ? `<img src="${teamNames.homeEmblem}" style="vertical-align:middle; margin-right:5px;" width="16" height="16">` : ''}
+                            <b>${teamNames.home}</b>
+                            <span style="margin:0 10px;">—</span>
+                            ${teamNames.awayEmblem ? `<img src="${teamNames.awayEmblem}" style="vertical-align:middle; margin-right:5px;" width="16" height="16">` : ''}
+                            <b>${teamNames.away}</b>
+                        </td>
+                    </tr>
+                `;
+                
+                // Строки с вариантами расчетов
+                const variants = ['min', 'avg', 'max'];
+                variants.forEach((variant, idx) => {
+                    const [homeStr, awayStr] = calculations[idx];
+                    const diff = homeStr - awayStr;
+                    const homePercent = homeStr + awayStr > 0 ? Math.round((homeStr / (homeStr + awayStr)) * 100) : 50;
+                    const awayPercent = 100 - homePercent;
+                    
+                    const variantData = weatherVariants[variant];
+                    const isAvg = variant === 'avg';
+                    const bgColor = isAvg ? ' bgcolor="#fff9db"' : '';
+                    
+                    tableHTML += `
+                        <tr${bgColor}>
+                            <td class="lh18 txt" width="240">${variantData.weather}, ${variantData.temperature}°</td>
+                            <td class="rdl" width="331">${Math.round(homeStr)}<span class="lh12 up" style="padding-left:2px">${diff > 0 ? '+' + Math.round(diff) : ''}</span><div style="float:right; padding-right:5px"><b>${homePercent}%</b></div></td>
+                            <td class="gdl">${Math.round(awayStr)}<div style="float:left; padding-left:5px"><b>${awayPercent}%</b></div></td>
+                        </tr>
+                    `;
+                });
+                
+                tableHTML += `</tbody></table>`;
+                resultDiv.innerHTML = tableHTML;
                 container.appendChild(resultDiv);
             } catch (e) {
                 console.error('Ошибка расчёта:', e);
-                alert('Ошибка при расчёте силы команд. Подробности в консоли.');
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'vsol-result';
+                resultDiv.style.marginTop = '15px';
+                resultDiv.innerHTML = `
+                    <table style="width:100%; border-collapse:collapse;">
+                        <tbody>
+                            <tr bgcolor="#ffe0e0">
+                                <td class="lh18 txt" style="text-align:center;">
+                                    <strong>❌ Ошибка при расчёте силы команд</strong><br>
+                                    <span style="font-size:11px;">Подробности в консоли браузера</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+                container.appendChild(resultDiv);
+            } finally {
+                isCalculating = false;
             }
         };
 
