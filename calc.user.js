@@ -5129,6 +5129,14 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                             const notPlayed = uniqueMatches.filter(m => m.minutes === 0).length;
                             
                             console.log(`[SynergyMatrix] Игрок ${playerId}: всего ${totalMatches} матчей, за команду ${teamId}: ${playedForTeam}, за другие команды: ${playedForOther}, не играл: ${notPlayed}`);
+                            
+                            // Детальное логирование первых 3 матчей для отладки
+                            if (playedForTeam === 0 && totalMatches > 0) {
+                                console.log(`[SynergyMatrix] Детали первых 3 матчей игрока ${playerId}:`);
+                                uniqueMatches.slice(0, 3).forEach((m, idx) => {
+                                    console.log(`  [${idx}] День ${m.day}: teamId=${m.teamId}, minutes=${m.minutes}, playedForTeam=${m.playedForTeam}, played=${m.played}`);
+                                });
+                            }
                         }
 
                         resolve(uniqueMatches);
