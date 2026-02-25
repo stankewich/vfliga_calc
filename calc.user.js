@@ -4456,8 +4456,11 @@
 
             /**
             * Расчет сыгранности из матрицы данных
+            * @param {object} synergyData - Данные матрицы сыгранности
+            * @param {number[]} lineupPlayerIds - ID игроков в составе
+            * @param {string|number} teamId - ID команды (для определения дней матчей)
             */
-            function calculateSynergyFromMatrix(synergyData, lineupPlayerIds = null) {
+            async function calculateSynergyFromMatrix(synergyData, lineupPlayerIds = null, teamId = null) {
                 if (!synergyData || !synergyData.d_sygran || !synergyData.plr_sygran || !synergyData.plr_id) {
                     console.log('[SynergyCalc] Некорректные данные сыгранности');
                     return null;
@@ -4476,6 +4479,18 @@
                 console.log('[SynergyCalc] Начинаем расчет для', currentLineup.length, 'игроков');
                 console.log('[SynergyCalc] Всего матчей в данных:', synergyData.d_sygran.length);
 
+                // Загружаем дни матчей команды (если teamId указан)
+                let teamMatchDays = [];
+                if (teamId) {
+                    try {
+                        teamMatchDays = await getTeamMatchDaysWithCache(teamId);
+                        console.log(`[SynergyCalc] Загружено ${teamMatchDays.length} дней матчей для команды ${teamId}`);
+                    } catch (error) {
+                        console.error(`[SynergyCalc] Ошибка загрузки дней матчей для команды ${teamId}:`, error);
+                        // Продолжаем без проверки дней команды
+                    }
+                }
+
                 // Проходим по каждому матчу (дню)
                 for (let matchIndex = 0; matchIndex < synergyData.d_sygran.length; matchIndex++) {
                     const matchDay = synergyData.d_sygran[matchIndex];
@@ -4492,10 +4507,18 @@
 
                     console.log(`[SynergyCalc] День ${matchDay}: ${playersInMatch} игроков играло`);
 
-                    // Если менее минимума игроков играло, пропускаем этот день
+                    // Если менее минимума игроков играло
                     if (playersInMatch < SYNERGY_MATRIX_CONFIG.MIN_PLAYERS_FOR_SYNERGY) {
-                        console.log(`[SynergyCalc] День ${matchDay}: пропускаем (менее ${SYNERGY_MATRIX_CONFIG.MIN_PLAYERS_FOR_SYNERGY} игроков)`);
-                        continue;
+                        // Проверяем, играла ли команда в этот день
+                        if (teamMatchDays.length > 0 && teamMatchDays.includes(matchDay)) {
+                            // Команда играла, но мало игроков из состава → прерываем анализ
+                            console.log(`[SynergyCalc] День ${matchDay}: прерываем анализ (команда играла, но только ${playersInMatch} игроков из состава)`);
+                            break;
+                        } else {
+                            // Команда не играла (или нет данных о днях) → пропускаем день
+                            console.log(`[SynergyCalc] День ${matchDay}: пропускаем (команда не играла или менее ${SYNERGY_MATRIX_CONFIG.MIN_PLAYERS_FOR_SYNERGY} игроков)`);
+                            continue;
+                        }
                     }
 
                     // Рассчитываем бонус по конфигурации (для 11+ игроков используем бонус для 11)
@@ -4522,7 +4545,7 @@
             /**
             * Пересчет сыгранности (основная функция для кнопки)
             */
-            function recalculateSynergy() {
+            async function recalculateSynergy() {
                 console.log('[Recalculate] Пересчет сыгранности');
 
                 // Извлекаем состав из слотов калькулятора
@@ -4587,7 +4610,8 @@
                 console.log('Используем данные команды', targetTeam);
 
                 // Рассчитываем сыгранность
-                const result = calculateSynergyFromMatrix(synergyData, currentLineup);
+                const teamId = synergyData.teamId || null;
+                const result = await calculateSynergyFromMatrix(synergyData, currentLineup, teamId);
 
                 if (result && result.value > 0) {
                     const synergyPercent = Math.round(result.value);
@@ -5248,6 +5272,7 @@
                         plr_sygran: participationMatrix,
                         plr_id: playerIds.map(id => parseInt(id)),
                         orders: [playerIds.slice(0, 11)],
+                        teamId: teamId, // Добавляем ID команды
 
                         // Метаданные актуальности
                         generatedAt: generationTime,
@@ -5322,7 +5347,7 @@
                     console.log(`[AutoSynergy] Матрица построена для ${teamType}:`, synergyMatrix.d_sygran.length, 'матчей');
 
                     // Рассчитываем сыгранность (используем существующую функцию)
-                    const synergyResult = calculateSynergyFromMatrix(synergyMatrix, playerIds);
+                    const synergyResult = await calculateSynergyFromMatrix(synergyMatrix, playerIds, teamId);
 
                     if (!synergyResult) {
                         console.warn(`[AutoSynergy] Не удалось рассчитать сыгранность для ${teamType}`);
@@ -9721,6 +9746,166 @@
                     });
                 }
 
+
+                // ============================================
+                // КЭШИРОВАНИЕ ДНЕЙ МАТЧЕЙ КОМАНДЫ
+                // ============================================
+                
+                const TEAM_MATCH_DAYS_CACHE_TTL = 60 * 60 * 1000; // 1 час в миллисекундах
+                
+                /**
+                 * Получает закэшированные дни матчей команды
+                 * @param {string|number} teamId - ID команды
+                 * @returns {object|null} - {days: number[], timestamp: number} или null
+                 */
+                function getCachedTeamMatchDays(teamId) {
+                    try {
+                        const cacheKey = `teamMatchDays_${teamId}`;
+                        const cached = localStorage.getItem(cacheKey);
+                        
+                        if (cached) {
+                            const data = JSON.parse(cached);
+                            return data;
+                        }
+                    } catch (error) {
+                        console.error(`[Synergy] Error reading cache for team ${teamId}:`, error);
+                    }
+                    return null;
+                }
+                
+                /**
+                 * Сохраняет дни матчей команды в кэш
+                 * @param {string|number} teamId - ID команды
+                 * @param {number[]} days - Массив дней матчей
+                 */
+                function setCachedTeamMatchDays(teamId, days) {
+                    try {
+                        const cacheKey = `teamMatchDays_${teamId}`;
+                        const data = {
+                            days: days,
+                            timestamp: Date.now(),
+                            teamId: String(teamId)
+                        };
+                        localStorage.setItem(cacheKey, JSON.stringify(data));
+                        console.log(`[Synergy] Cached ${days.length} match days for team ${teamId}`);
+                    } catch (error) {
+                        console.error(`[Synergy] Error saving cache for team ${teamId}:`, error);
+                    }
+                }
+                
+                /**
+                 * Проверяет, валиден ли кэш
+                 * @param {number} timestamp - Время создания кэша
+                 * @returns {boolean}
+                 */
+                function isCacheValid(timestamp) {
+                    const now = Date.now();
+                    return (now - timestamp) < TEAM_MATCH_DAYS_CACHE_TTL;
+                }
+                
+                /**
+                 * Получает дни матчей команды с использованием кэша
+                 * @param {string|number} teamId - ID команды
+                 * @returns {Promise<number[]>} - Массив дней матчей
+                 */
+                async function getTeamMatchDaysWithCache(teamId) {
+                    // Проверяем кэш
+                    const cached = getCachedTeamMatchDays(teamId);
+                    if (cached && isCacheValid(cached.timestamp)) {
+                        console.log(`[Synergy] Using cached match days for team ${teamId} (age: ${Math.round((Date.now() - cached.timestamp) / 1000 / 60)} min)`);
+                        return cached.days;
+                    }
+                    
+                    // Загружаем с сервера
+                    console.log(`[Synergy] Cache miss or expired for team ${teamId}, loading from server`);
+                    try {
+                        const days = await getAllTeamMatchDays(teamId);
+                        
+                        // Сохраняем в кэш
+                        setCachedTeamMatchDays(teamId, days);
+                        
+                        return days;
+                    } catch (error) {
+                        console.error(`[Synergy] Failed to load match days for team ${teamId}:`, error);
+                        
+                        // Fallback: если есть старый кэш, используем его
+                        if (cached && cached.days) {
+                            console.warn(`[Synergy] Using expired cache for team ${teamId} as fallback`);
+                            return cached.days;
+                        }
+                        
+                        // Если совсем ничего нет, возвращаем пустой массив
+                        console.error(`[Synergy] No cache available for team ${teamId}, returning empty array`);
+                        return [];
+                    }
+                }
+
+                /**
+                 * Получает список всех дней матчей команды из roster_m.php
+                 * @param {string|number} teamId - ID команды
+                 * @returns {Promise<number[]>} - Массив дней матчей (отсортирован от новых к старым)
+                 */
+                function getAllTeamMatchDays(teamId) {
+                    return new Promise((resolve, reject) => {
+                        const url = `${SITE_CONFIG.BASE_URL}/roster_m.php?num=${teamId}`;
+                        console.log(`[Synergy] Loading match days for team ${teamId}`);
+                        
+                        GM_xmlhttpRequest({
+                            method: "GET",
+                            url: url,
+                            onload: function (response) {
+                                if (response.status !== 200) {
+                                    console.error(`[Synergy] Failed to load roster_m for team ${teamId}`);
+                                    reject(new Error('Failed to load roster_m'));
+                                    return;
+                                }
+
+                                try {
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(response.responseText, 'text/html');
+
+                                    // Ищем все ссылки на сыгранные матчи (viewmatch.php)
+                                    const matchLinks = Array.from(doc.querySelectorAll('a[href*="viewmatch.php"]'));
+                                    console.log(`[Synergy] Found ${matchLinks.length} match links for team ${teamId}`);
+
+                                    const matchDays = [];
+
+                                    // Извлекаем дни из всех матчей
+                                    for (const link of matchLinks) {
+                                        const scoreText = link.textContent.trim();
+
+                                        // Пропускаем несыгранные матчи (счет ?:?)
+                                        if (!scoreText || scoreText === "?:?") {
+                                            continue;
+                                        }
+
+                                        const href = link.getAttribute('href');
+                                        const match = href.match(/day=(\d+)/);
+                                        if (match) {
+                                            const day = parseInt(match[1]);
+                                            if (day && !isNaN(day) && !matchDays.includes(day)) {
+                                                matchDays.push(day);
+                                            }
+                                        }
+                                    }
+
+                                    // Сортируем от новых к старым (как в матрице сыгранности)
+                                    matchDays.sort((a, b) => b - a);
+
+                                    console.log(`[Synergy] Team ${teamId} played ${matchDays.length} matches, days:`, matchDays.slice(0, 5), '...');
+                                    resolve(matchDays);
+                                } catch (error) {
+                                    console.error(`[Synergy] Error parsing roster_m for team ${teamId}:`, error);
+                                    reject(error);
+                                }
+                            },
+                            onerror: function (err) {
+                                console.error(`[Synergy] Network error loading roster_m for team ${teamId}:`, err);
+                                reject(err);
+                            }
+                        });
+                    });
+                }
 
                 function getLastMatchForTeam(teamId, preferHome = false) {
                     return new Promise((resolve, reject) => {
