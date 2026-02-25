@@ -4492,10 +4492,10 @@
 
                     console.log(`[SynergyCalc] День ${matchDay}: ${playersInMatch} игроков играло`);
 
-                    // Если менее минимума игроков играло, прерываем анализ
+                    // Если менее минимума игроков играло, пропускаем этот день
                     if (playersInMatch < SYNERGY_MATRIX_CONFIG.MIN_PLAYERS_FOR_SYNERGY) {
-                        console.log(`[SynergyCalc] День ${matchDay}: прерываем анализ (менее ${SYNERGY_MATRIX_CONFIG.MIN_PLAYERS_FOR_SYNERGY} игроков)`);
-                        break;
+                        console.log(`[SynergyCalc] День ${matchDay}: пропускаем (менее ${SYNERGY_MATRIX_CONFIG.MIN_PLAYERS_FOR_SYNERGY} игроков)`);
+                        continue;
                     }
 
                     // Рассчитываем бонус по конфигурации (для 11+ игроков используем бонус для 11)
