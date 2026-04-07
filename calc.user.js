@@ -14102,11 +14102,22 @@ setTimeout(() => {
         const myVsMatch = html.match(/var\s+my_vs\s*=\s*(\d+)/);
         result.myVs = myVsMatch ? parseInt(myVsMatch[1]) : 0;
 
-        // days[] — массив матчей
-        const daysMatch = html.match(/var\s+days\s*=\s*\[([\s\S]*?)\]\s*\n/);
-        if (daysMatch) {
+        // days[] — массив матчей (многострочный, с вложенными массивами)
+        const daysStartMatch = html.match(/var\s+days\s*=\s*\[/);
+        if (daysStartMatch) {
+            const startIdx = html.indexOf(daysStartMatch[0]) + daysStartMatch[0].length - 1;
+            // Считаем скобки чтобы найти конец массива
+            let depth = 0;
+            let endIdx = startIdx;
+            for (let i = startIdx; i < html.length; i++) {
+                if (html[i] === '[') depth++;
+                else if (html[i] === ']') {
+                    depth--;
+                    if (depth === 0) { endIdx = i + 1; break; }
+                }
+            }
             try {
-                result.days = eval(`[${daysMatch[1]}]`);
+                result.days = eval(html.substring(startIdx, endIdx));
             } catch (e) {
                 console.warn('[ORDER] Ошибка парсинга days[]:', e);
                 result.days = [];
