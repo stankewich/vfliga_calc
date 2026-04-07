@@ -44,19 +44,19 @@ const FIELD_LAYOUT = {
     // Размеры внешнего контейнера (фон поля)
     FIELD_WIDTH: 400,
     FIELD_HEIGHT: 566,
-    
+
     // Отступы контейнера футболок от краёв фона
     // Установлено 0 для максимального прижатия игроков к краям поля
     CONTAINER_PADDING: 0,
-    
+
     // Размеры рабочей области (вычисляются автоматически)
     get WORKING_WIDTH() { return this.FIELD_WIDTH - this.CONTAINER_PADDING * 2; },   // 400px
     get WORKING_HEIGHT() { return this.FIELD_HEIGHT - this.CONTAINER_PADDING * 2; }, // 566px
-    
+
     // Размеры футболок
     SHIRT_WIDTH: 40,
     SHIRT_HEIGHT: 34,
-    
+
     // Половинные размеры (для центрирования)
     get SHIRT_HALF_WIDTH() { return this.SHIRT_WIDTH / 2; },   // 20px
     get SHIRT_HALF_HEIGHT() { return this.SHIRT_HEIGHT / 2; }  // 17px
@@ -91,7 +91,7 @@ const CONFIG = {
         // Обратное соответствие: числовой стиль → строковый
         NUMERIC_TO_STRING: {
             0: 'norm',
-            1: 'sp', 
+            1: 'sp',
             2: 'bb',
             3: 'brazil',
             4: 'tiki',
@@ -500,16 +500,16 @@ function generateFieldPositionsWithFlankPreservation(formation, side, previousFo
     });
 
     console.log(`[FlankPositioning] Итоговые позиции для ${side}:`, positions);
-    
+
     // Применяем ограничения координат чтобы футболки не выходили за границы
     const SHIRT_HALF_WIDTH = FIELD_LAYOUT.SHIRT_HALF_WIDTH;   // 20px
     const SHIRT_HALF_HEIGHT = FIELD_LAYOUT.SHIRT_HALF_HEIGHT; // 17px
-    
+
     const MIN_X = SHIRT_HALF_WIDTH;
     const MAX_X = fieldWidth - SHIRT_HALF_WIDTH;
     const MIN_Y = SHIRT_HALF_HEIGHT;
     const MAX_Y = fieldHeight - SHIRT_HALF_HEIGHT;
-    
+
     positions.forEach(pos => {
         if (pos) {
             // Ограничиваем координаты
@@ -517,9 +517,9 @@ function generateFieldPositionsWithFlankPreservation(formation, side, previousFo
             pos.top = Math.max(MIN_Y, Math.min(MAX_Y, pos.top));
         }
     });
-    
+
     console.log(`[FlankPositioning] Позиции после ограничений для ${side}:`, positions);
-    
+
     return positions;
 }
 
@@ -645,12 +645,12 @@ function generateFieldPositions(formation, side) {
     // Применяем ограничения координат чтобы футболки не выходили за границы
     const SHIRT_HALF_WIDTH = FIELD_LAYOUT.SHIRT_HALF_WIDTH;   // 20px
     const SHIRT_HALF_HEIGHT = FIELD_LAYOUT.SHIRT_HALF_HEIGHT; // 17px
-    
+
     const MIN_X = SHIRT_HALF_WIDTH;
     const MAX_X = fieldWidth - SHIRT_HALF_WIDTH;
     const MIN_Y = SHIRT_HALF_HEIGHT;
     const MAX_Y = fieldHeight - SHIRT_HALF_HEIGHT;
-    
+
     positions.forEach(pos => {
         if (pos) {
             // Ограничиваем координаты
@@ -795,15 +795,15 @@ function areStylesInCollision(style1, style2) {
     if (!style1 || !style2 || style1 === 'norm' || style2 === 'norm') {
         return false;
     }
-    
+
     // Проверяем есть ли победа style1 над style2
     const style1Wins = collision_bonuses[style1];
     const style1BeatsStyle2 = !!(style1Wins && style1Wins[style2]);
-    
+
     // Проверяем есть ли победа style2 над style1
     const style2Wins = collision_bonuses[style2];
     const style2BeatsStyle1 = !!(style2Wins && style2Wins[style1]);
-    
+
     // Коллизия есть если один стиль побеждает другой
     return style1BeatsStyle2 || style2BeatsStyle1;
 }
@@ -819,7 +819,7 @@ function calculateLineModifier(player1, player2) {
     if (!player1.hidden_style || !player2.hidden_style) {
         return 0;
     }
-    
+
     // 2. Проверка на неизвестный стиль (norm)
     // Если оба игрока norm - временно возвращаем 5% (TODO: уточнить логику)
     if (player1.hidden_style === 'norm' && player2.hidden_style === 'norm') {
@@ -829,24 +829,24 @@ function calculateLineModifier(player1, player2) {
     if (player1.hidden_style === 'norm' || player2.hidden_style === 'norm') {
         return 0;
     }
-    
+
     // 3. Проверка на коллизию стилей (приоритет!)
     if (areStylesInCollision(player1.hidden_style, player2.hidden_style)) {
         return -0.05; // -5%
     }
-    
+
     // 4. Проверка на совпадение стилей (только для известных стилей)
     if (player1.hidden_style === player2.hidden_style) {
         // TODO: Добавить логику изученности стиля когда будут доступны данные
         // Пока используем максимальный бонус для совпадающих стилей
         return 0.125; // 12.5%
     }
-    
+
     // 5. Проверка на совпадение национальностей
     if (player1.nat_id && player2.nat_id && player1.nat_id === player2.nat_id) {
         return 0.05; // минимум 5%
     }
-    
+
     // 6. Все остальные случаи (разные нац, разные стили без коллизии)
     return 0;
 }
@@ -858,17 +858,17 @@ function calculateLineModifier(player1, player2) {
 */
 function is424Formation(positions) {
     if (!positions) return false;
-    
-    const defenderCount = positions.filter(p => 
+
+    const defenderCount = positions.filter(p =>
         ['LD', 'LB', 'CD', 'SW', 'RD', 'RB'].includes(p)
     ).length;
-    
+
     const cmCount = positions.filter(p => p === 'CM').length;
-    
-    const forwardCount = positions.filter(p => 
+
+    const forwardCount = positions.filter(p =>
         ['LF', 'CF', 'RF', 'ST', 'LW', 'RW'].includes(p)
     ).length;
-    
+
     return defenderCount === 4 && cmCount === 2 && forwardCount === 4;
 }
 
@@ -880,20 +880,20 @@ function is424Formation(positions) {
 */
 function getCFType(positions, cfIndex) {
     if (!positions || cfIndex < 0) return 'other';
-    
+
     const cfIndices = [];
     positions.forEach((pos, idx) => {
         if (pos === 'CF') cfIndices.push(idx);
     });
-    
+
     const cfCount = cfIndices.length;
-    
+
     if (cfCount === 0) return 'other';
     if (cfCount === 1) return 'single';
     if (cfCount === 3 && cfIndex === cfIndices[1]) return 'middle';
     if (cfIndex === Math.min(...cfIndices)) return 'min';
     if (cfIndex === Math.max(...cfIndices)) return 'max';
-    
+
     return 'other';
 }
 
@@ -905,20 +905,20 @@ function getCFType(positions, cfIndex) {
 */
 function getCMBySameIndex(positions, cfType) {
     if (!positions) return -1;
-    
+
     const cmIndices = [];
     positions.forEach((pos, idx) => {
         if (pos === 'CM') cmIndices.push(idx);
     });
-    
+
     if (cmIndices.length === 0) return -1;
-    
+
     if (cfType === 'min') {
         return Math.min(...cmIndices);
     } else if (cfType === 'max') {
         return Math.max(...cmIndices);
     }
-    
+
     return -1;
 }
 
@@ -945,7 +945,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
     if (position === 'GK') {
         return getGKConnections(lineup);
     }
-    
+
     // Обновленная матрица связей согласно CHEMISTRY_CONNECTIONS_GRAPH.md v0.945
     const connections = {
         // Защитники
@@ -991,7 +991,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             // RB имеет динамические связи
             dynamic: true
         },
-        
+
         // Полузащитники
         'LM': {
             // LM имеет динамические связи
@@ -1022,7 +1022,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
         'RW': {
             direct: ['RM', 'AM', 'RF', 'CF']
         },
-        
+
         // Нападающие
         'LF': {
             // LF имеет динамические связи
@@ -1041,51 +1041,51 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             dynamic: true
         }
     };
-    
+
     const positionData = connections[position];
     if (!positionData) {
         console.warn(`[CHEMISTRY] Unknown position: ${position}`);
         return [];
     }
-    
+
     // Специальная обработка для SW - связь со всеми CD
     if (position === 'SW' && positionData.connectToAllCD && lineup) {
         const directConnections = [...positionData.direct];
-        
+
         // Добавляем все CD из состава
         lineup.forEach(pos => {
             if (pos === 'CD') {
                 directConnections.push('CD');
             }
         });
-        
+
         console.log(`[CHEMISTRY] SW connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для LB - динамические связи
     if (position === 'LB' && positionData.dynamic && lineup) {
         const directConnections = [];
-        
+
         console.log(`[CHEMISTRY] LB connections building`);
-        
+
         // 1. GK (если есть SW)
         if (lineup.includes('SW')) {
             directConnections.push('GK');
         }
-        
+
         // 2. CD (min index если CD > 1)
         const cdIndices = [];
         lineup.forEach((pos, idx) => {
             if (pos === 'CD') cdIndices.push(idx);
         });
-        
+
         if (cdIndices.length > 1) {
             directConnections.push('CD'); // Левый CD (min index)
         } else if (cdIndices.length === 1) {
             directConnections.push('CD');
         }
-        
+
         // 3. Атака: LM || LW || LF
         if (lineup.includes('LM')) {
             directConnections.push('LM');
@@ -1094,34 +1094,34 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
         } else if (lineup.includes('LF')) {
             directConnections.push('LF');
         }
-        
+
         console.log(`[CHEMISTRY] LB connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для RB - динамические связи
     if (position === 'RB' && positionData.dynamic && lineup) {
         const directConnections = [];
-        
+
         console.log(`[CHEMISTRY] RB connections building`);
-        
+
         // 1. GK (если есть SW)
         if (lineup.includes('SW')) {
             directConnections.push('GK');
         }
-        
+
         // 2. CD (max index если CD > 1)
         const cdIndices = [];
         lineup.forEach((pos, idx) => {
             if (pos === 'CD') cdIndices.push(idx);
         });
-        
+
         if (cdIndices.length > 1) {
             directConnections.push('CD'); // Правый CD (max index)
         } else if (cdIndices.length === 1) {
             directConnections.push('CD');
         }
-        
+
         // 3. Атака: RM || RW || RF
         if (lineup.includes('RM')) {
             directConnections.push('RM');
@@ -1130,22 +1130,22 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
         } else if (lineup.includes('RF')) {
             directConnections.push('RF');
         }
-        
+
         console.log(`[CHEMISTRY] RB connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для LM - динамические связи
     if (position === 'LM' && positionData.dynamic && lineup) {
         const directConnections = [];
-        
+
         // 1. Связь с защитой: LD || LB
         if (lineup.includes('LD')) {
             directConnections.push('LD');
         } else if (lineup.includes('LB')) {
             directConnections.push('LB');
         }
-        
+
         // 2. Связь с полузащитой: CM (min index) || DM (min index)
         const cmIndices = [];
         const dmIndices = [];
@@ -1153,14 +1153,14 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             if (pos === 'CM') cmIndices.push(idx);
             if (pos === 'DM') dmIndices.push(idx);
         });
-        
+
         if (cmIndices.length > 0) {
             // Приоритет CM
             directConnections.push('CM'); // Левый CM (min index)
         } else if (dmIndices.length > 0) {
             directConnections.push('DM'); // Левый DM (min index)
         }
-        
+
         // 3. Связь с атакой: LF || CF (min index) || ST
         if (lineup.includes('LF')) {
             directConnections.push('LF');
@@ -1169,29 +1169,29 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             lineup.forEach((pos, idx) => {
                 if (pos === 'CF') cfIndices.push(idx);
             });
-            
+
             if (cfIndices.length > 0) {
                 directConnections.push('CF'); // Левый CF (min index)
             } else if (lineup.includes('ST')) {
                 directConnections.push('ST');
             }
         }
-        
+
         console.log(`[CHEMISTRY] LM connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для RM - динамические связи
     if (position === 'RM' && positionData.dynamic && lineup) {
         const directConnections = [];
-        
+
         // 1. Связь с защитой: RD || RB
         if (lineup.includes('RD')) {
             directConnections.push('RD');
         } else if (lineup.includes('RB')) {
             directConnections.push('RB');
         }
-        
+
         // 2. Связь с полузащитой: CM (max index) || DM (max index)
         const cmIndices = [];
         const dmIndices = [];
@@ -1199,14 +1199,14 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             if (pos === 'CM') cmIndices.push(idx);
             if (pos === 'DM') dmIndices.push(idx);
         });
-        
+
         if (cmIndices.length > 0) {
             // Приоритет CM
             directConnections.push('CM'); // Правый CM (max index)
         } else if (dmIndices.length > 0) {
             directConnections.push('DM'); // Правый DM (max index)
         }
-        
+
         // 3. Связь с атакой: RF || CF (max index) || ST
         if (lineup.includes('RF')) {
             directConnections.push('RF');
@@ -1215,36 +1215,36 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             lineup.forEach((pos, idx) => {
                 if (pos === 'CF') cfIndices.push(idx);
             });
-            
+
             if (cfIndices.length > 0) {
                 directConnections.push('CF'); // Правый CF (max index)
             } else if (lineup.includes('ST')) {
                 directConnections.push('ST');
             }
         }
-        
+
         console.log(`[CHEMISTRY] RM connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для CD - динамические связи
     if (position === 'CD' && positionData.dynamic && lineup) {
         // Используем переданный playerIndex или находим первое вхождение
         const cdPlayerIndex = playerIndex >= 0 ? playerIndex : lineup.indexOf('CD');
         if (cdPlayerIndex === -1) return [];
-        
+
         const cdType = getCDType(lineup, cdPlayerIndex);
         const directConnections = [];
-        
+
         console.log(`[CHEMISTRY] CD type: ${cdType} at index ${cdPlayerIndex}`);
-        
+
         // 1. Связь вверх: GK || SW (приоритет SW)
         if (lineup.includes('SW')) {
             directConnections.push('SW');
         } else {
             directConnections.push('GK');
         }
-        
+
         // 2. Горизонтальные связи с другими CD
         switch(cdType) {
             case 'single':
@@ -1267,7 +1267,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 directConnections.push('CD'); // Предыдущий CD
                 break;
         }
-        
+
         // 3. Связи с фланговыми защитниками
         if (cdType === 'min') {
             // Левый CD связан с LD || LB
@@ -1296,7 +1296,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 directConnections.push('RB');
             }
         }
-        
+
         // 4. Связи с полузащитой (приоритет: DM > CM > FR > AM)
         const midfieldIndices = getMidfieldConnectionsForCD(lineup, cdType);
         midfieldIndices.forEach(idx => {
@@ -1305,21 +1305,21 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 directConnections.push(pos);
             }
         });
-        
+
         console.log(`[CHEMISTRY] CD connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для CM - динамические связи
     if (position === 'CM' && positionData.dynamic && lineup) {
         const cmPlayerIndex = playerIndex >= 0 ? playerIndex : lineup.indexOf('CM');
         if (cmPlayerIndex === -1) return [];
-        
+
         const cmType = getCMType(lineup, cmPlayerIndex);
         const directConnections = [];
-        
+
         console.log(`[CHEMISTRY] CM type: ${cmType} at index ${cmPlayerIndex}`);
-        
+
         // Средний CM (CM = 3)
         if (cmType === 'middle') {
             // 1. Связь со всеми CD
@@ -1328,20 +1328,20 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                     directConnections.push('CD');
                 }
             });
-            
+
             // 2. Связь со всеми остальными CM
             lineup.forEach((pos, idx) => {
                 if (pos === 'CM' && idx !== cmPlayerIndex) {
                     directConnections.push('CM');
                 }
             });
-            
+
             // 3. Связь с атакой: CF (all) || ST
             const cfIndices = [];
             lineup.forEach((pos, idx) => {
                 if (pos === 'CF') cfIndices.push(idx);
             });
-            
+
             if (cfIndices.length > 0) {
                 // Связь со всеми CF
                 cfIndices.forEach(() => directConnections.push('CF'));
@@ -1357,7 +1357,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             lineup.forEach((pos, idx) => {
                 if (pos === 'DM') dmIndices.push(idx);
             });
-            
+
             if (dmIndices.length > 0) {
                 // Связь со всеми DM
                 dmIndices.forEach(() => directConnections.push('DM'));
@@ -1371,14 +1371,14 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                     directConnections.push('CD'); // Левый CD (min)
                 }
             }
-            
+
             // 2. Левый фланг: LM || LW
             if (lineup.includes('LM')) {
                 directConnections.push('LM');
             } else if (lineup.includes('LW')) {
                 directConnections.push('LW');
             }
-            
+
             // 3. Следующий CM
             const cmIndices = [];
             lineup.forEach((pos, idx) => {
@@ -1387,7 +1387,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             if (cmIndices.length > 1) {
                 directConnections.push('CM'); // CM (index+1)
             }
-            
+
             // 4. Атака: (FR, AM) || (is424? CF(min) : (LF || CF(min) || ST))
             if (lineup.includes('FR')) {
                 directConnections.push('FR');
@@ -1395,7 +1395,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 directConnections.push('AM');
             } else {
                 const is424 = is424Formation(lineup);
-                
+
                 if (is424) {
                     // Формация 4-2-4: связь с левым CF
                     const cfIndices = [];
@@ -1430,7 +1430,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             lineup.forEach((pos, idx) => {
                 if (pos === 'DM') dmIndices.push(idx);
             });
-            
+
             if (dmIndices.length > 0) {
                 // Связь со всеми DM
                 dmIndices.forEach(() => directConnections.push('DM'));
@@ -1444,14 +1444,14 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                     directConnections.push('CD'); // Правый CD (max)
                 }
             }
-            
+
             // 2. Правый фланг: RM || RW
             if (lineup.includes('RM')) {
                 directConnections.push('RM');
             } else if (lineup.includes('RW')) {
                 directConnections.push('RW');
             }
-            
+
             // 3. Предыдущий CM
             const cmIndices = [];
             lineup.forEach((pos, idx) => {
@@ -1460,7 +1460,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             if (cmIndices.length > 1) {
                 directConnections.push('CM'); // CM (index-1)
             }
-            
+
             // 4. Атака: (FR, AM) || (is424? CF(max) : (RF || CF(max) || ST))
             if (lineup.includes('FR')) {
                 directConnections.push('FR');
@@ -1468,7 +1468,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 directConnections.push('AM');
             } else {
                 const is424 = is424Formation(lineup);
-                
+
                 if (is424) {
                     // Формация 4-2-4: связь с правым CF
                     const cfIndices = [];
@@ -1496,40 +1496,40 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 }
             }
         }
-        
+
         console.log(`[CHEMISTRY] CM connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для DM - динамические связи
     if (position === 'DM' && positionData.dynamic && lineup) {
         const dmPlayerIndex = playerIndex >= 0 ? playerIndex : lineup.indexOf('DM');
         if (dmPlayerIndex === -1) return [];
-        
+
         const directConnections = [];
-        
+
         console.log(`[CHEMISTRY] DM at index ${dmPlayerIndex}`);
-        
+
         // 1. Связь со всеми CD
         lineup.forEach(pos => {
             if (pos === 'CD') {
                 directConnections.push('CD');
             }
         });
-        
+
         // 2. Связь с другими DM
         lineup.forEach((pos, idx) => {
             if (pos === 'DM' && idx !== dmPlayerIndex) {
                 directConnections.push('DM');
             }
         });
-        
+
         // 3. Приоритетная цепочка полузащиты/атаки
         const cmIndices = [];
         lineup.forEach((pos, idx) => {
             if (pos === 'CM') cmIndices.push(idx);
         });
-        
+
         if (cmIndices.length > 0) {
             // Приоритет 1: все CM
             cmIndices.forEach(() => directConnections.push('CM'));
@@ -1537,7 +1537,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             // Приоритет 2: FR, AM
             const hasFR = lineup.includes('FR');
             const hasAM = lineup.includes('AM');
-            
+
             if (hasFR || hasAM) {
                 if (hasFR) directConnections.push('FR');
                 if (hasAM) directConnections.push('AM');
@@ -1547,14 +1547,14 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 lineup.forEach((pos, idx) => {
                     if (pos === 'CF') cfIndices.push(idx);
                 });
-                
+
                 if (cfIndices.length > 0) {
                     cfIndices.forEach(() => directConnections.push('CF'));
                 } else {
                     // Приоритет 4: LF, RF
                     const hasLF = lineup.includes('LF');
                     const hasRF = lineup.includes('RF');
-                    
+
                     if (hasLF || hasRF) {
                         if (hasLF) directConnections.push('LF');
                         if (hasRF) directConnections.push('RF');
@@ -1569,23 +1569,23 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 }
             }
         }
-        
+
         console.log(`[CHEMISTRY] DM connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для AM - динамические связи
     if (position === 'AM' && positionData.dynamic && lineup) {
         const directConnections = [];
-        
+
         console.log(`[CHEMISTRY] AM connections building`);
-        
+
         // 1. Полузащита: CM (all) || DM (all)
         const cmIndices = [];
         lineup.forEach((pos, idx) => {
             if (pos === 'CM') cmIndices.push(idx);
         });
-        
+
         if (cmIndices.length > 0) {
             // Приоритет 1: все CM
             cmIndices.forEach(() => directConnections.push('CM'));
@@ -1597,22 +1597,22 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             });
             dmIndices.forEach(() => directConnections.push('DM'));
         }
-        
+
         // 2. FR (если есть)
         if (lineup.includes('FR')) {
             directConnections.push('FR');
         }
-        
+
         // 3. Атака: (CF (all), RF, LF) || (ST, LF, RF)
         const cfIndices = [];
         lineup.forEach((pos, idx) => {
             if (pos === 'CF') cfIndices.push(idx);
         });
-        
+
         if (cfIndices.length > 0) {
             // Приоритет 1: все CF + RF + LF
             cfIndices.forEach(() => directConnections.push('CF'));
-            
+
             if (lineup.includes('RF')) directConnections.push('RF');
             if (lineup.includes('LF')) directConnections.push('LF');
         } else {
@@ -1621,17 +1621,17 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             if (lineup.includes('LF')) directConnections.push('LF');
             if (lineup.includes('RF')) directConnections.push('RF');
         }
-        
+
         console.log(`[CHEMISTRY] AM connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для LF - динамические связи
     if (position === 'LF' && positionData.dynamic && lineup) {
         const directConnections = [];
-        
+
         console.log(`[CHEMISTRY] LF connections building`);
-        
+
         // 1. Левый фланг: LW || LM || LB || LD
         if (lineup.includes('LW')) {
             directConnections.push('LW');
@@ -1642,12 +1642,12 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
         } else if (lineup.includes('LD')) {
             directConnections.push('LD');
         }
-        
+
         // 2. Атака и полузащита
         const is424 = is424Formation(lineup);
         const hasCF = lineup.includes('CF');
         const hasST = lineup.includes('ST');
-        
+
         if (is424) {
             // Формация 4-2-4: (ST & CF) || CF(min)
             if (hasST && hasCF) {
@@ -1669,7 +1669,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 // Приоритет 3: RF + полузащита (только если нет CF и ST)
                 if (lineup.includes('RF')) {
                     directConnections.push('RF');
-                    
+
                     // Добавляем полузащиту: (AM || FR) || (CM(min) || DM)
                     if (lineup.includes('AM')) {
                         directConnections.push('AM');
@@ -1681,7 +1681,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                         lineup.forEach((pos, idx) => {
                             if (pos === 'CM') cmIndices.push(idx);
                         });
-                        
+
                         if (cmIndices.length > 0) {
                             directConnections.push('CM'); // Левый CM (min)
                         } else if (lineup.includes('DM')) {
@@ -1691,17 +1691,17 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 }
             }
         }
-        
+
         console.log(`[CHEMISTRY] LF connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для RF - динамические связи
     if (position === 'RF' && positionData.dynamic && lineup) {
         const directConnections = [];
-        
+
         console.log(`[CHEMISTRY] RF connections building`);
-        
+
         // 1. Правый фланг: RW || RM || RB || RD
         if (lineup.includes('RW')) {
             directConnections.push('RW');
@@ -1712,12 +1712,12 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
         } else if (lineup.includes('RD')) {
             directConnections.push('RD');
         }
-        
+
         // 2. Атака и полузащита
         const is424 = is424Formation(lineup);
         const hasCF = lineup.includes('CF');
         const hasST = lineup.includes('ST');
-        
+
         if (is424) {
             // Формация 4-2-4: (ST & CF) || CF(max)
             if (hasST && hasCF) {
@@ -1739,7 +1739,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 // Приоритет 3: LF + полузащита (только если нет CF и ST)
                 if (lineup.includes('LF')) {
                     directConnections.push('LF');
-                    
+
                     // Добавляем полузащиту: (AM || FR) || (CM(max) || DM)
                     if (lineup.includes('AM')) {
                         directConnections.push('AM');
@@ -1751,7 +1751,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                         lineup.forEach((pos, idx) => {
                             if (pos === 'CM') cmIndices.push(idx);
                         });
-                        
+
                         if (cmIndices.length > 0) {
                             directConnections.push('CM'); // Правый CM (max)
                         } else if (lineup.includes('DM')) {
@@ -1761,20 +1761,20 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 }
             }
         }
-        
+
         console.log(`[CHEMISTRY] RF connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для CF - динамические связи
     if (position === 'CF' && positionData.dynamic && lineup) {
         const cfPlayerIndex = playerIndex >= 0 ? playerIndex : lineup.indexOf('CF');
         if (cfPlayerIndex === -1) return [];
-        
+
         const directConnections = [];
-        
+
         console.log(`[CHEMISTRY] CF connections building`);
-        
+
         // Подсчет нападающих
         const cfCount = countPositionInLineup(lineup, 'CF');
         const stCount = countPositionInLineup(lineup, 'ST');
@@ -1783,9 +1783,9 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
         const totalForwards = cfCount + stCount + lfCount + rfCount;
         const is424 = is424Formation(lineup);
         const cfType = getCFType(lineup, cfPlayerIndex);
-        
+
         console.log(`[CHEMISTRY] CF type: ${cfType}, count: ${cfCount}, total forwards: ${totalForwards}, is424: ${is424}`);
-        
+
         // Случай 1: Единственный нападающий (ST + CF + RF + LF) = 1
         if (totalForwards === 1) {
             // Левый фланг: LW || LM
@@ -1794,14 +1794,14 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             } else if (lineup.includes('LM')) {
                 directConnections.push('LM');
             }
-            
+
             // Правый фланг: RW || RM
             if (lineup.includes('RW')) {
                 directConnections.push('RW');
             } else if (lineup.includes('RM')) {
                 directConnections.push('RM');
             }
-            
+
             // Полузащита: AM || FR || CM(all) || DM(all)
             if (lineup.includes('AM')) {
                 directConnections.push('AM');
@@ -1827,11 +1827,11 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
         else if (cfCount === 1 && lfCount === 1 && rfCount === 1 && stCount === 0) {
             // Фланги: LF, RF
             directConnections.push('LF', 'RF');
-            
+
             // Полузащита: (AM, FR) || (AM || FR || CM(all) || DM(all))
             const hasAM = lineup.includes('AM');
             const hasFR = lineup.includes('FR');
-            
+
             if (hasAM && hasFR) {
                 // Оба вместе
                 directConnections.push('AM', 'FR');
@@ -1865,7 +1865,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             } else if (lineup.includes('LM')) {
                 directConnections.push('LM');
             }
-            
+
             if (lineup.includes('RF')) {
                 directConnections.push('RF');
             } else if (lineup.includes('RW')) {
@@ -1873,15 +1873,15 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             } else if (lineup.includes('RM')) {
                 directConnections.push('RM');
             }
-            
+
             // Другой CF
             directConnections.push('CF');
-            
+
             // ST (если есть)
             if (stCount > 0) {
                 directConnections.push('ST');
             }
-            
+
             // Полузащита
             if (is424) {
                 // Формация 4-2-4
@@ -1898,7 +1898,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                             cmIndices.forEach(() => directConnections.push('CM'));
                         }
                     }
-                    
+
                     // Дополнительно: LM/RM по индексу
                     if (cfType === 'min') {
                         if (lineup.includes('LM')) directConnections.push('LM');
@@ -1912,7 +1912,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                         directConnections.push('CM');
                     }
                 }
-                
+
                 // Дополнительная связь: FR || CM(same index)
                 if (lineup.includes('FR')) {
                     directConnections.push('FR');
@@ -1951,10 +1951,10 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 } else if (lineup.includes('LM')) {
                     directConnections.push('LM');
                 }
-                
+
                 // Следующий CF
                 directConnections.push('CF');
-                
+
                 // Полузащита
                 if (lineup.includes('AM')) {
                     directConnections.push('AM');
@@ -1983,10 +1983,10 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 } else if (lineup.includes('RM')) {
                     directConnections.push('RM');
                 }
-                
+
                 // Предыдущий CF
                 directConnections.push('CF');
-                
+
                 // Полузащита
                 if (lineup.includes('AM')) {
                     directConnections.push('AM');
@@ -2015,7 +2015,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                         directConnections.push('CF');
                     }
                 });
-                
+
                 // Полузащита
                 if (lineup.includes('AM')) {
                     directConnections.push('AM');
@@ -2038,17 +2038,17 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 }
             }
         }
-        
+
         console.log(`[CHEMISTRY] CF connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Специальная обработка для ST - динамические связи
     if (position === 'ST' && positionData.dynamic && lineup) {
         const directConnections = [];
-        
+
         console.log(`[CHEMISTRY] ST connections building`);
-        
+
         // Подсчет нападающих
         const cfCount = countPositionInLineup(lineup, 'CF');
         const stCount = countPositionInLineup(lineup, 'ST');
@@ -2056,9 +2056,9 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
         const rfCount = countPositionInLineup(lineup, 'RF');
         const totalForwards = cfCount + stCount + lfCount + rfCount;
         const is424 = is424Formation(lineup);
-        
+
         console.log(`[CHEMISTRY] ST count: ${stCount}, CF: ${cfCount}, total forwards: ${totalForwards}, is424: ${is424}`);
-        
+
         // Случай 1: Единственный нападающий (ST + CF + RF + LF) = 1
         if (totalForwards === 1) {
             // Левый фланг: LW || LM
@@ -2067,14 +2067,14 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             } else if (lineup.includes('LM')) {
                 directConnections.push('LM');
             }
-            
+
             // Правый фланг: RW || RM
             if (lineup.includes('RW')) {
                 directConnections.push('RW');
             } else if (lineup.includes('RM')) {
                 directConnections.push('RM');
             }
-            
+
             // Полузащита: AM || FR || CM(all) || DM(all)
             if (lineup.includes('AM')) {
                 directConnections.push('AM');
@@ -2100,11 +2100,11 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
         else if (stCount === 1 && lfCount === 1 && rfCount === 1 && cfCount === 0) {
             // Фланги: LF, RF
             directConnections.push('LF', 'RF');
-            
+
             // Полузащита: (AM, FR) || (AM || FR || CM(all) || DM(all))
             const hasAM = lineup.includes('AM');
             const hasFR = lineup.includes('FR');
-            
+
             if (hasAM && hasFR) {
                 // Оба вместе
                 directConnections.push('AM', 'FR');
@@ -2136,7 +2136,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 if (pos === 'CF') cfIndices.push(idx);
             });
             cfIndices.forEach(() => directConnections.push('CF'));
-            
+
             if (lfCount > 0) directConnections.push('LF');
             if (rfCount > 0) directConnections.push('RF');
         }
@@ -2149,11 +2149,11 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             });
             cfIndices.forEach(() => directConnections.push('CF'));
         }
-        
+
         console.log(`[CHEMISTRY] ST connections: ${directConnections.join(', ')}`);
         return directConnections;
     }
-    
+
     // Применяем условия если они есть
     let directConnections = [...positionData.direct];
     if (positionData.conditions && lineup) {
@@ -2162,7 +2162,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             return !condition || condition(lineup);
         });
     }
-    
+
     // Обработка приоритетной связи с атакой (для LD и RD)
     if (positionData.priorityAttack && lineup) {
         // Ищем первую доступную позицию из приоритетного списка
@@ -2171,7 +2171,7 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
             directConnections.push(attackConnection);
         }
     }
-    
+
     // Обработка специального выбора CD (для LD и RD)
     if (positionData.cdSelector && lineup && directConnections.includes('CD')) {
         // Находим все индексы CD в составе
@@ -2181,17 +2181,17 @@ function getPositionConnections(position, lineup, playerIndex = -1) {
                 cdIndices.push(idx);
             }
         });
-        
+
         if (cdIndices.length > 0) {
             // Выбираем CD по правилу (min или max индекс)
-            const selectedCdIndex = positionData.cdSelector === 'min' 
-                ? Math.min(...cdIndices) 
+            const selectedCdIndex = positionData.cdSelector === 'min'
+                ? Math.min(...cdIndices)
                 : Math.max(...cdIndices);
-            
+
             console.log(`[CHEMISTRY] ${position} CD selector: ${positionData.cdSelector}, selected CD at index ${selectedCdIndex} (total CDs: ${cdIndices.length})`);
         }
     }
-    
+
     // Возвращаем только прямые связи (пока не используем диагональные)
     console.log(`[CHEMISTRY] ${position} connections: ${directConnections.join(', ')}`);
     return directConnections;
@@ -2209,20 +2209,20 @@ function getGKConnections(lineup) {
         console.log('[CHEMISTRY] GK: no lineup provided, returning all defenders');
         return ['LD', 'LB', 'CD', 'SW', 'RD', 'RB'];
     }
-    
+
     // Находим всех защитников в составе
     const defenderPositions = ['LD', 'LB', 'CD', 'SW', 'RD', 'RB'];
     const defenders = [];
-    
+
     // Проходим по составу и собираем всех защитников
     for (const position of lineup) {
         if (position && defenderPositions.includes(position)) {
             defenders.push(position);
         }
     }
-    
+
     console.log(`[CHEMISTRY] GK connections: ${defenders.join(', ')} (${defenders.length} defenders total)`);
-    
+
     return defenders;
 }
 
@@ -2234,7 +2234,7 @@ function getGKConnections(lineup) {
 */
 function countPositionInLineup(lineup, position) {
     if (!lineup) return 0;
-    
+
     return lineup.filter(pos => pos === position).length;
 }
 
@@ -2249,7 +2249,7 @@ function getSpecificCDIndex(positions, playerPosition, selector) {
     if (!positions || (playerPosition !== 'LD' && playerPosition !== 'RD')) {
         return -1;
     }
-    
+
     // Находим все индексы CD в составе
     const cdIndices = [];
     positions.forEach((pos, idx) => {
@@ -2257,14 +2257,14 @@ function getSpecificCDIndex(positions, playerPosition, selector) {
             cdIndices.push(idx);
         }
     });
-    
+
     if (cdIndices.length === 0) return -1;
-    
+
     // Выбираем CD по правилу
-    const selectedIndex = selector === 'min' 
-        ? Math.min(...cdIndices) 
+    const selectedIndex = selector === 'min'
+        ? Math.min(...cdIndices)
         : Math.max(...cdIndices);
-    
+
     return selectedIndex;
 }
 
@@ -2276,7 +2276,7 @@ function getSpecificCDIndex(positions, playerPosition, selector) {
 */
 function getCDType(positions, cdIndex) {
     if (!positions || cdIndex < 0) return 'other';
-    
+
     // Находим все индексы CD
     const cdIndices = [];
     positions.forEach((pos, idx) => {
@@ -2284,19 +2284,19 @@ function getCDType(positions, cdIndex) {
             cdIndices.push(idx);
         }
     });
-    
+
     const cdCount = cdIndices.length;
-    
+
     if (cdCount === 0) return 'other';
     if (cdCount === 1) return 'single';
-    
+
     // Для 3 CD - проверяем средний
     if (cdCount === 3 && cdIndex === cdIndices[1]) return 'middle';
-    
+
     // Проверяем минимальный и максимальный
     if (cdIndex === Math.min(...cdIndices)) return 'min';
     if (cdIndex === Math.max(...cdIndices)) return 'max';
-    
+
     return 'other';
 }
 
@@ -2308,16 +2308,16 @@ function getCDType(positions, cdIndex) {
 */
 function getCMIndicesForCD(positions, cdType) {
     if (!positions) return [];
-    
+
     const cmIndices = [];
     positions.forEach((pos, idx) => {
         if (pos === 'CM') {
             cmIndices.push(idx);
         }
     });
-    
+
     if (cmIndices.length === 0) return [];
-    
+
     switch(cdType) {
         case 'min':
             // Левый CD связан с левым CM (минимальный индекс)
@@ -2342,17 +2342,17 @@ function getCMIndicesForCD(positions, cdType) {
 */
 function getMidfieldConnectionsForCD(positions, cdType) {
     if (!positions) return [];
-    
+
     const connections = [];
-    
+
     // Приоритет: DM > CM > FR > AM
-    
+
     // 1. Проверяем DM
     const dmIndices = [];
     positions.forEach((pos, idx) => {
         if (pos === 'DM') dmIndices.push(idx);
     });
-    
+
     if (dmIndices.length > 0) {
         // Единственный CD связан со всеми DM
         if (cdType === 'single') {
@@ -2361,25 +2361,25 @@ function getMidfieldConnectionsForCD(positions, cdType) {
         // Остальные CD связаны с первым DM
         return [dmIndices[0]];
     }
-    
+
     // 2. Проверяем CM
     const cmIndices = getCMIndicesForCD(positions, cdType);
     if (cmIndices.length > 0) {
         return cmIndices;
     }
-    
+
     // 3. Проверяем FR
     const frIndex = positions.findIndex(pos => pos === 'FR');
     if (frIndex !== -1) {
         return [frIndex];
     }
-    
+
     // 4. Проверяем AM
     const amIndex = positions.findIndex(pos => pos === 'AM');
     if (amIndex !== -1) {
         return [amIndex];
     }
-    
+
     return [];
 }
 
@@ -2391,21 +2391,21 @@ function getMidfieldConnectionsForCD(positions, cdType) {
 */
 function getCMType(positions, cmIndex) {
     if (!positions || cmIndex < 0) return 'other';
-    
+
     const cmIndices = [];
     positions.forEach((pos, idx) => {
         if (pos === 'CM') {
             cmIndices.push(idx);
         }
     });
-    
+
     const cmCount = cmIndices.length;
-    
+
     if (cmCount === 0) return 'other';
     if (cmCount === 3 && cmIndex === cmIndices[1]) return 'middle';
     if (cmIndex === Math.min(...cmIndices)) return 'min';
     if (cmIndex === Math.max(...cmIndices)) return 'max';
-    
+
     return 'other';
 }
 
@@ -2416,20 +2416,20 @@ function getCMType(positions, cmIndex) {
 */
 function is424Formation(positions) {
     if (!positions) return false;
-    
+
     // Считаем защитников
-    const defenderCount = positions.filter(p => 
+    const defenderCount = positions.filter(p =>
         ['LD', 'LB', 'CD', 'SW', 'RD', 'RB'].includes(p)
     ).length;
-    
+
     // Считаем CM
     const cmCount = positions.filter(p => p === 'CM').length;
-    
+
     // Считаем нападающих
-    const forwardCount = positions.filter(p => 
+    const forwardCount = positions.filter(p =>
         ['LF', 'CF', 'RF', 'ST', 'LW', 'RW'].includes(p)
     ).length;
-    
+
     // 4-2-4: 4 защитника, 2 CM, 4 нападающих
     return defenderCount === 4 && cmCount === 2 && forwardCount === 4;
 }
@@ -2442,26 +2442,26 @@ function is424Formation(positions) {
 */
 function getCFType(positions, cfIndex) {
     if (!positions || cfIndex < 0) return 'other';
-    
+
     const cfIndices = [];
     positions.forEach((pos, idx) => {
         if (pos === 'CF') {
             cfIndices.push(idx);
         }
     });
-    
+
     const cfCount = cfIndices.length;
-    
+
     if (cfCount === 0) return 'other';
     if (cfCount === 1) return 'single';
-    
+
     // Для 3 CF - проверяем средний
     if (cfCount === 3 && cfIndex === cfIndices[1]) return 'middle';
-    
+
     // Проверяем минимальный и максимальный
     if (cfIndex === Math.min(...cfIndices)) return 'min';
     if (cfIndex === Math.max(...cfIndices)) return 'max';
-    
+
     return 'other';
 }
 
@@ -2473,20 +2473,20 @@ function getCFType(positions, cfIndex) {
 */
 function getCMBySameIndex(positions, cfType) {
     if (!positions) return -1;
-    
+
     const cmIndices = [];
     positions.forEach((pos, idx) => {
         if (pos === 'CM') cmIndices.push(idx);
     });
-    
+
     if (cmIndices.length === 0) return -1;
-    
+
     if (cfType === 'min') {
         return Math.min(...cmIndices);
     } else if (cfType === 'max') {
         return Math.max(...cmIndices);
     }
-    
+
     return -1;
 }
 
@@ -2511,25 +2511,25 @@ function countPositionInLineup(positions, position) {
 function calculatePlayerChemistryModifier(player, lineup, positions) {
     const playerIndex = lineup.findIndex(p => p.id === player.id);
     if (playerIndex === -1) return 0;
-    
+
     const playerPosition = positions[playerIndex];
     if (!playerPosition) return 0;
-    
+
     // Получаем связанные позиции
     const connectedPositions = getPositionConnections(playerPosition, positions, playerIndex);
     if (connectedPositions.length === 0) return 0;
-    
+
     let totalModifier = 0;
     let connectionCount = 0;
-    
+
     // Для CD нужна специальная обработка связей
     const isCDPlayer = playerPosition === 'CD';
     const cdType = isCDPlayer ? getCDType(positions, playerIndex) : null;
-    
+
     // Рассчитываем модификатор для каждой связи
     connectedPositions.forEach((connectedPos, idx) => {
         let connectedPlayerIndex = -1;
-        
+
         // Специальная обработка для LD/RD с CD - выбираем конкретный CD по индексу
         if ((playerPosition === 'LD' || playerPosition === 'RD') && connectedPos === 'CD') {
             const selector = playerPosition === 'LD' ? 'min' : 'max';
@@ -2567,7 +2567,7 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
                     cdIndices.push(i);
                 }
             });
-            
+
             if (cdIndices.length > 0) {
                 // Для среднего CD - берем CD по порядку из массива связей
                 if (cdType === 'middle') {
@@ -2613,14 +2613,14 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
         // Специальная обработка для CM
         else if (playerPosition === 'CM') {
             const cmType = getCMType(positions, playerIndex);
-            
+
             // CM с другими CM
             if (connectedPos === 'CM') {
                 const cmIndices = [];
                 positions.forEach((pos, i) => {
                     if (pos === 'CM' && i !== playerIndex) cmIndices.push(i);
                 });
-                
+
                 if (cmType === 'middle') {
                     // Средний CM связан со всеми остальными CM
                     const cmConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CM').length;
@@ -2639,7 +2639,7 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
                 positions.forEach((pos, i) => {
                     if (pos === 'CD') cdIndices.push(i);
                 });
-                
+
                 if (cmType === 'middle') {
                     // Средний CM связан со всеми CD
                     const cdConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CD').length;
@@ -2668,7 +2668,7 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
                 positions.forEach((pos, i) => {
                     if (pos === 'CF') cfIndices.push(i);
                 });
-                
+
                 if (cmType === 'middle') {
                     // Средний CM связан со всеми CF
                     const cfConnectionIndex = connectedPositions.slice(0, idx).filter(p => p === 'CF').length;
@@ -2890,14 +2890,14 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
         // Специальная обработка для CF
         else if (playerPosition === 'CF') {
             const cfType = getCFType(positions, playerIndex);
-            
+
             // CF с другими CF
             if (connectedPos === 'CF') {
                 const cfIndices = [];
                 positions.forEach((pos, i) => {
                     if (pos === 'CF' && i !== playerIndex) cfIndices.push(i);
                 });
-                
+
                 if (cfType === 'min' && cfIndices.length > 0) {
                     // Левый CF связан со следующим (index+1)
                     connectedPlayerIndex = cfIndices[0];
@@ -2919,7 +2919,7 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
                 positions.forEach((pos, i) => {
                     if (pos === 'CM') cmIndices.push(i);
                 });
-                
+
                 if (cfType === 'min' && cmIndices.length > 0) {
                     // Левый CF связан с левым CM
                     connectedPlayerIndex = Math.min(...cmIndices);
@@ -2989,7 +2989,7 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
             // Для остальных позиций - находим первое вхождение
             connectedPlayerIndex = positions.findIndex(pos => pos === connectedPos);
         }
-        
+
         if (connectedPlayerIndex !== -1 && connectedPlayerIndex < lineup.length) {
             const connectedPlayer = lineup[connectedPlayerIndex];
             if (connectedPlayer) {
@@ -2999,15 +2999,15 @@ function calculatePlayerChemistryModifier(player, lineup, positions) {
             }
         }
     });
-    
+
     // Рассчитываем базовый Chemistry (среднее арифметическое модификаторов всех линий)
     // ВАЖНО: Больше связей = стабильнее результат, но максимальный бонус всегда 12.5%
     const baseChemistry = connectionCount > 0 ? totalModifier / connectionCount : 0;
-    
+
     // Применяем модификатор изученности стиля игрока
     const styleKnowledge = player.styleKnowledge || 1.0; // По умолчанию 100%
     const finalChemistry = baseChemistry * styleKnowledge;
-    
+
     return finalChemistry;
 }
 
@@ -3024,69 +3024,69 @@ function getChemistryBonus(player, inLineupPlayers, teamStyleId) {
         console.warn('[CHEMISTRY] Игрок не найден');
         return 0;
     }
-    
+
     // Получаем позиции из slotEntries (если доступны)
     const slotEntries = window.currentSlotEntries || [];
-    
+
     if (slotEntries.length === 0) {
         console.log('[CHEMISTRY] slotEntries не доступны, Chemistry отключен');
         return 0;
     }
-    
+
     // Находим entry для текущего игрока чтобы получить customStyleValue
-    const playerEntry = slotEntries.find(entry => 
+    const playerEntry = slotEntries.find(entry =>
         entry.player && String(entry.player.id) === String(player.id)
     );
-    
+
     // Определяем стиль для Chemistry: customStyleValue (если есть) или hidden_style
     const effectiveStyle = (playerEntry && playerEntry.customStyleValue) || player.hidden_style || 'norm';
-    
+
     // Создаем модифицированный объект игрока с эффективным стилем
     const modifiedPlayer = {
         ...player,
         hidden_style: effectiveStyle
     };
-    
+
     // Проверяем наличие необходимых данных для Chemistry
     if (!modifiedPlayer.nat_id && !modifiedPlayer.hidden_style) {
         console.log(`[CHEMISTRY] ${player.name}: нет данных для Chemistry (nat_id: ${modifiedPlayer.nat_id}, style: ${modifiedPlayer.hidden_style})`);
         return 0;
     }
-    
+
     // Находим позиции всех игроков
     const positions = slotEntries.map(entry => entry.matchPos);
-    
+
     // Создаем модифицированный lineup с эффективными стилями
     const modifiedLineup = inLineupPlayers.map(p => {
-        const pEntry = slotEntries.find(entry => 
+        const pEntry = slotEntries.find(entry =>
             entry.player && String(entry.player.id) === String(p.id)
         );
         const pEffectiveStyle = (pEntry && pEntry.customStyleValue) || p.hidden_style || 'norm';
-        
+
         return {
             ...p,
             hidden_style: pEffectiveStyle
         };
     });
-    
+
     // Рассчитываем модификатор Chemistry
     let modifier = calculatePlayerChemistryModifier(modifiedPlayer, modifiedLineup, positions);
-    
+
     // Добавляем бонус/штраф за совпадение/коллизию стиля игрока со стилем команды
     if (teamStyleId && effectiveStyle && effectiveStyle !== 'norm') {
         const teamStyleBonus = getFavoriteStyleBonus(teamStyleId, effectiveStyle);
         modifier += teamStyleBonus;
-        
+
         if (teamStyleBonus !== 0) {
             console.log(`[CHEMISTRY] ${player.name}: team style bonus ${(teamStyleBonus * 100).toFixed(1)}% (team: ${teamStyleId}, player: ${effectiveStyle})`);
         }
     }
-    
+
     // Логирование для отладки (только если есть модификатор)
     if (modifier !== 0) {
-        const isCustomStyle = playerEntry && playerEntry.customStyleValue && 
+        const isCustomStyle = playerEntry && playerEntry.customStyleValue &&
                             playerEntry.customStyleValue !== player.hidden_style;
-        
+
         console.log(`[CHEMISTRY] ${player.name}: ${(modifier * 100).toFixed(1)}%`, {
             nat_id: player.nat_id,
             nat: player.nat,
@@ -3097,7 +3097,7 @@ function getChemistryBonus(player, inLineupPlayers, teamStyleId) {
             modifier: modifier
         });
     }
-    
+
     return modifier; // Возвращаем как есть (уже в долях от 1)
 }
 
@@ -4961,7 +4961,7 @@ function getCachedTeamMatchDays(teamId) {
     try {
         const cacheKey = `teamMatchDays_${teamId}`;
         const cached = localStorage.getItem(cacheKey);
-        
+
         if (cached) {
             const data = JSON.parse(cached);
             return data;
@@ -5014,25 +5014,25 @@ async function getTeamMatchDaysWithCache(teamId) {
         console.log(`[Synergy] Using cached match days for team ${teamId} (age: ${Math.round((Date.now() - cached.timestamp) / 1000 / 60)} min)`);
         return cached.days;
     }
-    
+
     // Загружаем с сервера
     console.log(`[Synergy] Cache miss or expired for team ${teamId}, loading from server`);
     try {
         const days = await getAllTeamMatchDays(teamId);
-        
+
         // Сохраняем в кэш
         setCachedTeamMatchDays(teamId, days);
-        
+
         return days;
     } catch (error) {
         console.error(`[Synergy] Failed to load match days for team ${teamId}:`, error);
-        
+
         // Fallback: если есть старый кэш, используем его
         if (cached && cached.days) {
             console.warn(`[Synergy] Using expired cache for team ${teamId} as fallback`);
             return cached.days;
         }
-        
+
         // Если совсем ничего нет, возвращаем пустой массив
         console.error(`[Synergy] No cache available for team ${teamId}, returning empty array`);
         return [];
@@ -5048,7 +5048,7 @@ function getAllTeamMatchDays(teamId) {
     return new Promise((resolve, reject) => {
         const url = `${SITE_CONFIG.BASE_URL}/roster_m.php?num=${teamId}`;
         console.log(`[Synergy] Loading match days for team ${teamId}`);
-        
+
         GM_xmlhttpRequest({
             method: "GET",
             url: url,
@@ -5231,10 +5231,10 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                 const day = parseInt(dayMatch[1]);
                                                 if (day && !isNaN(day)) {
                                                     const tournamentLower = tournamentCell.toLowerCase();
-                                                    
+
                                                     const isFriendly = tournamentLower.includes('товарищеский') ||
                                                                     tournamentLower.includes('friendly');
-                                                    
+
                                                     // Проверяем, является ли это матчем сборной
                                                     const isNationalTeam = tournamentLower.includes('сборн') ||
                                                                         tournamentLower.includes('отборочные') ||
@@ -5256,7 +5256,7 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                         // Ищем все ссылки на команды (roster.php или managerzone.php)
                                                         const teamLinks = [];
                                                         const allLinks = teamsCell.querySelectorAll('a');
-                                                        
+
                                                         // Собираем все ссылки на команды
                                                         for (const link of allLinks) {
                                                             const href = link.getAttribute('href');
@@ -5264,7 +5264,7 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                                 teamLinks.push(link);
                                                             }
                                                         }
-                                                        
+
                                                         // Извлекаем ID обеих команд
                                                         const teamIds = [];
                                                         for (const link of teamLinks) {
@@ -5278,7 +5278,7 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                                 }
                                                             }
                                                         }
-                                                        
+
                                                         // Проверяем, есть ли среди команд нужная нам
                                                         if (teamId && teamIds.length > 0) {
                                                             // Ищем совпадение с нашим teamId
@@ -5289,7 +5289,7 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                             // Если фильтр не задан, берем первую команду
                                                             matchTeamId = teamIds[0];
                                                         }
-                                                        
+
                                                         // Логирование для первого матча
                                                         if (teamId && matches.length === 0) {
                                                             console.log(`[SynergyMatrix] Игрок ${playerId}, первый матч (день ${day}):`);
@@ -5301,7 +5301,7 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                     }
 
                                                     // Исключаем товарищеские и матчи сборных, если настроено
-                                                    const shouldExclude = (excludeFriendly && isFriendly) || 
+                                                    const shouldExclude = (excludeFriendly && isFriendly) ||
                                                                         (excludeNationalTeam && isNationalTeam);
 
                                                     if (!shouldExclude) {
@@ -5314,7 +5314,7 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                                                             // Если ID команды найден - сравниваем
                                                             playedForTeam = String(matchTeamId) === String(teamId);
                                                         }
-                                                        
+
                                                         const played = playedMinutes && playedForTeam;
 
                                                         matches.push({
@@ -5346,15 +5346,15 @@ async function loadPlayerMatchHistoryForMatrix(playerId, teamId = null) {
                             const playedForTeam = uniqueMatches.filter(m => m.playedForTeam && m.played).length;
                             const playedForOther = uniqueMatches.filter(m => !m.playedForTeam && m.minutes > 0).length;
                             const notPlayed = uniqueMatches.filter(m => m.minutes === 0).length;
-                            
+
                             console.log(`[SynergyMatrix] Игрок ${playerId}: всего ${totalMatches} матчей, за команду ${teamId}: ${playedForTeam}, за другие команды: ${playedForOther}, не играл: ${notPlayed}`);
-                            
+
                             // Детальное логирование первых 3 матчей для отладки
                             if (playedForTeam === 0 && totalMatches > 0) {
                                 console.log(`[SynergyMatrix] Детали первых 3 матчей игрока ${playerId}:`);
                                 const first3 = uniqueMatches.slice(0, 3);
                                 console.log(`[SynergyMatrix] Количество матчей для вывода: ${first3.length}`);
-                                
+
                                 if (first3.length > 0) {
                                     console.log(`[SynergyMatrix] Матч 0:`, first3[0]);
                                 }
@@ -5722,20 +5722,20 @@ function getPlayerStyleCache() {
         if (!cached) {
             return createEmptyCache();
         }
-        
+
         const cache = JSON.parse(cached);
-        
+
         // Проверяем версию и мигрируем если нужно
         if (!cache.version || cache.version !== CACHE_VERSION) {
             console.log('[CACHE] Migrating cache from version', cache.version || 'legacy', 'to', CACHE_VERSION);
             return migrateCache(cache);
         }
-        
+
         // Автоматическая очистка при загрузке
         if (cache.settings?.autoCleanup) {
             return performAutoCleanup(cache);
         }
-        
+
         return cache;
     } catch (e) {
         console.warn('[CACHE] Failed to load player styles cache, creating new', e);
@@ -5754,9 +5754,9 @@ function createEmptyCache() {
 
 function migrateCache(oldCache) {
     console.log('[CACHE] Migrating legacy cache format');
-    
+
     const newCache = createEmptyCache();
-    
+
     // Если это старый формат (плоский объект с playerId: style)
     if (oldCache && typeof oldCache === 'object' && !oldCache.version) {
         // Помещаем все данные в команду "unknown"
@@ -5767,7 +5767,7 @@ function migrateCache(oldCache) {
                 migrated: true
             }
         };
-        
+
         let migratedCount = 0;
         for (const [playerId, style] of Object.entries(oldCache)) {
             if (typeof style === 'string' && /^\d+$/.test(playerId)) {
@@ -5779,10 +5779,10 @@ function migrateCache(oldCache) {
                 migratedCount++;
             }
         }
-        
+
         console.log(`[CACHE] Migrated ${migratedCount} player styles`);
     }
-    
+
     savePlayerStyleCache(newCache);
     return newCache;
 }
@@ -5790,54 +5790,54 @@ function migrateCache(oldCache) {
 function performAutoCleanup(cache) {
     const now = Date.now();
     const maxAge = cache.settings?.maxAge || DEFAULT_CACHE_SETTINGS.maxAge;
-    
+
     // Очистка только если прошло больше часа с последней очистки
     if (now - cache.lastCleanup < 60 * 60 * 1000) {
         return cache;
     }
-    
+
     console.log('[CACHE_CLEANUP] Performing automatic cleanup');
-    
+
     let totalCleaned = 0;
     let teamsToRemove = [];
-    
+
     // Очищаем устаревшие записи в каждой команде
     for (const [teamId, teamData] of Object.entries(cache.teams)) {
         let cleanedInTeam = 0;
         const playersToRemove = [];
-        
+
         for (const [playerId, playerData] of Object.entries(teamData.players)) {
             if (now - playerData.timestamp > maxAge) {
                 playersToRemove.push(playerId);
                 cleanedInTeam++;
             }
         }
-        
+
         // Удаляем устаревших игроков
         playersToRemove.forEach(playerId => {
             delete teamData.players[playerId];
         });
-        
+
         // Если команда пустая, помечаем для удаления
         if (Object.keys(teamData.players).length === 0) {
             teamsToRemove.push(teamId);
         }
-        
+
         totalCleaned += cleanedInTeam;
     }
-    
+
     // Удаляем пустые команды
     teamsToRemove.forEach(teamId => {
         delete cache.teams[teamId];
     });
-    
+
     cache.lastCleanup = now;
-    
+
     if (totalCleaned > 0 || teamsToRemove.length > 0) {
         console.log(`[CACHE_CLEANUP] Cleaned ${totalCleaned} expired players, ${teamsToRemove.length} empty teams`);
         savePlayerStyleCache(cache);
     }
-    
+
     return cache;
 }
 
@@ -5853,11 +5853,11 @@ function getCurrentTeamId() {
     // Пытаемся определить ID текущей команды из URL или других источников
     const urlMatch = window.location.href.match(/team[_=](\d+)/i);
     if (urlMatch) return urlMatch[1];
-    
+
     // Пытаемся найти в данных команд
     if (window.homeTeamId) return String(window.homeTeamId);
     if (window.awayTeamId) return String(window.awayTeamId);
-    
+
     // Fallback - используем "current"
     return 'current';
 }
@@ -5865,19 +5865,19 @@ function getCurrentTeamId() {
 function getPlayerStyleFromCache(playerId) {
     const cache = getPlayerStyleCache();
     const teamId = getCurrentTeamId();
-    
+
     // Ищем в текущей команде
     if (cache.teams[teamId]?.players[playerId]) {
         const playerData = cache.teams[teamId].players[playerId];
-        
+
         // Обновляем время последнего использования
         playerData.lastUsed = Date.now();
         savePlayerStyleCache(cache);
-        
+
         console.log(`[CACHE] Hit: игрок ${playerId} → ${playerData.style} (команда ${teamId})`);
         return playerData.style;
     }
-    
+
     // Ищем в других командах (для совместимости)
     for (const [otherTeamId, teamData] of Object.entries(cache.teams)) {
         if (teamData.players[playerId]) {
@@ -5886,7 +5886,7 @@ function getPlayerStyleFromCache(playerId) {
             return playerData.style;
         }
     }
-    
+
     console.log(`[CACHE] Miss: игрок ${playerId} не найден в кэше`);
     return null; // Возвращаем null вместо 'norm' чтобы использовать hidden_style
 }
@@ -5896,11 +5896,11 @@ function setPlayerStyleToCache(playerId, styleValue) {
         console.warn(`[CACHE] Invalid data: playerId=${playerId}, style=${styleValue}`);
         return;
     }
-    
+
     const cache = getPlayerStyleCache();
     const teamId = getCurrentTeamId();
     const now = Date.now();
-    
+
     // Создаем команду если не существует
     if (!cache.teams[teamId]) {
         cache.teams[teamId] = {
@@ -5912,18 +5912,18 @@ function setPlayerStyleToCache(playerId, styleValue) {
         };
         console.log(`[CACHE] Created team cache: ${teamId}`);
     }
-    
+
     // Сохраняем данные игрока
     cache.teams[teamId].players[playerId] = {
         style: styleValue,
         timestamp: now,
         lastUsed: now
     };
-    
+
     // Проверяем лимиты и очищаем если нужно
     enforceTeamLimits(cache, teamId);
     enforceGlobalLimits(cache);
-    
+
     savePlayerStyleCache(cache);
     console.log(`[CACHE] Saved: игрок ${playerId} → ${styleValue} (команда ${teamId})`);
 }
@@ -5940,17 +5940,17 @@ function enforceTeamLimits(cache, teamId) {
     const teamData = cache.teams[teamId];
     const maxPlayers = cache.settings?.maxPlayersPerTeam || DEFAULT_CACHE_SETTINGS.maxPlayersPerTeam;
     const players = Object.entries(teamData.players);
-    
+
     if (players.length > maxPlayers) {
         // Сортируем по времени последнего использования (старые первыми)
         players.sort((a, b) => a[1].lastUsed - b[1].lastUsed);
-        
+
         const toRemove = players.length - maxPlayers;
         for (let i = 0; i < toRemove; i++) {
             const [playerId] = players[i];
             delete teamData.players[playerId];
         }
-        
+
         console.log(`[CACHE_CLEANUP] Removed ${toRemove} old players from team ${teamId} (limit: ${maxPlayers})`);
     }
 }
@@ -5958,17 +5958,17 @@ function enforceTeamLimits(cache, teamId) {
 function enforceGlobalLimits(cache) {
     const maxTeams = cache.settings?.maxTeams || DEFAULT_CACHE_SETTINGS.maxTeams;
     const teams = Object.entries(cache.teams);
-    
+
     if (teams.length > maxTeams) {
         // Сортируем команды по времени создания (старые первыми)
         teams.sort((a, b) => (a[1].metadata?.created || 0) - (b[1].metadata?.created || 0));
-        
+
         const toRemove = teams.length - maxTeams;
         for (let i = 0; i < toRemove; i++) {
             const [teamId] = teams[i];
             delete cache.teams[teamId];
         }
-        
+
         console.log(`[CACHE_CLEANUP] Removed ${toRemove} old teams (limit: ${maxTeams})`);
     }
 }
@@ -5982,16 +5982,16 @@ function enforceGlobalLimits(cache) {
 function clearTeamStyleCache(teamId = null) {
     const cache = getPlayerStyleCache();
     const targetTeamId = teamId || getCurrentTeamId();
-    
+
     if (cache.teams[targetTeamId]) {
         const playersCount = Object.keys(cache.teams[targetTeamId].players).length;
         delete cache.teams[targetTeamId];
         savePlayerStyleCache(cache);
-        
+
         console.log(`[CACHE_CLEANUP] Cleared team ${targetTeamId}: ${playersCount} players`);
         return playersCount;
     }
-    
+
     console.log(`[CACHE_CLEANUP] Team ${targetTeamId} not found in cache`);
     return 0;
 }
@@ -6002,10 +6002,10 @@ function clearTeamStyleCache(teamId = null) {
 function clearAllStyleCache() {
     const cache = getPlayerStyleCache();
     const stats = getStyleCacheStats();
-    
+
     const newCache = createEmptyCache();
     savePlayerStyleCache(newCache);
-    
+
     console.log(`[CACHE_CLEANUP] Cleared all cache: ${stats.totalPlayers} players, ${stats.totalTeams} teams`);
     return stats;
 }
@@ -6018,39 +6018,39 @@ function cleanExpiredStyles(maxAge = null) {
     const cache = getPlayerStyleCache();
     const ageLimit = maxAge || cache.settings?.maxAge || DEFAULT_CACHE_SETTINGS.maxAge;
     const now = Date.now();
-    
+
     let totalCleaned = 0;
     let teamsToRemove = [];
-    
+
     for (const [teamId, teamData] of Object.entries(cache.teams)) {
         let cleanedInTeam = 0;
         const playersToRemove = [];
-        
+
         for (const [playerId, playerData] of Object.entries(teamData.players)) {
             if (now - playerData.timestamp > ageLimit) {
                 playersToRemove.push(playerId);
                 cleanedInTeam++;
             }
         }
-        
+
         playersToRemove.forEach(playerId => {
             delete teamData.players[playerId];
         });
-        
+
         if (Object.keys(teamData.players).length === 0) {
             teamsToRemove.push(teamId);
         }
-        
+
         totalCleaned += cleanedInTeam;
     }
-    
+
     teamsToRemove.forEach(teamId => {
         delete cache.teams[teamId];
     });
-    
+
     cache.lastCleanup = now;
     savePlayerStyleCache(cache);
-    
+
     console.log(`[CACHE_CLEANUP] Cleaned ${totalCleaned} expired players (>${Math.round(ageLimit/1000/60/60)}h), ${teamsToRemove.length} empty teams`);
     return { playersRemoved: totalCleaned, teamsRemoved: teamsToRemove.length };
 }
@@ -6060,16 +6060,16 @@ function cleanExpiredStyles(maxAge = null) {
 */
 function smartCleanupStyleCache() {
     console.log('[CACHE_CLEANUP] Starting smart cleanup');
-    
+
     const beforeStats = getStyleCacheStats();
-    
+
     // 1. Очищаем устаревшие записи
     const expiredResult = cleanExpiredStyles();
-    
+
     // 2. Применяем лимиты
     const cache = getPlayerStyleCache();
     enforceGlobalLimits(cache);
-    
+
     // 3. Очищаем команды без метаданных (возможно поврежденные)
     let corruptedTeams = 0;
     for (const [teamId, teamData] of Object.entries(cache.teams)) {
@@ -6078,14 +6078,14 @@ function smartCleanupStyleCache() {
             corruptedTeams++;
         }
     }
-    
+
     if (corruptedTeams > 0) {
         console.log(`[CACHE_CLEANUP] Removed ${corruptedTeams} corrupted teams`);
         savePlayerStyleCache(cache);
     }
-    
+
     const afterStats = getStyleCacheStats();
-    
+
     console.log(`[CACHE_CLEANUP] Smart cleanup completed:`, {
         before: beforeStats,
         after: afterStats,
@@ -6094,7 +6094,7 @@ function smartCleanupStyleCache() {
             teams: beforeStats.totalTeams - afterStats.totalTeams
         }
     });
-    
+
     return {
         before: beforeStats,
         after: afterStats,
@@ -6109,19 +6109,19 @@ function smartCleanupStyleCache() {
 function getStyleCacheStats() {
     const cache = getPlayerStyleCache();
     const now = Date.now();
-    
+
     let totalPlayers = 0;
     let totalTeams = Object.keys(cache.teams).length;
     let oldestEntry = now;
     let newestEntry = 0;
     let styleDistribution = {};
     let teamSizes = {};
-    
+
     for (const [teamId, teamData] of Object.entries(cache.teams)) {
         const playersInTeam = Object.keys(teamData.players).length;
         teamSizes[teamId] = playersInTeam;
         totalPlayers += playersInTeam;
-        
+
         for (const [playerId, playerData] of Object.entries(teamData.players)) {
             // Статистика по времени
             if (playerData.timestamp < oldestEntry) {
@@ -6130,19 +6130,19 @@ function getStyleCacheStats() {
             if (playerData.timestamp > newestEntry) {
                 newestEntry = playerData.timestamp;
             }
-            
+
             // Статистика по стилям
             const style = playerData.style;
             styleDistribution[style] = (styleDistribution[style] || 0) + 1;
         }
     }
-    
+
     const cacheSize = JSON.stringify(cache).length;
     const maxAge = cache.settings?.maxAge || DEFAULT_CACHE_SETTINGS.maxAge;
     const expiredCount = Object.values(cache.teams).reduce((count, teamData) => {
         return count + Object.values(teamData.players).filter(p => now - p.timestamp > maxAge).length;
     }, 0);
-    
+
     return {
         version: cache.version,
         totalPlayers,
@@ -6169,17 +6169,17 @@ window.getStyleCacheStats = getStyleCacheStats;
 // Альтернативное определение для отладки
 (function() {
     'use strict';
-    
+
     // Проверяем, что функции определены локально
     if (typeof clearAllStyleCache !== 'function') {
         console.error('❌ clearAllStyleCache не определена локально');
         return;
     }
-    
+
     // Принудительно устанавливаем в window
     window.clearAllStyleCache = clearAllStyleCache;
     window.getStyleCacheStats = getStyleCacheStats;
-    
+
     console.log('🔧 Функции кэша принудительно установлены в window');
 })();
 
@@ -6191,7 +6191,7 @@ window.testCacheFunctions = function() {
     console.log('cleanExpiredStyles:', typeof window.cleanExpiredStyles);
     console.log('smartCleanupStyleCache:', typeof window.smartCleanupStyleCache);
     console.log('getStyleCacheStats:', typeof window.getStyleCacheStats);
-    
+
     try {
         const stats = getStyleCacheStats();
         console.log('✅ Функции кэша работают корректно');
@@ -6210,7 +6210,7 @@ window.cacheTest = function() {
         clearAllStyleCache: typeof clearAllStyleCache,
         getStyleCacheStats: typeof getStyleCacheStats
     });
-    
+
     if (typeof clearAllStyleCache === 'function') {
         console.log('✅ clearAllStyleCache доступна');
         return true;
@@ -6543,13 +6543,13 @@ function createDummySelect() {
     50% { opacity: 0.7; }
     }
     @keyframes fadeInScale {
-    0% { 
-        opacity: 0; 
-        transform: scale(0.8); 
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
     }
-    100% { 
-        opacity: 1; 
-        transform: scale(1); 
+    100% {
+        opacity: 1;
+        transform: scale(1);
     }
     }
 `;
@@ -6955,8 +6955,8 @@ function createOrdersSelect({
         opts.forEach(opt => {
             const div = document.createElement('div');
             const isSelected = String(opt.value || '') === String(currentValue);
-            div.className = 'orders-option' + 
-                (opt.disabled ? ' disabled' : '') + 
+            div.className = 'orders-option' +
+                (opt.disabled ? ' disabled' : '') +
                 (isSelected ? ' selected' : '');
             div.textContent = opt.label;
             div.dataset.value = opt.value;
@@ -7091,11 +7091,11 @@ function getAllowedMiniOptions({
     const rmIdxs = (counts.indexes && counts.indexes['RM']) || [];
 
     // === ОБЩИЕ ОПРЕДЕЛЕНИЯ ДЛЯ ВСЕХ CASE'ОВ ===
-    
+
     // Количество позиций
     const amCount = counts['AM'] || 0;
     const frCount = counts['FR'] || 0;
-    
+
     // Определение максимального индекса среди всех полузащитников (для CM/DM → AM)
     const midfielderIndices = [];
     positions.forEach((pos, idx) => {
@@ -7105,7 +7105,7 @@ function getAllowedMiniOptions({
     });
     const maxMidfielderIndex = midfielderIndices.length ? Math.max(...midfielderIndices) : null;
     const isMaxMidfielder = rowIndex === maxMidfielderIndex;
-    
+
     // Определение центральных позиций (для FR логики)
     const centralIndices = [];
     positions.forEach((pos, idx) => {
@@ -7116,16 +7116,16 @@ function getAllowedMiniOptions({
     const minCentralIndex = centralIndices.length ? Math.min(...centralIndices) : null;
     const maxCentralIndex = centralIndices.length ? Math.max(...centralIndices) : null;
     const totalCentralCount = centralIndices.length;
-    
+
     // Общие условия для превращения в AM
     const amAbsent = amCount < 1;
     const noWingers = !hasLW && !hasRW;
     const canBecomeAM = !is424 && amAbsent && noWingers && isMaxMidfielder;
-    
+
     // Общие условия для превращения в FR
     const centralFieldPlayers = cmCount + dmCount + amCount + frCount;
     const canBecomeFR = frCount < 1 && centralFieldPlayers < 4;
-    
+
     console.log(`[getAllowedMiniOptions] === ОБЩИЕ ОПРЕДЕЛЕНИЯ ===`);
     console.log(`[getAllowedMiniOptions] Полузащитники:`, {
         midfielderIndices, maxMidfielderIndex, isMaxMidfielder,
@@ -7161,7 +7161,7 @@ function getAllowedMiniOptions({
         case 'LM': {
             console.log(`[getAllowedMiniOptions] === LM ЛОГИКА ===`);
             if (is424) add(options, 'CM');
-            
+
             // ИСПРАВЛЕНИЕ: Запрет LM → LW для схемы 4-2-4
             if (!is424) {
                 const amAbsent = (counts['AM'] || 0) < 1;
@@ -7180,7 +7180,7 @@ function getAllowedMiniOptions({
         case 'RM': {
             console.log(`[getAllowedMiniOptions] === RM ЛОГИКА ===`);
             if (is424) add(options, 'CM');
-            
+
             // ИСПРАВЛЕНИЕ: Запрет RM → RW для схемы 4-2-4
             if (!is424) {
                 const amAbsent = (counts['AM'] || 0) < 1;
@@ -7261,7 +7261,7 @@ function getAllowedMiniOptions({
 
                 // НОВАЯ ЛОГИКА ДЛЯ FR: CM может стать FR
                 const centralFieldPlayers = cmCount + dmCount + amCount + frCount;
-                
+
                 console.log(`[PositionLogic] CM→FR проверка для позиции ${rowIndex}:`, {
                     frCount, centralFieldPlayers,
                     canBecomeFR: frCount < 1 && centralFieldPlayers < 4
@@ -7429,21 +7429,21 @@ function getAllowedMiniOptions({
             break;
         case 'FR': {
             console.log(`[getAllowedMiniOptions] === FR ЛОГИКА ===`);
-            
+
             // 1. FR всегда может стать CM
             add(options, 'CM');
-            
+
             console.log(`[PositionLogic] FR обратная логика для позиции ${rowIndex}:`, {
                 centralIndices, minCentralIndex, maxCentralIndex, totalCentralCount,
                 isMinCentral: rowIndex === minCentralIndex,
                 isMaxCentral: rowIndex === maxCentralIndex
             });
-            
+
             // 3. Специальный случай: 1 центральный игрок
             if (totalCentralCount === 1) {
                 console.log(`[PositionLogic] FR: Единственный центральный игрок - может стать DM, AM, CM`);
                 add(options, 'DM');
-                
+
                 // AM только если его нет в составе
                 if (amCount < 1) {
                     console.log(`[PositionLogic] FR: Добавляем AM (единственный центральный и AM < 1)`);
@@ -7451,11 +7451,11 @@ function getAllowedMiniOptions({
                 } else {
                     console.log(`[PositionLogic] FR: НЕ добавляем AM (уже есть AM в составе)`);
                 }
-                
+
                 // CM уже добавлен выше
                 break;
             }
-            
+
             // 4. Специальный случай: формация 3-6-1
             if (is361) {
                 console.log(`[PositionLogic] FR: Формация 3-6-1 - специальная логика для DM`);
@@ -7466,10 +7466,10 @@ function getAllowedMiniOptions({
             } else {
                 // 5. Обычная логика для других формаций
                 // ИСПРАВЛЕНИЕ 3: Универсальное ограничение для DM
-                const canBecomeDM = (totalCentralCount === 1) || 
-                                (totalCentralCount >= 3) || 
+                const canBecomeDM = (totalCentralCount === 1) ||
+                                (totalCentralCount >= 3) ||
                                 (totalCentralCount === 2 && !isMaxMidfielder);
-                
+
                 console.log(`[PositionLogic] FR→DM проверка для позиции ${rowIndex}:`, {
                     totalCentralCount, isMaxMidfielder, canBecomeDM
                 });
@@ -7479,7 +7479,7 @@ function getAllowedMiniOptions({
                     add(options, 'DM');
                 }
             }
-            
+
             // 6. FR → AM (только на максимальном индексе И если AM < 1)
             if (rowIndex === maxCentralIndex && amCount < 1) {
                 console.log(`[PositionLogic] FR: Добавляем AM (максимальный индекс и AM < 1)`);
@@ -7487,7 +7487,7 @@ function getAllowedMiniOptions({
             } else if (rowIndex === maxCentralIndex && amCount >= 1) {
                 console.log(`[PositionLogic] FR: НЕ добавляем AM (уже есть AM в составе)`);
             }
-            
+
             break;
         }
         default:
@@ -7927,25 +7927,25 @@ function onMiniPositionChange({
         // второй должен тоже становиться фланговым игроком (противоположный фланг)
         if (selectedOpt.value === 'LM' || selectedOpt.value === 'RM') {
             const originalPosition = positions[rowIndex];
-            
+
             // Проверяем, был ли это центральный полузащитник
             if (originalPosition === 'CM' || originalPosition === 'FR') {
                 console.log(`[onMiniPositionChange] 4-2-4: ${originalPosition} → ${selectedOpt.value}, ищем второго полузащитника`);
-                
+
                 // Определяем целевой фланг для второго полузащитника
                 const targetFlank = selectedOpt.value === 'LM' ? 'RM' : 'LM';
-                
+
                 // Ищем другого центрального полузащитника (CM или FR)
                 const otherMidfielderIndex = newPositions.findIndex((pos, idx) => {
                     return (pos === 'CM' || pos === 'FR') && idx !== rowIndex;
                 });
-                
+
                 if (otherMidfielderIndex !== -1) {
                     const otherOriginalPos = newPositions[otherMidfielderIndex];
                     newPositions[otherMidfielderIndex] = targetFlank;
-                    
+
                     console.log(`[onMiniPositionChange] 4-2-4: Автоматически превращаем ${otherOriginalPos} (индекс ${otherMidfielderIndex}) → ${targetFlank}`);
-                    
+
                     // Обновить мини-селектор для второго полузащитника
                     if (lineup && lineup[otherMidfielderIndex] && lineup[otherMidfielderIndex].miniPositionSelect) {
                         const flankOpts = getAllowedMiniOptions({
@@ -7961,34 +7961,34 @@ function onMiniPositionChange({
                 }
             }
         }
-        
+
         // Обратная логика: когда фланговый полузащитник (LM/RM) становится центральным (CM/FR),
         // второй фланговый тоже должен стать центральным
         if (selectedOpt.value === 'CM' || selectedOpt.value === 'FR') {
             const originalPosition = positions[rowIndex];
-            
+
             // Проверяем, был ли это фланговый полузащитник
             if (originalPosition === 'LM' || originalPosition === 'RM') {
                 console.log(`[onMiniPositionChange] 4-2-4: ${originalPosition} → ${selectedOpt.value}, ищем второго флангового`);
-                
+
                 // Определяем противоположный фланг
                 const oppositeFlank = originalPosition === 'LM' ? 'RM' : 'LM';
-                
+
                 // Ищем противоположного флангового полузащитника
                 const oppositeFlankIndex = newPositions.findIndex((pos, idx) => {
                     return pos === oppositeFlank && idx !== rowIndex;
                 });
-                
+
                 if (oppositeFlankIndex !== -1) {
                     // Определяем целевую позицию (приоритет CM, если FR уже занят)
                     const hasCM = newPositions.includes('CM');
                     const hasFR = newPositions.includes('FR');
                     const targetPosition = (!hasCM) ? 'CM' : (!hasFR) ? 'FR' : 'CM';
-                    
+
                     newPositions[oppositeFlankIndex] = targetPosition;
-                    
+
                     console.log(`[onMiniPositionChange] 4-2-4: Автоматически превращаем ${oppositeFlank} (индекс ${oppositeFlankIndex}) → ${targetPosition}`);
-                    
+
                     // Обновить мини-селектор для противоположного флангового
                     if (lineup && lineup[oppositeFlankIndex] && lineup[oppositeFlankIndex].miniPositionSelect) {
                         const centralOpts = getAllowedMiniOptions({
@@ -8071,17 +8071,17 @@ function parseWeatherFromPreview() {
 
 function getWeatherVariants(currentWeather, minTemp, maxTemp) {
     const WEATHER_SCALE = [
-        "очень жарко", "жарко", "солнечно", 
+        "очень жарко", "жарко", "солнечно",
         "облачно", "пасмурно", "дождь", "снег"
     ];
-    
+
     const currentIndex = WEATHER_SCALE.indexOf(currentWeather);
     if (currentIndex === -1 || minTemp === null || maxTemp === null) {
         return null;
     }
-    
+
     const avgTemp = Math.round((minTemp + maxTemp) / 2);
-    
+
     return {
         min: {
             weather: WEATHER_SCALE[Math.min(currentIndex + 1, WEATHER_SCALE.length - 1)],
@@ -8247,7 +8247,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     label: toOptionLabel(p, matchPosition, playerFormId)
                 };
             });
-            
+
             // Объединяем: сначала пустая опция, потом игроки
             const opts = [emptyOption, ...playerOpts];
             slot.setOptions(opts);
@@ -8404,7 +8404,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         }
         const styleSelect = createCustomStyleSelect((styleValue) => {
             console.log(`[SELECT] Изменение стиля: ${styleValue}`);
-            
+
             slotApi.customStyleValue = styleValue;
             const playerId = slotApi.getValue && slotApi.getValue();
 
@@ -8423,7 +8423,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     strength: Number(player.realStr) || 0
                 });
             }
-            
+
             // Пересчитываем Chemistry и силу команды при изменении стиля
             if (typeof saveAllStates === 'function') {
                 saveAllStates();
@@ -8452,19 +8452,19 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                     if (player) {
                         // Сохраняем данные игрока в slotApi
                         slotApi.selectedPlayer = player;  // ← ДОБАВЛЕНО
-                        
+
                         // Автоматически устанавливаем стиль игрока из hidden_style
                         const playerHiddenStyleNumeric = player.hidden_style;
                         const playerHiddenStyle = convertNumericStyleToString(playerHiddenStyleNumeric);
-                        
+
                         console.log(`[SELECT] Выбран игрок ${player.name}: hidden_style=${playerHiddenStyleNumeric} → ${playerHiddenStyle}`);
-                        
+
                         // Загружаем стиль игрока из кэша или используем hidden_style
                         const cachedStyle = getPlayerStyleFromCache(v);
                         const effectiveStyle = cachedStyle || playerHiddenStyle;
-                        
+
                         console.log(`[SELECT] Эффективный стиль для ${player.name}: кэш=${cachedStyle || 'нет'}, итого=${effectiveStyle}`);
-                        
+
                         if (effectiveStyle !== 'norm') {
                             slotApi.customStyleValue = effectiveStyle;
                             if (styleSelect && styleSelect.setValue) {
@@ -8504,23 +8504,23 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                 } else {
                     // Игрок не выбран - очищаем данные
                     slotApi.selectedPlayer = null;
-                    
+
                     // Очищаем физическую форму
                     if (slotApi.physicalFormSelect) {
                         slotApi.physicalFormSelect.setValue(null);
                         slotApi.physicalFormValue = null;
                     }
-                    
+
                     // Очищаем модифицированную силу
                     slotApi.modifiedRealStr = null;
-                    
+
                     // Сбрасываем стиль на обычный
                     slotApi.customStyleValue = 'norm';
                     if (styleSelect && styleSelect.setValue) {
                         styleSelect.setValue('norm');
                         console.log(`[SELECT] Сброшен стиль на norm при очистке (setValue)`);
                     }
-                    
+
                     console.log(`[SELECT] Игрок не выбран, очищаем данные`);
                 }
             },
@@ -8547,7 +8547,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             if (player) {
                 // Сохраняем данные игрока в slotApi
                 slotApi.selectedPlayer = player;  // ← ДОБАВЛЕНО
-                
+
                 logPlayerWeatherCoef({
                     player,
                     customStyleValue: slotApi.customStyleValue || 'norm',
@@ -8572,23 +8572,23 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             } else {
                 // Игрок не выбран - очищаем данные
                 slotApi.selectedPlayer = null;
-                
+
                 // Очищаем физическую форму
                 if (slotApi.physicalFormSelect) {
                     slotApi.physicalFormSelect.setValue(null);
                     slotApi.physicalFormValue = null;
                 }
-                
+
                 // Очищаем модифицированную силу
                 slotApi.modifiedRealStr = null;
-                
+
                 // Сбрасываем стиль на обычный
                 slotApi.customStyleValue = 'norm';
                 if (styleSelect && styleSelect.setValue) {
                     styleSelect.setValue('norm');
                     console.log(`[SELECT] Сброшен стиль на norm при очистке игрока`);
                 }
-                
+
                 // Обновляем селекторы после очистки
                 updatePlayerSelectOptions();
             }
@@ -8615,10 +8615,10 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         // addPlayerDetailHints(orders.el, () => {
         //     const playerId = slotApi.getValue();
         //     if (!playerId) return null;
-        //     
+        //
         //     const player = players.find(p => String(p.id) === playerId);
         //     if (!player) return null;
-        //     
+        //
         //     return {
         //         player: player,
         //         matchPosition: slotApi.posValue,
@@ -8717,7 +8717,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             lineup.forEach(slot => {
                 const playerId = slot.getValue();
                 const position = slot.posValue;
-                
+
                 // Исключаем вратарей из списка исполнителей стандартов
                 if (playerId && playerId !== '-1' && position !== 'GK') {
                     const player = players.find(p => String(p.id) === playerId);
@@ -8771,7 +8771,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
     }
 
     updatePlayerSelectOptions();
-    
+
     const lineupBlockObj = {
         block: table,
         lineup,
@@ -8787,7 +8787,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         uglovSelect: null,
         penaltySelect: null
     };
-    
+
     return lineupBlockObj;
 }
 
@@ -8910,9 +8910,9 @@ function createDefenceTypeSelector(team, onChange) {
 function showPlayerDetailHint(element, player, matchPosition, physicalFormId, customStyle, teamStyleId = null) {
     // Удаляем существующие подсказки
     removeExistingHints();
-    
+
     if (!player) return;
-    
+
     // Пытаемся определить стиль команды, если не передан
     if (!teamStyleId) {
         // Проверяем, есть ли доступ к селекторам стилей команд
@@ -8920,20 +8920,20 @@ function showPlayerDetailHint(element, player, matchPosition, physicalFormId, cu
             teamStyleId = window.homeTeam._styleSelector.value;
         }
     }
-    
+
     // Рассчитываем Chemistry бонус для игрока
     let chemistryBonus = 0;
     try {
         const slotEntries = window.currentSlotEntries || [];
         const inLineupPlayers = slotEntries.map(entry => entry.player).filter(Boolean);
-        
+
         if (inLineupPlayers.length > 0) {
             chemistryBonus = getChemistryBonus(player, inLineupPlayers, teamStyleId);
         }
     } catch (e) {
         console.warn('[CHEMISTRY] Ошибка расчета бонуса для подсказки:', e);
     }
-    
+
     // Создаем контейнер подсказки
     const hint = document.createElement('div');
     hint.className = 'vs-player-detail-hint';
@@ -8952,7 +8952,7 @@ function showPlayerDetailHint(element, player, matchPosition, physicalFormId, cu
         transform: scale(0.95);
         transition: opacity 0.15s ease, transform 0.15s ease;
     `;
-    
+
     // Добавляем заголовок
     const header = document.createElement('div');
     header.style.cssText = `
@@ -8965,7 +8965,7 @@ function showPlayerDetailHint(element, player, matchPosition, physicalFormId, cu
     `;
     header.textContent = 'Детали игрока';
     hint.appendChild(header);
-    
+
     // Добавляем содержимое
     const content = document.createElement('div');
     content.style.cssText = 'padding: 10px;';
@@ -8977,20 +8977,20 @@ function showPlayerDetailHint(element, player, matchPosition, physicalFormId, cu
         chemistryBonus
     });
     hint.appendChild(content);
-    
+
     // Позиционируем подсказку
     document.body.appendChild(hint);
     positionHint(hint, element, 'right top');
-    
+
     // Анимация появления
     setTimeout(() => {
         hint.style.opacity = '1';
         hint.style.transform = 'scale(1)';
     }, 10);
-    
+
     // Сохраняем ссылку для удаления
     element._playerHint = hint;
-    
+
     return hint;
 }
 
@@ -9019,9 +9019,9 @@ function hidePlayerDetailHint(element) {
 */
 function addPlayerDetailHints(selectElement, getPlayerData) {
     if (!selectElement || selectElement._hintsAdded) return;
-    
+
     let hoverTimeout = null;
-    
+
     // Обработчик наведения
     selectElement.addEventListener('mouseenter', () => {
         // Задержка перед показом подсказки
@@ -9038,7 +9038,7 @@ function addPlayerDetailHints(selectElement, getPlayerData) {
             }
         }, 500); // 500ms задержка
     });
-    
+
     // Обработчик ухода курсора
     selectElement.addEventListener('mouseleave', () => {
         if (hoverTimeout) {
@@ -9047,7 +9047,7 @@ function addPlayerDetailHints(selectElement, getPlayerData) {
         }
         hidePlayerDetailHint(selectElement);
     });
-    
+
     selectElement._hintsAdded = true;
 }
 
@@ -9067,7 +9067,7 @@ function addHelpButton(container, type, title, context = {}) {
         showCalculatorHint(helpBtn, type, title, 450, context);
         return false;
     };
-    
+
     // Улучшенные стили кнопки
     helpBtn.style.cssText = `
         width: 16px;
@@ -9087,7 +9087,7 @@ function addHelpButton(container, type, title, context = {}) {
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     `;
     helpBtn.textContent = '?';
-    
+
     // Улучшенные hover эффекты
     helpBtn.onmouseover = () => {
         helpBtn.style.background = 'linear-gradient(135deg, #e8e8e8, #d8d8d8)';
@@ -9101,7 +9101,7 @@ function addHelpButton(container, type, title, context = {}) {
         helpBtn.style.transform = 'translateY(0)';
         helpBtn.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
     };
-    
+
     container.appendChild(helpBtn);
 }
 
@@ -9791,7 +9791,7 @@ function getTournamentType() {
                 console.log('Ошибка парсинга игрока:', e, m[1]);
             }
         }
-        
+
         // Отладочное логирование для Chemistry системы
         if (items.length > 0) {
             const firstPlayer = items[0];
@@ -9805,7 +9805,7 @@ function getTournamentType() {
                 'total_length': firstPlayer.length
             });
         }
-        
+
         console.log('[CHEMISTRY] Extracted data:', items);
         return items;
     }
@@ -9850,7 +9850,7 @@ function getTournamentType() {
                             return;
                         }
                         const players = extractPlayersFromPlrdat(rawPlayers);
-                        
+
                         // Отладочное логирование для Chemistry системы
                         if (players.length > 0) {
                             console.log('[CHEMISTRY] Пример игрока:', {
@@ -9860,7 +9860,7 @@ function getTournamentType() {
                                 hidden_style: players[0].hidden_style
                             });
                         }
-                        
+
                         resolve(players);
                     } catch (error) {
                         reject(error);
@@ -9926,7 +9926,7 @@ function getTournamentType() {
         return new Promise((resolve, reject) => {
             const url = `${SITE_CONFIG.BASE_URL}/roster_m.php?num=${teamId}`;
             console.log(`[SHIRTS] Loading match list for team ${teamId}, preferHome=${preferHome}`);
-            
+
             GM_xmlhttpRequest({
                 method: "GET",
                 url: url,
@@ -9963,7 +9963,7 @@ function getTournamentType() {
                                 // Ищем строку таблицы с этим матчем
                                 const row = link.closest('tr');
                                 let isHome = false;
-                                
+
                                 if (row) {
                                     // Проверяем, есть ли "(д)" или "(г)" в строке
                                     const rowText = row.textContent;
@@ -9987,9 +9987,9 @@ function getTournamentType() {
                                     isHome: isHome,
                                     scoreText: scoreText
                                 };
-                                
+
                                 matches.push(matchInfo);
-                                
+
                                 // Логируем первые 3 матча для отладки
                                 if (matches.length <= 3) {
                                     console.log(`[SHIRTS] Match #${matches.length}:`, matchInfo, 'rowText:', row ? row.textContent.substring(0, 100) : 'no row');
@@ -9998,7 +9998,7 @@ function getTournamentType() {
                         }
 
                         console.log(`[SHIRTS] Found ${matches.length} played matches`);
-                        
+
                         if (matches.length > 0) {
                             // Если нужен домашний матч, ищем его
                             if (preferHome) {
@@ -10011,7 +10011,7 @@ function getTournamentType() {
                                     console.log(`[SHIRTS] No home match found, using last match`);
                                 }
                             }
-                            
+
                             // Возвращаем последний матч
                             const lastMatch = matches[0];
                             console.log(`[SHIRTS] Selected last match: day=${lastMatch.day}, matchId=${lastMatch.matchId}, isHome=${lastMatch.isHome}, score=${lastMatch.scoreText}`);
@@ -10337,7 +10337,7 @@ function getTournamentType() {
         const fatigueModifier = getFatigueBonus(Number(player.fatigue) || 0);
         const realityModifier = getRealityBonus(player.real_status, player.real_sign);
         const positionModifier = getPositionModifier(player.mainPos, player.secondPos, matchPosition);
-        
+
         const calculatedStr = Math.round(baseStr * physicalFormModifier * fatigueModifier * realityModifier * positionModifier);
 
         // Расчет бонусов
@@ -10356,7 +10356,7 @@ function getTournamentType() {
         let chemistryModifier = 0;
         try {
             let slotEntries = window.currentSlotEntries || [];
-            
+
             // Если currentSlotEntries пустой, пытаемся использовать currentFieldLineups
             if (slotEntries.length === 0 && window.currentFieldLineups) {
                 const lineup = window.currentFieldLineups[team];
@@ -10371,18 +10371,18 @@ function getTournamentType() {
                             playerIndex: idx
                         };
                     }).filter(Boolean);
-                    
+
                     // Временно устанавливаем currentSlotEntries для getChemistryBonus
                     window.currentSlotEntries = slotEntries;
                 }
             }
-            
+
             const inLineupPlayers = slotEntries.map(entry => entry.player).filter(Boolean);
-            
+
             console.log('[CHEMISTRY] Field hint - slotEntries:', slotEntries.length);
             console.log('[CHEMISTRY] Field hint - inLineupPlayers:', inLineupPlayers.length);
             console.log('[CHEMISTRY] Field hint - player:', player.name);
-            
+
             if (inLineupPlayers.length > 0) {
                 chemistryModifier = getChemistryBonus(player, inLineupPlayers, teamStyleId);
                 contribution.chemistry = Math.round(calculatedStr * chemistryModifier);
@@ -10421,14 +10421,14 @@ function getTournamentType() {
             }
         }
 
-        contribution.total = calculatedStr + 
-            contribution.captain + 
-            contribution.synergy + 
-            contribution.chemistry + 
-            contribution.morale + 
-            contribution.atmosphere + 
-            contribution.defence + 
-            contribution.rough + 
+        contribution.total = calculatedStr +
+            contribution.captain +
+            contribution.synergy +
+            contribution.chemistry +
+            contribution.morale +
+            contribution.atmosphere +
+            contribution.defence +
+            contribution.rough +
             contribution.leadership;
 
         return {
@@ -10464,7 +10464,7 @@ function getTournamentType() {
         console.log('[FieldHints] team:', team);
         console.log('[FieldHints] playerData:', playerData);
         console.log('[FieldHints] shirtElement:', shirtElement);
-        
+
         // Удаляем существующие подсказки
         removeExistingHints();
 
@@ -10478,7 +10478,7 @@ function getTournamentType() {
         const matchPosition = playerData.matchPosition || position;
         const physicalFormId = playerData.physicalFormId || 'normal';
         const playerIndex = playerData.playerIndex || 0;
-        
+
         // Создаем контейнер подсказки
         const hintDiv = document.createElement('div');
         hintDiv.className = 'vs-field-player-hint';
@@ -10500,11 +10500,11 @@ function getTournamentType() {
 
         // ОБНОВЛЕНО: Используем новую функцию getPlayerFullData
         const fullData = getPlayerFullData(player, matchPosition, physicalFormId, team, playerIndex);
-        
+
         // Создаем содержимое подсказки
         const teamName = team === 'home' ? 'Хозяева' : 'Гости';
         const teamColor = team === 'home' ? '#28a745' : '#dc3545';
-        
+
         hintDiv.innerHTML = `
             <div style="display: flex; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e9ecef;">
                 <div style="width: 32px; height: 32px; background: ${teamColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 10px;">
@@ -10515,7 +10515,7 @@ function getTournamentType() {
                     <div style="color: #6c757d; font-size: 10px;">${teamName} • ${player.age} лет</div>
                 </div>
             </div>
-            
+
             <div style="margin-bottom: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                     <span style="color: #495057;">Базовая сила:</span>
@@ -10539,14 +10539,14 @@ function getTournamentType() {
                 <div style="font-weight: bold; color: #495057; margin-bottom: 6px; font-size: 11px;">Модификаторы силы:</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px;">
                     <div>
-                        Физ. форма: 
+                        Физ. форма:
                         <span style="font-weight: bold; color: ${fullData.details.form >= 110 ? '#28a745' : fullData.details.form >= 95 ? '#ffc107' : fullData.details.form >= 85 ? '#fd7e14' : '#dc3545'};">
                             ${CONFIG.PHYSICAL_FORM.FORMS[fullData.details.physicalFormId]?.label || fullData.details.form + '%'}
                         </span>
                         <span style="color: #6c757d;"> (×${fullData.modifiers.physicalForm.toFixed(3)})</span>
                     </div>
                     <div>
-                        Усталость: 
+                        Усталость:
                         <span style="font-weight: bold; color: ${fullData.details.fatigue <= 25 ? '#28a745' : fullData.details.fatigue <= 50 ? '#ffc107' : fullData.details.fatigue <= 75 ? '#fd7e14' : '#dc3545'};">
                             ${fullData.details.fatigue}%
                         </span>
@@ -10595,12 +10595,12 @@ function getTournamentType() {
 
             <div style="text-align: center; margin-top: 12px; padding-top: 8px; border-top: 1px solid #e9ecef;">
                 <button onclick="this.parentElement.parentElement.remove()" style="
-                    background: #007bff; 
-                    color: white; 
-                    border: none; 
-                    padding: 6px 12px; 
-                    border-radius: 6px; 
-                    cursor: pointer; 
+                    background: #007bff;
+                    color: white;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    cursor: pointer;
                     font-size: 11px;
                     transition: background 0.2s ease;
                 " onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
@@ -10660,7 +10660,7 @@ function getTournamentType() {
                     <div style="color: #6c757d; font-size: 10px;">${teamName} • ${positionInfo.line}</div>
                 </div>
             </div>
-            
+
             <div style="color: #6c757d; text-align: center; margin: 12px 0;">
                 <em>Игрок не выбран</em>
             </div>
@@ -10674,12 +10674,12 @@ function getTournamentType() {
 
             <div style="text-align: center; margin-top: 12px; padding-top: 8px; border-top: 1px solid #e9ecef;">
                 <button onclick="this.parentElement.parentElement.remove()" style="
-                    background: #6c757d; 
-                    color: white; 
-                    border: none; 
-                    padding: 6px 12px; 
-                    border-radius: 6px; 
-                    cursor: pointer; 
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    cursor: pointer;
                     font-size: 11px;
                     transition: background 0.2s ease;
                 " onmouseover="this.style.background='#545b62'" onmouseout="this.style.background='#6c757d'">
@@ -10716,7 +10716,7 @@ function getTournamentType() {
         // Корректируем позицию если выходит за границы экрана
         if (left < 10) left = 10;
         if (left + hintRect.width > viewportWidth - 10) left = viewportWidth - hintRect.width - 10;
-        
+
         if (top < 10) {
             top = shirtRect.bottom + 10;
         }
@@ -10736,7 +10736,7 @@ function getTournamentType() {
             const color = data.coefficient >= 1 ? '#28a745' : data.coefficient >= 0.9 ? '#ffc107' : '#dc3545';
             const sign = data.coefficient >= 1 ? '+' : '';
             const change = ((data.coefficient - 1) * 100).toFixed(1);
-            
+
             return `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                     <span style="color: #495057; font-size: 10px;">${data.name}:</span>
@@ -10779,13 +10779,13 @@ function getTournamentType() {
 
     function createShirtElement(position, shirtUrl, top, left, playerName = null, team = null, playerData = null) {
         const div = document.createElement('div');
-        
+
         // Генерируем уникальный ID для футболки
         const uniqueId = `shirt-${team || 'unknown'}-${position}-${Math.random().toString(36).substr(2, 9)}`;
         div.id = uniqueId;
-        
+
         console.log(`[FieldHints] Создание футболки: ID=${uniqueId}, позиция=${position}, команда=${team}, игрок=${playerName}, есть данные=${!!playerData}`);
-        
+
         div.style.cssText = `
             position: absolute;
             width: ${FIELD_LAYOUT.SHIRT_WIDTH}px;
@@ -10814,14 +10814,14 @@ function getTournamentType() {
         div.addEventListener('click', (e) => {
             e.stopPropagation();
             console.log(`[FieldHints] Клик по футболке: ${uniqueId}, позиция: ${position}, команда: ${team}`);
-            
+
             // Проверяем, есть ли данные игрока
             if (playerData && playerData.player) {
                 console.log(`[FieldHints] Показываем подсказку для игрока: ${playerData.player.name}`);
             } else {
                 console.log(`[FieldHints] Показываем подсказку только для позиции: ${position}`);
             }
-            
+
             showFieldPlayerHint(position, team, playerData, div);
         });
 
@@ -10832,13 +10832,13 @@ function getTournamentType() {
         console.log('[FieldHints] displayShirtsOnField вызвана');
         console.log('[FieldHints] homeLineup:', homeLineup);
         console.log('[FieldHints] awayLineup:', awayLineup);
-        
+
         // Сохраняем lineups глобально для использования в field hints
         window.currentFieldLineups = {
             home: homeLineup,
             away: awayLineup
         };
-        
+
         // Создаём или очищаем контейнер для футболок
         let shirtsContainer = fieldCol.querySelector('.shirts-container');
         if (!shirtsContainer) {
@@ -11091,7 +11091,7 @@ function getTournamentType() {
     window.addHelpButton = addHelpButton;
     window.showCalculatorHint = showCalculatorHint;
     window.getHintContent = getHintContent;
-    
+
     // Новые функции ЭТАПА 4 - подсказки при клике на футболки
     window.showFieldPlayerHint = showFieldPlayerHint;
     window.calculatePlayerStrength = calculatePlayerStrength;
@@ -11099,7 +11099,7 @@ function getTournamentType() {
     function createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere = 0, awayAtmosphere = 0) {
         const parsedWeather = parseWeatherFromPreview();
         const stadiumCapacity = parseStadiumCapacity() || 0;
-        
+
         // Сохраняем ID команд в глобальные переменные для использования в других функциях
         window.homeTeamId = homeTeamId;
         window.awayTeamId = awayTeamId;
@@ -11225,10 +11225,10 @@ function getTournamentType() {
                     // Извлекаем эмблемы команд
                     const homeEmblem = teamLinks[0].querySelector('img')?.src || '';
                     const awayEmblem = teamLinks[1].querySelector('img')?.src || '';
-                    
+
                     // Извлекаем названия команд
                     const teamNames = matchHeader.querySelectorAll('a.mnuw b');
-                    
+
                     return {
                         home: teamNames[0]?.textContent.trim() || 'Команда хозяев',
                         away: teamNames[1]?.textContent.trim() || 'Команда гостей',
@@ -11366,12 +11366,12 @@ function getTournamentType() {
         const title = document.createElement('h3');
         title.textContent = 'Калькулятор силы';
         title.style.position = 'relative';
-        
+
         // Добавляем индикатор справки
         const helpIndicator = document.createElement('span');
         helpIndicator.innerHTML = ' <small style="color: #666; font-size: 10px;">(F1 - справка, Ctrl+H - горячие клавиши)</small>';
         title.appendChild(helpIndicator);
-        
+
         container.appendChild(tournamentTypeUI);
         container.appendChild(title);
         container.appendChild(mainTable);
@@ -11650,9 +11650,9 @@ function getTournamentType() {
                 console.log('[Calc] Already calculating, skipping...');
                 return;
             }
-            
+
             isCalculating = true;
-            
+
             const wt = getCurrentWeatherFromUI();
             if (!wt) {
                 alert('Не найдены элементы UI погоды');
@@ -11717,11 +11717,11 @@ function getTournamentType() {
                     teamStatus,
                     teamBonus
                 } = getCollisionInfo(myStyleId, oppStyleId);
-                
+
                 // Используем переданные значения погоды или берем из UI
                 const actualWeather = weatherOverride !== null ? weatherOverride : wt.weather;
                 const actualTemperature = temperatureOverride !== null ? temperatureOverride : wt.temperature;
-                
+
                 const tasks = lineup.map(slot => new Promise(resolve => {
                     const playerId = slot.getValue && slot.getValue();
                     if (!playerId) return resolve(null);
@@ -11803,7 +11803,7 @@ function getTournamentType() {
                         matchPos
                     } : null;
                 }).filter(Boolean);
-                
+
                 // Сохраняем slotEntries для Chemistry системы с customStyleValue
                 window.currentSlotEntries = slotEntries.map(entry => ({
                     ...entry,
@@ -12140,11 +12140,11 @@ function getTournamentType() {
                 // Удаляем предыдущий результат
                 const oldResult = container.querySelector('.vsol-result');
                 if (oldResult) oldResult.remove();
-                
+
                 // Проверяем, есть ли игроки в составах
                 const homeHasPlayers = homeLineupBlock.lineup.some(slot => slot.getValue && slot.getValue());
                 const awayHasPlayers = awayLineupBlock.lineup.some(slot => slot.getValue && slot.getValue());
-                
+
                 // Если составы пусты, показываем сообщение
                 if (!homeHasPlayers || !awayHasPlayers) {
                     const resultDiv = document.createElement('div');
@@ -12165,13 +12165,13 @@ function getTournamentType() {
                     container.appendChild(resultDiv);
                     return;
                 }
-                
+
                 // Получаем варианты погоды
                 const weatherData = parseWeatherFromPreview();
                 const weatherVariants = weatherData && weatherData.minTemp !== null && weatherData.maxTemp !== null
                     ? getWeatherVariants(weatherData.weather, weatherData.minTemp, weatherData.maxTemp)
                     : null;
-                
+
                 // Если нет вариантов погоды, делаем один расчет
                 if (!weatherVariants) {
                     const [homeStrength, awayStrength] = await Promise.all([
@@ -12180,7 +12180,7 @@ function getTournamentType() {
                         computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
                             'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere)
                     ]);
-                    
+
                     const resultDiv = document.createElement('div');
                     resultDiv.className = 'vsol-result';
                     resultDiv.style.marginTop = '15px';
@@ -12190,7 +12190,7 @@ function getTournamentType() {
                     container.appendChild(resultDiv);
                     return;
                 }
-                
+
                 // Делаем 4 расчета: пользовательский + 3 варианта погоды
                 const calculations = await Promise.all([
                     // Пользовательский выбор (первый)
@@ -12230,16 +12230,16 @@ function getTournamentType() {
                             weatherVariants.max.weather, weatherVariants.max.temperature)
                     ])
                 ]);
-                
+
                 const teamNames = extractTeamNames();
-                
+
                 // Создаем таблицу с результатами
                 const resultDiv = document.createElement('div');
                 resultDiv.className = 'vsol-result';
                 resultDiv.style.marginTop = '15px';
-                
+
                 let tableHTML = `<table style="width:100%; border-collapse:collapse; border:1px solid #ddd;"><tbody>`;
-                
+
                 // Заголовок с названиями команд
                 tableHTML += `
                     <tr bgcolor="#006600">
@@ -12252,7 +12252,7 @@ function getTournamentType() {
                         </td>
                     </tr>
                 `;
-                
+
                 // Первая строка - пользовательский выбор
                 const [userHomeStr, userAwayStr] = calculations[0];
                 const userDiff = userHomeStr - userAwayStr;
@@ -12262,7 +12262,7 @@ function getTournamentType() {
                 const userAwayWidth = 331 - userHomeWidth;
                 const userHomeDiff = userDiff > 0 ? `<span class="lh12 up" style="padding-left:2px">+${Math.round(userDiff)}</span>` : '';
                 const userAwayDiff = userDiff < 0 ? `<span class="lh12 up" style="padding-left:2px">+${Math.round(Math.abs(userDiff))}</span>` : '';
-                
+
                 tableHTML += `
                     <tr bgcolor="#e7f5ff">
                         <td class="lh18 txt" width="240" style="border:1px solid #ddd;">${wt.weather}, ${wt.temperature}° (ваш выбор)</td>
@@ -12270,7 +12270,7 @@ function getTournamentType() {
                         <td class="gdl" width="${userAwayWidth}" style="border:1px solid #ddd;">${Math.round(userAwayStr)}${userAwayDiff}<div style="float:left; padding-left:5px"><b>${userAwayPercent}%</b></div></td>
                     </tr>
                 `;
-                
+
                 // Строки с вариантами расчетов (min, avg, max)
                 const variants = ['min', 'avg', 'max'];
                 variants.forEach((variant, idx) => {
@@ -12278,19 +12278,19 @@ function getTournamentType() {
                     const diff = homeStr - awayStr;
                     const homePercent = homeStr + awayStr > 0 ? Math.round((homeStr / (homeStr + awayStr)) * 100) : 50;
                     const awayPercent = 100 - homePercent;
-                    
+
                     const variantData = weatherVariants[variant];
                     const isAvg = variant === 'avg';
                     const bgColor = isAvg ? ' bgcolor="#fff9db"' : '';
-                    
+
                     // Динамическая ширина колонок на основе процентов
                     const homeWidth = Math.round(331 * (homePercent / 100));
                     const awayWidth = 331 - homeWidth;
-                    
+
                     // Разница показывается только у выигрывающей команды
                     const homeDiff = diff > 0 ? `<span class="lh12 up" style="padding-left:2px">+${Math.round(diff)}</span>` : '';
                     const awayDiff = diff < 0 ? `<span class="lh12 up" style="padding-left:2px">+${Math.round(Math.abs(diff))}</span>` : '';
-                    
+
                     tableHTML += `
                         <tr${bgColor}>
                             <td class="lh18 txt" width="240" style="border:1px solid #ddd;">${variantData.weather}, ${variantData.temperature}°</td>
@@ -12299,13 +12299,13 @@ function getTournamentType() {
                         </tr>
                     `;
                 });
-                
+
                 tableHTML += `</tbody></table>`;
                 resultDiv.innerHTML = tableHTML;
                 container.appendChild(resultDiv);
             } catch (e) {
                 console.error('Ошибка расчёта:', e);
-                
+
                 const resultDiv = document.createElement('div');
                 resultDiv.className = 'vsol-result';
                 resultDiv.style.marginTop = '15px';
@@ -12396,7 +12396,7 @@ function getTournamentType() {
     function showCalculatorHint(button, type, title, width = 400, context = {}) {
         // Удаляем существующие подсказки
         removeExistingHints();
-        
+
         // Создаем контейнер подсказки
         const hint = document.createElement('div');
         hint.className = 'vs-calculator-hint';
@@ -12415,7 +12415,7 @@ function getTournamentType() {
             transform: scale(0.95);
             transition: opacity 0.2s ease, transform 0.2s ease;
         `;
-        
+
         // Добавляем заголовок
         const header = document.createElement('div');
         header.style.cssText = `
@@ -12429,7 +12429,7 @@ function getTournamentType() {
         `;
         header.textContent = title;
         hint.appendChild(header);
-        
+
         // Добавляем кнопку закрытия
         const closeBtn = document.createElement('button');
         closeBtn.textContent = '×';
@@ -12458,23 +12458,23 @@ function getTournamentType() {
             setTimeout(() => hint.remove(), 200);
         };
         header.appendChild(closeBtn);
-        
+
         // Добавляем содержимое
         const content = document.createElement('div');
         content.style.cssText = 'padding: 12px;';
         content.innerHTML = getHintContent(type, context);
         hint.appendChild(content);
-        
+
         // Позиционируем подсказку
         document.body.appendChild(hint);
         positionHint(hint, button, 'right top');
-        
+
         // Анимация появления
         setTimeout(() => {
             hint.style.opacity = '1';
             hint.style.transform = 'scale(1)';
         }, 10);
-        
+
         // Автоматическое закрытие при клике вне подсказки
         setTimeout(() => {
             document.addEventListener('click', function closeOnOutsideClick(e) {
@@ -12509,7 +12509,7 @@ function getTournamentType() {
             synergy: () => {
                 const currentHome = getSynergyPercentHome();
                 const currentAway = getSynergyPercentAway();
-                
+
                 return `
                     <p><strong>Бонус сыгранности</strong> рассчитывается на основе последних 25 матчей команды.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
@@ -12535,7 +12535,7 @@ function getTournamentType() {
                     <p style="font-size: 10px; color: #666;"><em>Товарищеские матчи не учитываются в расчете сыгранности.</em></p>
                 `;
             },
-            
+
             leadership: () => {
                 // Получаем текущие значения лидерства из UI
                 const homeDefValue = document.getElementById('vs-leadership-home-def-value')?.textContent || '0';
@@ -12544,7 +12544,7 @@ function getTournamentType() {
                 const awayDefValue = document.getElementById('vs-leadership-away-def-value')?.textContent || '0';
                 const awayMidValue = document.getElementById('vs-leadership-away-mid-value')?.textContent || '0';
                 const awayAttValue = document.getElementById('vs-leadership-away-att-value')?.textContent || '0';
-                
+
                 return `
                     <p><strong>Бонусы лидеров</strong> применяются к игрокам соответствующих линий.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
@@ -12582,12 +12582,12 @@ function getTournamentType() {
                     <p style="font-size: 10px; color: #666;"><em>Формула: Сила лидера × Коэффициент уровня = Бонус для всех игроков линии</em></p>
                 `;
             },
-            
+
             weather: () => {
                 const weatherUI = getCurrentWeatherFromUI();
                 const currentWeather = weatherUI ? weatherUI.weather : 'не выбрано';
                 const currentTemp = weatherUI ? weatherUI.temperature : 'не выбрано';
-                
+
                 return `
                     <p><strong>Влияние погоды</strong> на силу игроков зависит от собственной силы игрока - чем сильнее игрок тем больше он подвержен влиянию погоды.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
@@ -12614,22 +12614,22 @@ function getTournamentType() {
                     <p style="font-size: 10px; color: #666;"><em>В плохую погоды силы выравниваются!</em></p>
                 `;
             },
-            
+
             collision: () => {
                 const homeStyle = window.homeStyle?.value || 'norm';
                 const awayStyle = window.awayStyle?.value || 'norm';
                 const collisionInfo = getCollisionInfo(homeStyle, awayStyle);
-                
+
                 const styleNames = {
                     'norm': 'Нормальный',
-                    'sp': 'Спартаковский', 
+                    'sp': 'Спартаковский',
                     'brazil': 'Бразильский',
                     'tiki': 'Тики-така',
                     'bb': 'Бей-беги',
                     'kat': 'Катеначчо',
                     'brit': 'Британский'
                 };
-                
+
                 let statusText = 'Нет коллизии';
                 let statusColor = '#666';
                 if (collisionInfo.teamStatus === 'win') {
@@ -12639,7 +12639,7 @@ function getTournamentType() {
                     statusText = `Гости выигрывают (+${(collisionInfo.oppBonus * 100).toFixed(0)}%)`;
                     statusColor = '#dc3545';
                 }
-                
+
                 return `
                     <p><strong>Коллизии стилей</strong> - взаимодействие между стилями игры команд. Часть игры, вносящий элемент непредсказуемости результата.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
@@ -12680,7 +12680,7 @@ function getTournamentType() {
                     'typeB_amateur': 'Конференция любительских',
                     'all': 'Все формы'
                 };
-                
+
                 return `
                     <p><strong>Тип турнира</strong> определяет доступные физические формы игроков. Могут быть ошибки, тк не доработано.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
@@ -12709,7 +12709,7 @@ function getTournamentType() {
             teamwork: () => {
                 const homeTeamwork = document.getElementById('vs_teamwork_home')?.textContent || '0.00';
                 const awayTeamwork = document.getElementById('vs_teamwork_away')?.textContent || '0.00';
-                
+
                 return `
                     <p><strong>Командная игра</strong> - бонус от способности "Командная Игра" (И).</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
@@ -12736,7 +12736,7 @@ function getTournamentType() {
             atmosphere: () => {
                 const homeAtmosphere = document.getElementById('vs_atmosphere_home')?.textContent || '0.00';
                 const awayAtmosphere = document.getElementById('vs_atmosphere_away')?.textContent || '0.00';
-                
+
                 return `
                     <p><strong>Атмосфера в команде</strong> влияет на всех игроков команды.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
@@ -12796,7 +12796,7 @@ function getTournamentType() {
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">Международный</td><td style="padding: 4px; border: 1px solid #ddd;">76%</td><td style="padding: 4px; border: 1px solid #ddd;">124%</td></tr>
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">Любительский</td><td style="padding: 4px; border: 1px solid #ddd;">75%</td><td style="padding: 4px; border: 1px solid #ddd;">125%</td></tr>
                     </table>
-                
+
                     <p style="font-size: 10px; color: #666; margin-top: 8px;"><em>Калькулятор автоматически определяет форму по данным игрока и типу турнира.</em></p>
                     <p style="font-size: 10px; color: #666;"><em>Вы можете вручную изменить форму игрока в селекторе.</em></p>
                 `;
@@ -12825,17 +12825,17 @@ function getTournamentType() {
             player_details: (context) => {
                 const { player, matchPosition, physicalFormId, customStyle, chemistryBonus } = context;
                 if (!player) return '<p>Игрок не найден.</p>';
-                
+
                 const baseStr = Number(player.baseStrength) || Number(player.realStr) || 0;
                 const age = Number(player.age) || 0;
                 const form = Number(player.form) || 0;
                 const fatigue = Number(player.fatigue) || 0;
-                
+
                 // Рассчитываем все модификаторы
                 const physicalFormModifier = getPhysicalFormModifier(physicalFormId);
                 const realityModifier = getRealityBonus(player.real_status, player.real_sign);
                 const positionModifier = getPositionModifier(player.mainPos, player.secondPos, matchPosition);
-                
+
                 // Усталость
                 let fatigueModifier;
                 let displayFatigue = fatigue; // Усталость для отображения
@@ -12846,28 +12846,28 @@ function getTournamentType() {
                 } else {
                     fatigueModifier = getFatigueBonus(fatigue);
                 }
-                
+
                 // Итоговая сила
                 const finalStr = Math.round(baseStr * physicalFormModifier * fatigueModifier * realityModifier * positionModifier);
-                
+
                 // Получаем информацию о физической форме
                 const formInfo = CONFIG.PHYSICAL_FORM.FORMS[physicalFormId] || { label: 'Неизвестно', modifier: 1.0 };
                 const formLabel = formInfo.label || `${form}%`;
-                
+
                 // Определяем цвет формы
                 let formColor = '#666';
                 if (form >= 110) formColor = '#28a745';
                 else if (form >= 95) formColor = '#ffc107';
                 else if (form >= 85) formColor = '#fd7e14';
                 else formColor = '#dc3545';
-                
+
                 // Определяем цвет усталости
                 let fatigueColor = '#666';
                 if (displayFatigue <= 25) fatigueColor = '#28a745';
                 else if (displayFatigue <= 50) fatigueColor = '#ffc107';
                 else if (displayFatigue <= 75) fatigueColor = '#fd7e14';
                 else fatigueColor = '#dc3545';
-                
+
                 // Определяем цвет Chemistry
                 let chemistryColor = '#666';
                 let chemistrySign = '';
@@ -12877,7 +12877,7 @@ function getTournamentType() {
                 } else if (chemistryBonus < 0) {
                     chemistryColor = '#dc3545';
                 }
-                
+
                 return `
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin-bottom: 8px;">
                         <strong style="font-size: 12px;">${player.name}</strong><br>
@@ -12885,7 +12885,7 @@ function getTournamentType() {
                             ${player.mainPos}${player.secondPos ? '/' + player.secondPos : ''} | ${age} лет
                         </span>
                     </div>
-                    
+
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                         <div style="flex: 1;">
                             <strong>Базовая сила:</strong> ${baseStr}<br>
@@ -12896,7 +12896,7 @@ function getTournamentType() {
                             <strong>Стиль:</strong> ${customStyle || 'norm'}
                         </div>
                     </div>
-                    
+
                     <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin: 8px 0;">
                         <tr style="background: #e9ecef;">
                             <th style="padding: 4px; border: 1px solid #ddd;">Модификатор</th>
@@ -12929,14 +12929,14 @@ function getTournamentType() {
                             <td style="padding: 4px; border: 1px solid #ddd; color: ${chemistryColor}; font-weight: bold;">${chemistrySign}${(finalStr * chemistryBonus).toFixed(1)}</td>
                         </tr>
                     </table>
-                    
+
                     ${player.abilities ? `
                         <div style="margin-top: 8px;">
                             <strong>Способности:</strong><br>
                             <span style="font-size: 10px; color: #666;">${player.abilities}</span>
                         </div>
                     ` : ''}
-                    
+
                     <div style="margin-top: 8px; font-size: 10px; color: #666;">
                         <em>💡 Расчет: ${baseStr} × ${physicalFormModifier.toFixed(3)} × ${fatigueModifier.toFixed(3)} × ${realityModifier.toFixed(3)} × ${positionModifier.toFixed(3)} = ${finalStr}</em>
                     </div>
@@ -12953,7 +12953,7 @@ function getTournamentType() {
                     'typeC_international': 'Международный',
                     'typeB_amateur': 'Любительский'
                 };
-                
+
                 return `
                     <p><strong>Физическая форма</strong> влияет на итоговую силу игрока.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
@@ -12985,14 +12985,14 @@ function getTournamentType() {
                 const currentStyle = window.homeStyle?.value || window.awayStyle?.value || 'norm';
                 const styleNames = {
                     'norm': 'Нормальный',
-                    'sp': 'Спартаковский', 
+                    'sp': 'Спартаковский',
                     'brazil': 'Бразильский',
                     'tiki': 'Тики-така',
                     'bb': 'Бей-беги',
                     'kat': 'Катеначчо',
                     'brit': 'Британский'
                 };
-                
+
                 return `
                     <p><strong>Способности игроков</strong> дают бонусы в зависимости от стиля команды.</p>
                     <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 8px 0;">
@@ -13023,12 +13023,12 @@ function getTournamentType() {
                 `;
             }
         };
-        
+
         const hintFunction = hints[type];
         if (typeof hintFunction === 'function') {
             return hintFunction();
         }
-        
+
         return hints[type] || '<p>Информация недоступна.</p>';
     }
 
@@ -13045,9 +13045,9 @@ function getTournamentType() {
             width: window.innerWidth,
             height: window.innerHeight
         };
-        
+
         let left, top;
-        
+
         switch (position) {
             case 'right top':
                 left = buttonRect.right + 8;
@@ -13065,7 +13065,7 @@ function getTournamentType() {
                 left = buttonRect.right + 8;
                 top = buttonRect.top;
         }
-        
+
         // Корректируем позицию, чтобы подсказка не выходила за границы экрана
         if (left + hintRect.width > viewport.width) {
             left = buttonRect.left - hintRect.width - 8;
@@ -13079,7 +13079,7 @@ function getTournamentType() {
         if (top < 0) {
             top = 8;
         }
-        
+
         hint.style.left = left + window.scrollX + 'px';
         hint.style.top = top + window.scrollY + 'px';
     }
@@ -13100,7 +13100,7 @@ function getTournamentType() {
             showCalculatorHint(helpBtn, type, title, 450, context);
             return false;
         };
-        
+
         // Улучшенные стили кнопки
         helpBtn.style.cssText = `
             width: 16px;
@@ -13120,7 +13120,7 @@ function getTournamentType() {
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         `;
         helpBtn.textContent = '?';
-        
+
         // Улучшенные hover эффекты
         helpBtn.onmouseover = () => {
             helpBtn.style.background = 'linear-gradient(135deg, #e8e8e8, #d8d8d8)';
@@ -13134,7 +13134,7 @@ function getTournamentType() {
             helpBtn.style.transform = 'translateY(0)';
             helpBtn.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
         };
-        
+
         container.appendChild(helpBtn);
     }
 
@@ -13172,11 +13172,11 @@ function getTournamentType() {
             `;
 
             document.body.appendChild(hintElement);
-            
+
             // Позиционируем подсказку
             const rect = element.getBoundingClientRect();
             const hintRect = hintElement.getBoundingClientRect();
-            
+
             let left, top;
             switch (position) {
                 case 'top':
@@ -13203,7 +13203,7 @@ function getTournamentType() {
 
             hintElement.style.left = left + window.scrollX + 'px';
             hintElement.style.top = top + window.scrollY + 'px';
-            
+
             // Показываем с анимацией
             setTimeout(() => {
                 if (hintElement) hintElement.style.opacity = '1';
@@ -13244,17 +13244,17 @@ function getTournamentType() {
         const helpBtn = document.createElement('button');
         helpBtn.className = 'vs-help-btn interactive';
         helpBtn.title = 'Показать интерактивную подсказку';
-        
+
         // Добавляем индикатор интерактивности
         helpBtn.innerHTML = '<span style="font-size: 8px;">?</span><span style="font-size: 6px; position: absolute; top: 1px; right: 1px;">⚡</span>';
-        
+
         helpBtn.onclick = (e) => {
             e.preventDefault();
             const context = calculator ? { example: calculator() } : {};
             showCalculatorHint(helpBtn, type, title, 500, context);
             return false;
         };
-        
+
         // Стили для интерактивной кнопки
         helpBtn.style.cssText = `
             width: 16px;
@@ -13273,7 +13273,7 @@ function getTournamentType() {
             box-shadow: 0 1px 2px rgba(0,123,255,0.2);
             position: relative;
         `;
-        
+
         // Hover эффекты для интерактивной кнопки
         helpBtn.onmouseover = () => {
             helpBtn.style.background = 'linear-gradient(135deg, #bbdefb, #90caf9)';
@@ -13287,7 +13287,7 @@ function getTournamentType() {
             helpBtn.style.transform = 'translateY(0)';
             helpBtn.style.boxShadow = '0 1px 2px rgba(0,123,255,0.2)';
         };
-        
+
         container.appendChild(helpBtn);
     }
 
@@ -13301,12 +13301,12 @@ function getTournamentType() {
                 e.preventDefault();
                 showKeyboardShortcutsHelp();
             }
-            
+
             // Escape - закрыть все подсказки
             if (e.key === 'Escape') {
                 removeExistingHints();
             }
-            
+
             // F1 - показать общую справку
             if (e.key === 'F1') {
                 e.preventDefault();
@@ -13336,7 +13336,7 @@ function getTournamentType() {
             font-size: 11px;
             line-height: 1.4;
         `;
-        
+
         hint.innerHTML = `
             <div style="background: linear-gradient(135deg, #006600, #008800); color: white; font-weight: bold; padding: 10px 12px; border-radius: 6px 6px 0 0;">
                 Клавиатурные сокращения
@@ -13370,7 +13370,7 @@ function getTournamentType() {
                 </p>
             </div>
         `;
-        
+
         document.body.appendChild(hint);
     }
 
@@ -13397,7 +13397,7 @@ function getTournamentType() {
             font-size: 11px;
             line-height: 1.4;
         `;
-        
+
         hint.innerHTML = `
             <div style="background: linear-gradient(135deg, #006600, #008800); color: white; font-weight: bold; padding: 10px 12px; border-radius: 6px 6px 0 0;">
                 Справка по калькулятору силы команд
@@ -13411,7 +13411,7 @@ function getTournamentType() {
                     <li><strong>Интерактивные подсказки</strong> - помощь по всем элементам</li>
                     <li><strong>Сохранение состояний</strong> - автоматическое сохранение настроек</li>
                 </ul>
-                
+
                 <h4 style="margin: 12px 0 8px 0; color: #006600;">Порядок работы</h4>
                 <ol style="margin: 0 0 12px 0; padding-left: 16px; font-size: 10px;">
                     <li>Выберите тип турнира (определяется автоматически)</li>
@@ -13421,7 +13421,7 @@ function getTournamentType() {
                     <li>Назначьте капитанов и исполнителей стандартов</li>
                     <li>Нажмите "Рассчитать силу" для получения результата</li>
                 </ol>
-                
+
                 <h4 style="margin: 12px 0 8px 0; color: #006600;">Учитываемые факторы</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10px;">
                     <div>
@@ -13445,21 +13445,21 @@ function getTournamentType() {
                         </ul>
                     </div>
                 </div>
-                
+
                 <h4 style="margin: 12px 0 8px 0; color: #006600;">Внешние факторы</h4>
                 <ul style="margin: 0 0 12px 0; padding-left: 16px; font-size: 10px;">
                     <li><strong>Погода:</strong> Температура и условия влияют на игроков</li>
                     <li><strong>Домашний бонус:</strong> Посещаемость стадиона (для некоторых турниров)</li>
                     <li><strong>Коллизии стилей:</strong> Взаимодействие стилей команд</li>
                 </ul>
-                
+
                 <p style="margin-top: 12px; font-size: 10px; color: #666; text-align: center;">
                     <strong>Версия:</strong> ${document.querySelector('script[src*="Virtual-Soccer-Strength-Analyzer"]')?.textContent?.match(/@version\s+([\d.]+)/)?.[1] || 'неизвестна'}<br>
                     Для получения подробной справки нажимайте кнопки <strong>?</strong> рядом с элементами интерфейса.
                 </p>
             </div>
         `;
-        
+
         document.body.appendChild(hint);
     }
 
@@ -13777,18 +13777,18 @@ function getTournamentType() {
 
         const penaltyPlayerCell = document.createElement('td');
         penaltyPlayerCell.className = 'txtl';
-        
+
         // Создаем селектор штрафных напрямую
         const shtSelect = document.createElement('select');
         shtSelect.tabIndex = -1;
         shtSelect.style.cssText = 'width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
-        
+
         const shtDefaultOption = document.createElement('option');
         shtDefaultOption.value = '-1';
         shtDefaultOption.className = 'grD';
         shtDefaultOption.textContent = 'некому исполнять штрафные';
         shtSelect.appendChild(shtDefaultOption);
-        
+
         penaltyPlayerCell.appendChild(shtSelect);
 
         penaltyRow.appendChild(penaltyRoleCell);
@@ -13812,18 +13812,18 @@ function getTournamentType() {
 
         const cornerPlayerCell = document.createElement('td');
         cornerPlayerCell.className = 'txtl';
-        
+
         // Создаем селектор угловых напрямую
         const uglovSelect = document.createElement('select');
         uglovSelect.tabIndex = -1;
         uglovSelect.style.cssText = 'width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
-        
+
         const uglovDefaultOption = document.createElement('option');
         uglovDefaultOption.value = '-1';
         uglovDefaultOption.className = 'grD';
         uglovDefaultOption.textContent = 'некому исполнять угловые';
         uglovSelect.appendChild(uglovDefaultOption);
-        
+
         cornerPlayerCell.appendChild(uglovSelect);
 
         cornerRow.appendChild(cornerRoleCell);
@@ -13847,18 +13847,18 @@ function getTournamentType() {
 
         const penPlayerCell = document.createElement('td');
         penPlayerCell.className = 'txtl';
-        
+
         // Создаем селектор пенальти напрямую
         const penaltySelect = document.createElement('select');
         penaltySelect.tabIndex = -1;
         penaltySelect.style.cssText = 'width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
-        
+
         const penaltyDefaultOption = document.createElement('option');
         penaltyDefaultOption.value = '-1';
         penaltyDefaultOption.className = 'grD';
         penaltyDefaultOption.textContent = 'некому исполнять пенальти';
         penaltySelect.appendChild(penaltyDefaultOption);
-        
+
         penPlayerCell.appendChild(penaltySelect);
 
         penRow.appendChild(penRoleCell);
@@ -13874,7 +13874,7 @@ function getTournamentType() {
             lineupBlock.shtSelect = shtSelect;
             lineupBlock.uglovSelect = uglovSelect;
             lineupBlock.penaltySelect = penaltySelect;
-            
+
             // Инициализируем селекторы с игроками из текущего состава
             if (lineupBlock.updateRoleSelectors) {
                 lineupBlock.updateRoleSelectors();
@@ -13890,22 +13890,22 @@ function getTournamentType() {
     }
 
     // ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ ДЛЯ ИНТЕРАКТИВНЫХ КАЛЬКУЛЯТОРОВ =====
-    
+
     /**
     * Инициализирует систему подсказок для существующих элементов футболок на странице
     * Используется для HTML страниц, где футболки уже созданы статически
     */
     window.initializeFieldHints = function() {
         console.log('[FieldHints] Начинаем инициализацию системы подсказок...');
-        
+
         // Находим все существующие элементы футболок
         const shirtsContainers = document.querySelectorAll('.shirts-container');
         console.log(`[FieldHints] Найдено контейнеров футболок: ${shirtsContainers.length}`);
-        
+
         shirtsContainers.forEach((container, containerIndex) => {
             const shirtElements = container.children;
             console.log(`[FieldHints] Контейнер ${containerIndex}: найдено футболок: ${shirtElements.length}`);
-            
+
             Array.from(shirtElements).forEach((shirtElement, shirtIndex) => {
                 // Проверяем, что это элемент футболки
                 if (shirtElement.style.backgroundImage && shirtElement.style.backgroundImage.includes('shirt')) {
@@ -13915,49 +13915,49 @@ function getTournamentType() {
                         const team = containerIndex === 0 ? 'home' : 'away';
                         shirtElement.id = `shirt-${team}-${position}-${Math.random().toString(36).substr(2, 9)}`;
                     }
-                    
+
                     // Добавляем стили для интерактивности
                     shirtElement.style.cursor = 'pointer';
-                    
+
                     // Добавляем обработчик клика для показа подсказки
                     shirtElement.addEventListener('click', (e) => {
                         e.stopPropagation();
                         const position = shirtElement.textContent || 'Unknown';
                         const team = containerIndex === 0 ? 'home' : 'away';
-                        
+
                         console.log(`[FieldHints] Клик по футболке: ${shirtElement.id}, позиция: ${position}, команда: ${team}`);
-                        
+
                         // Показываем подсказку только для позиции (без данных игрока)
                         showFieldPlayerHint(position, team, null, shirtElement);
                     });
-                    
+
                     console.log(`[FieldHints] Добавлены обработчики для футболки: ${shirtElement.id}`);
                 }
             });
         });
-        
+
         console.log('[FieldHints] Инициализация системы подсказок завершена');
     };
-    
+
     // ===== КОНЕЦ НОВЫХ ФУНКЦИЙ =====
-    
+
     // ===== ОТЛАДОЧНЫЕ ФУНКЦИИ ДЛЯ CHEMISTRY СИСТЕМЫ =====
-    
+
     /**
     * Отладочная функция для тестирования Chemistry системы
     */
     window.testChemistry = function() {
         console.log('=== ТЕСТ CHEMISTRY СИСТЕМЫ ===');
-        
+
         // Проверяем доступность данных
         const slotEntries = window.currentSlotEntries || [];
         if (slotEntries.length === 0) {
             console.log('❌ slotEntries не доступны. Сначала рассчитайте силу команды.');
             return;
         }
-        
+
         console.log('✅ Найдено игроков в составе:', slotEntries.length);
-        
+
         // Проверяем данные игроков
         slotEntries.forEach((entry, idx) => {
             const player = entry.player;
@@ -13969,16 +13969,16 @@ function getTournamentType() {
                 styleKnowledge: player.styleKnowledge
             });
         });
-        
+
         // Тестируем функции Chemistry
         console.log('\n=== ТЕСТ ФУНКЦИЙ ===');
-        
+
         // Тест коллизий стилей
         console.log('Коллизии стилей:');
         console.log('sp vs brit:', areStylesInCollision('sp', 'brit')); // должно быть true
         console.log('norm vs sp:', areStylesInCollision('norm', 'sp')); // должно быть false
         console.log('bb vs sp:', areStylesInCollision('bb', 'sp')); // должно быть true
-        
+
         // Тест связей позиций
         const positions = slotEntries.map(e => e.matchPos);
         console.log('\nСвязи позиций:');
@@ -13986,24 +13986,24 @@ function getTournamentType() {
             const connections = getPositionConnections(pos, positions);
             console.log(`${pos}: [${connections.join(', ')}]`);
         });
-        
+
         // Тест расчета Chemistry для каждого игрока
         console.log('\n=== РАСЧЕТ CHEMISTRY ===');
         const players = slotEntries.map(e => e.player);
-        
+
         slotEntries.forEach((entry, idx) => {
             const modifier = calculatePlayerChemistryModifier(entry.player, players, positions);
             console.log(`${entry.player.name} (${entry.matchPos}): ${(modifier * 100).toFixed(1)}%`);
         });
-        
+
         // Тест Style Knowledge модификатора
         console.log('\n=== ТЕСТ STYLE KNOWLEDGE ===');
         if (players.length > 0) {
             const testPlayer = players[0];
             const originalKnowledge = testPlayer.styleKnowledge;
-            
+
             console.log(`Тестируем игрока: ${testPlayer.name}`);
-            
+
             // Тестируем разные уровни изученности
             const knowledgeLevels = [0.2, 0.4, 0.6, 0.8, 1.0];
             knowledgeLevels.forEach(level => {
@@ -14011,14 +14011,14 @@ function getTournamentType() {
                 const modifier = calculatePlayerChemistryModifier(testPlayer, players, positions);
                 console.log(`Style Knowledge ${(level * 100)}%: Chemistry = ${(modifier * 100).toFixed(1)}%`);
             });
-            
+
             // Восстанавливаем оригинальное значение
             testPlayer.styleKnowledge = originalKnowledge;
         }
-        
+
         console.log('=== КОНЕЦ ТЕСТА ===');
     };
-    
+
     /**
     * Показывает информацию о Chemistry системе
     */
@@ -14055,7 +14055,7 @@ function getTournamentType() {
 Логирование: Все сообщения помечены тегом [CHEMISTRY]
         `);
     };
-    
+
     // Показываем справку при загрузке
     console.log('🧪 Chemistry System v0.943 загружена! ОБНОВЛЕН граф связей позиций (GK + LD). Используйте testCacheFunctions() для проверки.');
 
@@ -14068,7 +14068,7 @@ setTimeout(() => {
         console.error('❌ Ошибка загрузки функций управления кэшем');
     }
 }, 100);
-    
+
     // ===== КОНЕЦ ОТЛАДОЧНЫХ ФУНКЦИЙ =====
 
     // ===== ИНТЕГРАЦИЯ В MNG_ORDER =====
@@ -14076,8 +14076,10 @@ setTimeout(() => {
     async function initOrderPage() {
         console.group('[ORDER] Инициализация на mng_order.php');
 
-        if (typeof window.plr_id === 'undefined' || typeof window.days === 'undefined') {
-            console.warn('[ORDER] Данные mng_order не найдены');
+        // Ждём пока inline-скрипты страницы объявят переменные
+        const ready = await waitForPageVars(['plr_id', 'days', 'curr'], 5000);
+        if (!ready) {
+            console.warn('[ORDER] Данные mng_order не найдены за 5 сек');
             console.groupEnd();
             return;
         }
@@ -14092,6 +14094,19 @@ setTimeout(() => {
         console.log('[ORDER] Ближайший матч:', matchData);
         createOrderTabs(matchData);
         console.groupEnd();
+    }
+
+    function waitForPageVars(varNames, timeout) {
+        return new Promise((resolve) => {
+            const start = Date.now();
+            const check = () => {
+                const allExist = varNames.every(n => typeof window[n] !== 'undefined');
+                if (allExist) return resolve(true);
+                if (Date.now() - start > timeout) return resolve(false);
+                setTimeout(check, 100);
+            };
+            check();
+        });
     }
 
     function extractMatchFromDays() {
@@ -14243,7 +14258,7 @@ setTimeout(() => {
     }
 
     // ===== КОНЕЦ ИНТЕГРАЦИИ MNG_ORDER =====
-    
+
     // ===== РОУТЕР СТРАНИЦ =====
     function isOrderPage() {
         return window.location.pathname.includes('mng_order');
