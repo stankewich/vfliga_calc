@@ -6,9 +6,13 @@
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        *://*.virtualsoccer.ru/previewmatch.php*
+// @match        *://*.virtualsoccer.ru/mng_order.php*
 // @match        *://*.vfleague.com/previewmatch.php*
+// @match        *://*.vfleague.com/mng_order.php*
 // @match        *://*.vfliga.ru/previewmatch.php*
+// @match        *://*.vfliga.ru/mng_order.php*
 // @match        *://*.vfliga.com/previewmatch.php*
+// @match        *://*.vfliga.com/mng_order.php*
 // @connect      virtualsoccer.ru
 // @connect      vfleague.com
 // @connect      vfliga.ru
@@ -124,7 +128,7 @@ const CONFIG = {
             brit: { ST: 0.00, CF: -0.05, LF: 0.05, RF: 0.05, AM: -0.09, CM: -0.05, DM: -0.09, LW: 0.09, LM: 0.05, LB: 0.05, LD: 0.05, RW: 0.09, RM: 0.05, RB: 0.05, RD: 0.05, CD: 0.00, SW: -0.05, FR: 0.00, GK: 0.00 },
             sp: { ST: 0.00, CF: 0.07, LF: -0.06, RF: -0.06, AM: 0.09, CM: 0.00, DM: 0.09, LW: -0.11, LM: -0.05, LB: -0.11, LD: 0.00, RW: -0.11, RM: -0.05, RB: -0.11, RD: 0.00, CD: 0.00, SW: 0.05, FR: 0.00, GK: 0.00 },
             kat: { ST: -0.04, CF: -0.04, LF: -0.04, RF: -0.04, AM: -0.04, CM: 0.00, DM: 0.07, LW: -0.04, LM: 0.00, LB: 0.07, LD: 0.07, RW: -0.04, RM: 0.00, RB: 0.07, RD: 0.07, CD: 0.00, SW: 0.13, FR: 0.00, GK: 0.00 },
-            brazil: { ST: 0.08, CF: 0.04, LF: 0.04, RF: 0.04, AM: 0.04, CM: 0.00, DM: -0.05, LW: 0.04, LM: 0.00, LB: 0.00, LD: -0.05, RW: 0.04, RM: 0.00, RB: 0.00, RD: -0.05, CD: -0.05, SW: -0.09, FR: 0.00, GK: 0.00 },
+            brazil: { ST: 0.04, CF: 0.08, LF: 0.04, RF: 0.04, AM: 0.04, CM: 0.00, DM: -0.05, LW: 0.04, LM: 0.00, LB: 0.00, LD: -0.05, RW: 0.04, RM: 0.00, RB: 0.00, RD: -0.05, CD: -0.05, SW: -0.09, FR: 0.00, GK: 0.00 },
             norm: {}
         }
     },
@@ -244,6 +248,7 @@ const CONFIG = {
             'typeC_international': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'UNKNOWN'],
             'typeB': ['B_79_up', 'B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'B_125_down', 'UNKNOWN'],
             'typeB_amateur': ['B_79_up', 'B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'B_125_down', 'UNKNOWN'],
+            'typeB_cup': ['B_79_up', 'B_75_up', 'B_79_down', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'B_125_down', 'UNKNOWN'],
             'friendly': ['FRIENDLY_100', 'UNKNOWN'],
             'all': ['C_76_down', 'C_76_up', 'C_83_down', 'C_83_up', 'C_94_down', 'C_94_up', 'C_106_down', 'C_106_up', 'C_117_down', 'C_117_up', 'C_124_down', 'C_124_up', 'B_75_up', 'B_79_down', 'B_79_up', 'B_88_down', 'B_88_up', 'B_100_down', 'B_100_up', 'B_112_down', 'B_112_up', 'B_121_down', 'B_121_up', 'B_125_down', 'FRIENDLY_100', 'UNKNOWN']
         }
@@ -816,7 +821,11 @@ function calculateLineModifier(player1, player2) {
     }
     
     // 2. Проверка на неизвестный стиль (norm)
-    // Если хотя бы один игрок имеет norm - нет бонуса
+    // Если оба игрока norm - временно возвращаем 5% (TODO: уточнить логику)
+    if (player1.hidden_style === 'norm' && player2.hidden_style === 'norm') {
+        return 0.05; // 5% временный хардкод
+    }
+    // Если только один norm - нет бонуса
     if (player1.hidden_style === 'norm' || player2.hidden_style === 'norm') {
         return 0;
     }
@@ -9310,7 +9319,7 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
 // Вспомогательные функции для определения типа турнира
 function parseMatchInfo(html) {
     // Расширенный список возможных названий турниров
-    const typeRegex = /(?:Чемпионат|Кубок межсезонья|Кубок страны|Кубок вызова|Товарищеский матч|Конференция любительских клубов|КЛК|Лига Европы|Лига европейских чемпионов|Кубок азиатской конфедерации|Лига чемпионов Азии|Кубок африканской конфедерации|Лига чемпионов Африки|Кубок Южной Америки|Кубок Либертадорес|Кубок Сев\. и Центр\. Америки|Кубок Северной и Центральной Америки|Лига чемпионов Америки|Переходные матчи|Отборочные матчи)/i;
+    const typeRegex = /(?:Чемпионат|Кубок межсезонья|Кубок страны|Кубок вызова|Товарищеский матч|Конференция любительских клубов|КЛК|КТ "|Лига Европы|Лига европейских чемпионов|Кубок азиатской конфедерации|Лига чемпионов Азии|Кубок африканской конфедерации|Лига чемпионов Африки|Кубок Южной Америки|Кубок Либертадорес|Кубок Сев\. и Центр\. Америки|Кубок Северной и Центральной Америки|Лига чемпионов Америки|Переходные матчи|Отборочные матчи)/i;
     const typeMatch = html.match(typeRegex);
 
     console.log('🔍 Поиск типа турнира в HTML:');
@@ -9331,6 +9340,7 @@ function parseMatchInfo(html) {
         else if (t.includes('вызова')) tournamentType = 'challenge_cup';
         else if (t.includes('товарищеский')) tournamentType = 'friendly';
         else if (t.includes('конференция любительских') || t === 'клк') tournamentType = 'amators';
+        else if (t.startsWith('кт')) tournamentType = 'cup_tournament'; // КТ (Кубковый Турнир) = тип B
         else if (t.includes('переходные матчи')) tournamentType = 'championship'; // Переходные матчи = тип B
         else if (t.includes('отборочные матчи')) tournamentType = 'national_cup'; // Отборочные = тип C
         else if (t.includes('лига европы')) tournamentType = 'europa_league';
@@ -9367,6 +9377,7 @@ function detectTournamentTypeFromPage() {
             'national_cup': 'typeC',             // Кубок страны
             'challenge_cup': 'typeC',            // Кубок вызова
             'amators': 'typeB_amateur',          // Конференция любительских
+            'cup_tournament': 'typeB_cup',            // КТ (Коммерческий Турнир) - формы B, без домашнего бонуса
             // Международные турниры с бонусом дома
             'europa_league': 'typeC_international',
             'champions_league_europe': 'typeC_international',
@@ -9807,6 +9818,7 @@ function getTournamentType() {
             national_cup: 4,
             amators: 10,
             challenge_cup: 47,
+            cup_tournament: 5,              // КТ (Коммерческий Турнир) - тип B, как чемпионат
             // Международные турниры
             champions_league_europe: 8,
             europa_league: 14,
@@ -11279,6 +11291,7 @@ function getTournamentType() {
                                 <option value="typeC">Тип C (кубок страны, кубок вызова)</option>
                                 <option value="typeC_international">Международный кубок (C-формы, с бонусом дома)</option>
                                 <option value="typeB">Тип B (чемпионат, кубок межсезонья)</option>
+                                <option value="typeB_cup">КТ (формы B, без домашнего бонуса)</option>
                                 <option value="typeB_amateur">Конференция любительских клубов (тип B)</option>
                                 <option value="all">Все формы</option>
                             </select>
@@ -12663,6 +12676,7 @@ function getTournamentType() {
                     'typeC': 'Тип C (кубки стран)',
                     'typeC_international': 'Международный кубок',
                     'typeB': 'Тип B (чемпионаты)',
+                    'typeB_cup': 'КТ (формы B, без дом. бонуса)',
                     'typeB_amateur': 'Конференция любительских',
                     'all': 'Все формы'
                 };
@@ -12683,6 +12697,7 @@ function getTournamentType() {
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">Товарищеский</td><td style="padding: 4px; border: 1px solid #ddd;">100%</td><td style="padding: 4px; border: 1px solid #ddd;">Играются без учёта формы</td></tr>
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">Тип C</td><td style="padding: 4px; border: 1px solid #ddd;">76-124%</td><td style="padding: 4px; border: 1px solid #ddd;">Кубки стран, кубки вызова - нет домашнего бонуса</td></tr>
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">Тип B</td><td style="padding: 4px; border: 1px solid #ddd;">75-125%</td><td style="padding: 4px; border: 1px solid #ddd;">Чемпионаты, межсезонье</td></tr>
+                        <tr><td style="padding: 4px; border: 1px solid #ddd;">КТ</td><td style="padding: 4px; border: 1px solid #ddd;">75-125%</td><td style="padding: 4px; border: 1px solid #ddd;">Комм. турнир - нет домашнего бонуса</td></tr>
                         <tr style="background: #d4edda;"><td style="padding: 4px; border: 1px solid #ddd;"><strong>Международный</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>76-124%</strong></td><td style="padding: 4px; border: 1px solid #ddd;"><strong>Есть домашний бонус</strong></td></tr>
                         <tr><td style="padding: 4px; border: 1px solid #ddd;">Любительский</td><td style="padding: 4px; border: 1px solid #ddd;">75-125%</td><td style="padding: 4px; border: 1px solid #ddd;">Конференция КЛК - аналог чемпионата</td></tr>
                     </table>
@@ -12934,6 +12949,7 @@ function getTournamentType() {
                     'friendly': 'Товарищеский',
                     'typeC': 'Тип C',
                     'typeB': 'Тип B',
+                    'typeB_cup': 'КТ',
                     'typeC_international': 'Международный',
                     'typeB_amateur': 'Любительский'
                 };
@@ -14054,6 +14070,192 @@ setTimeout(() => {
 }, 100);
     
     // ===== КОНЕЦ ОТЛАДОЧНЫХ ФУНКЦИЙ =====
+
+    // ===== ИНТЕГРАЦИЯ В MNG_ORDER =====
+
+    async function initOrderPage() {
+        console.group('[ORDER] Инициализация на mng_order.php');
+
+        if (typeof window.plr_id === 'undefined' || typeof window.days === 'undefined') {
+            console.warn('[ORDER] Данные mng_order не найдены');
+            console.groupEnd();
+            return;
+        }
+
+        const matchData = extractMatchFromDays();
+        if (!matchData) {
+            console.warn('[ORDER] Не найден ближайший матч с соперником');
+            console.groupEnd();
+            return;
+        }
+
+        console.log('[ORDER] Ближайший матч:', matchData);
+        createOrderTabs(matchData);
+        console.groupEnd();
+    }
+
+    function extractMatchFromDays() {
+        const days = window.days;
+        if (!days || !days.length) return null;
+
+        for (let i = 0; i < days.length; i++) {
+            const d = days[i];
+            if (d[12] && d[12] > 0) {
+                return {
+                    day: d[0], abbr: d[1], round: d[2], orderDay: d[3],
+                    tournamentName: d[4], tournamentSort: d[5], fizaType: d[6],
+                    teamId: window.curr,
+                    opponentId: d[12], opponentName: d[10],
+                    opponentFullName: d[11], opponentRating: d[13],
+                    homeAway: d[14]
+                };
+            }
+        }
+        return null;
+    }
+
+    function createOrderTabs(matchData) {
+        const forma = document.getElementById('forma');
+        if (!forma) return;
+
+        const tabContainer = document.createElement('div');
+        tabContainer.style.cssText = 'margin: 10px 0 5px 0; display: flex; gap: 0;';
+
+        const tabStyle = (active) => `
+            padding: 6px 16px; cursor: pointer; font-size: 12px; font-weight: bold;
+            border: 1px solid ${active ? '#006600' : '#ccc'};
+            border-bottom: ${active ? '2px solid #fff' : '1px solid #ccc'};
+            background: ${active ? '#fff' : '#f0f0f0'};
+            color: ${active ? '#006600' : '#666'};
+            margin-bottom: -1px; position: relative; z-index: ${active ? 2 : 1};
+        `;
+
+        const tabOrder = document.createElement('div');
+        tabOrder.textContent = 'Состав';
+        tabOrder.style.cssText = tabStyle(true);
+
+        const tabCalc = document.createElement('div');
+        tabCalc.textContent = `Калькулятор — ${matchData.opponentName} (${matchData.homeAway})`;
+        tabCalc.style.cssText = tabStyle(false);
+
+        tabContainer.appendChild(tabOrder);
+        tabContainer.appendChild(tabCalc);
+
+        const tabLine = document.createElement('div');
+        tabLine.style.cssText = 'border-bottom: 1px solid #ccc; margin-bottom: 10px;';
+
+        const calcContainer = document.createElement('div');
+        calcContainer.id = 'order-calc-container';
+        calcContainer.style.display = 'none';
+
+        forma.parentNode.insertBefore(tabContainer, forma);
+        forma.parentNode.insertBefore(tabLine, forma);
+        forma.parentNode.insertBefore(calcContainer, forma.nextSibling);
+
+        let calcLoaded = false;
+
+        tabOrder.addEventListener('click', () => {
+            tabOrder.style.cssText = tabStyle(true);
+            tabCalc.style.cssText = tabStyle(false);
+            forma.style.display = '';
+            calcContainer.style.display = 'none';
+        });
+
+        tabCalc.addEventListener('click', async () => {
+            tabCalc.style.cssText = tabStyle(true);
+            tabOrder.style.cssText = tabStyle(false);
+            forma.style.display = 'none';
+            calcContainer.style.display = '';
+
+            if (!calcLoaded) {
+                calcLoaded = true;
+                calcContainer.innerHTML = '<div style="text-align:center; padding:40px; color:#666;">Загрузка данных...</div>';
+                try {
+                    await loadAndBuildCalculator(calcContainer, matchData);
+                } catch (e) {
+                    console.error('[ORDER] Ошибка загрузки калькулятора:', e);
+                    calcContainer.innerHTML = `<div style="text-align:center; padding:40px; color:red;">Ошибка: ${e.message}</div>`;
+                    calcLoaded = false;
+                }
+            }
+        });
+    }
+
+    async function loadAndBuildCalculator(container, matchData) {
+        console.group('[ORDER] Загрузка данных для калькулятора');
+
+        const fizaToTournament = { 'B': 'championship', 'C': 'national_cup', '-': 'friendly' };
+        const tournamentType = fizaToTournament[matchData.fizaType] || 'championship';
+        console.log('[ORDER] Тип турнира:', tournamentType);
+
+        const isHome = matchData.homeAway === 'Д';
+        const homeTeamId = isHome ? String(matchData.teamId) : String(matchData.opponentId);
+        const awayTeamId = isHome ? String(matchData.opponentId) : String(matchData.teamId);
+
+        const [homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere] = await Promise.all([
+            loadTeamRoster(homeTeamId, tournamentType),
+            loadTeamRoster(awayTeamId, tournamentType),
+            loadTeamAtmosphere(homeTeamId),
+            loadTeamAtmosphere(awayTeamId)
+        ]);
+
+        console.log('[ORDER] Загружено: хозяева', homePlayers.length, 'гости', awayPlayers.length);
+
+        // Рейтинги
+        const myRating = window.my_vs || 0;
+        const oppRating = matchData.opponentRating || 0;
+        window.cachedTeamRatings = isHome
+            ? { home: myRating, away: oppRating }
+            : { home: oppRating, away: myRating };
+
+        container.innerHTML = '';
+        const ui = createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere);
+        container.appendChild(ui);
+
+        // Синхронизируем состав из формы
+        syncLineupFromOrderForm(isHome);
+
+        console.log('[ORDER] Калькулятор построен');
+        console.groupEnd();
+    }
+
+    function syncLineupFromOrderForm(isHome) {
+        const myLineupBlock = isHome ? window.homeLineupBlock : window.awayLineupBlock;
+        if (!myLineupBlock || !myLineupBlock.lineup) return;
+
+        const lineup = myLineupBlock.lineup;
+
+        for (let i = 0; i < Math.min(11, lineup.length); i++) {
+            const slot = lineup[i];
+            if (!slot) continue;
+
+            const plrSelect = document.getElementById(`plr_${i}`);
+            if (plrSelect && plrSelect.value && plrSelect.value !== '-1') {
+                if (slot.setValue) {
+                    slot.setValue(plrSelect.value);
+                }
+            }
+        }
+
+        if (typeof window.__vs_recalculateStrength === 'function') {
+            setTimeout(() => window.__vs_recalculateStrength(), 500);
+        }
+    }
+
+    // ===== КОНЕЦ ИНТЕГРАЦИИ MNG_ORDER =====
     
-    init();
+    // ===== РОУТЕР СТРАНИЦ =====
+    function isOrderPage() {
+        return window.location.pathname.includes('mng_order');
+    }
+
+    function isPreviewPage() {
+        return window.location.pathname.includes('previewmatch');
+    }
+
+    if (isOrderPage()) {
+        initOrderPage();
+    } else if (isPreviewPage()) {
+        init();
+    }
 })();
