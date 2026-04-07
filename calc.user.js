@@ -14073,18 +14073,69 @@ setTimeout(() => {
 
     // ===== ИНТЕГРАЦИЯ В MNG_ORDER =====
 
+    function parseOrderPageData() {
+        // Парсим переменные из inline-скриптов страницы (sandbox не даёт доступ к window)
+        const html = document.body.innerHTML;
+        const result = {};
+
+        // curr (ID команды)
+        const currMatch = html.match(/var\s+curr\s*=\s*(\d+)/);
+        result.curr = currMatch ? parseInt(currMatch[1]) : null;
+
+        // order_day
+        const orderDayMatch = html.match(/var\s+order_day\s*=\s*(\d+)/);
+        result.orderDay = orderDayMatch ? parseInt(orderDayMatch[1]) : null;
+
+        // match_id
+        const matchIdMatch = html.match(/var\s+match_id\s*=\s*(\d+)/);
+        result.matchId = matchIdMatch ? parseInt(matchIdMatch[1]) : null;
+
+        // matchname
+        const matchnameMatch = html.match(/var\s+matchname\s*=\s*"([^"]+)"/);
+        result.matchname = matchnameMatch ? matchnameMatch[1] : null;
+
+        // fizatype
+        const fizaMatch = html.match(/var\s+fizatype\s*=\s*"([^"]+)"/);
+        result.fizatype = fizaMatch ? fizaMatch[1] : null;
+
+        // my_vs (рейтинг)
+        const myVsMatch = html.match(/var\s+my_vs\s*=\s*(\d+)/);
+        result.myVs = myVsMatch ? parseInt(myVsMatch[1]) : 0;
+
+        // days[] — массив матчей
+        const daysMatch = html.match(/var\s+days\s*=\s*\[([\s\S]*?)\]\s*\n/);
+        if (daysMatch) {
+            try {
+                result.days = eval(`[${daysMatch[1]}]`);
+            } catch (e) {
+                console.warn('[ORDER] Ошибка парсинга days[]:', e);
+                result.days = [];
+            }
+        } else {
+            result.days = [];
+        }
+
+        console.log('[ORDER] Распарсенные данные:', {
+            curr: result.curr, orderDay: result.orderDay,
+            matchId: result.matchId, matchname: result.matchname,
+            fizatype: result.fizatype, myVs: result.myVs,
+            daysCount: result.days.length
+        });
+
+        return result;
+    }
+
     async function initOrderPage() {
         console.group('[ORDER] Инициализация на mng_order.php');
 
-        // Ждём пока inline-скрипты страницы объявят переменные
-        const ready = await waitForPageVars(['plr_id', 'days', 'curr'], 5000);
-        if (!ready) {
-            console.warn('[ORDER] Данные mng_order не найдены за 5 сек');
+        const pageData = parseOrderPageData();
+        if (!pageData.curr || !pageData.days.length) {
+            console.warn('[ORDER] Не удалось распарсить данные страницы');
             console.groupEnd();
             return;
         }
 
-        const matchData = extractMatchFromDays();
+        const matchData = extractMatchFromDays(pageData);
         if (!matchData) {
             console.warn('[ORDER] Не найден ближайший матч с соперником');
             console.groupEnd();
@@ -14096,21 +14147,8 @@ setTimeout(() => {
         console.groupEnd();
     }
 
-    function waitForPageVars(varNames, timeout) {
-        return new Promise((resolve) => {
-            const start = Date.now();
-            const check = () => {
-                const allExist = varNames.every(n => typeof window[n] !== 'undefined');
-                if (allExist) return resolve(true);
-                if (Date.now() - start > timeout) return resolve(false);
-                setTimeout(check, 100);
-            };
-            check();
-        });
-    }
-
-    function extractMatchFromDays() {
-        const days = window.days;
+    function extractMatchFromDays(pageData) {
+        const days = pageData.days;
         if (!days || !days.length) return null;
 
         for (let i = 0; i < days.length; i++) {
@@ -14119,10 +14157,12 @@ setTimeout(() => {
                 return {
                     day: d[0], abbr: d[1], round: d[2], orderDay: d[3],
                     tournamentName: d[4], tournamentSort: d[5], fizaType: d[6],
-                    teamId: window.curr,
+                    teamId: pageData.curr,
                     opponentId: d[12], opponentName: d[10],
                     opponentFullName: d[11], opponentRating: d[13],
-                    homeAway: d[14]
+                    homeAway: d[14],
+                    matchId: pageData.matchId || 0,
+                    myRating: pageData.myVs || 0
                 };
             }
         }
@@ -14217,7 +14257,7 @@ setTimeout(() => {
         console.log('[ORDER] Загружено: хозяева', homePlayers.length, 'гости', awayPlayers.length);
 
         // Рейтинги
-        const myRating = window.my_vs || 0;
+        const myRating = matchData.myRating || 0;
         const oppRating = matchData.opponentRating || 0;
         window.cachedTeamRatings = isHome
             ? { home: myRating, away: oppRating }
