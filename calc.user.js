@@ -14147,14 +14147,21 @@ setTimeout(() => {
         }
 
         const allMatches = extractAllMatchesFromDays(pageData);
-        if (!allMatches.length) {
-            console.warn('[ORDER] Не найдены матчи с соперниками');
+        // Находим матч по текущему order_day
+        const currentMatch = allMatches.find(m => m.orderDay === pageData.orderDay);
+        
+        if (!currentMatch) {
+            console.warn('[ORDER] Не найден матч для order_day:', pageData.orderDay);
+            // Если соперник неизвестен — показываем только вкладки без калькулятора
+            if (allMatches.length > 0) {
+                console.log('[ORDER] Соперник для текущего дня неизвестен');
+            }
             console.groupEnd();
             return;
         }
 
-        console.log('[ORDER] Найдено матчей:', allMatches.length);
-        createOrderTabs(allMatches, pageData);
+        console.log('[ORDER] Текущий матч:', currentMatch);
+        createOrderTabs(currentMatch);
         console.groupEnd();
     }
 
@@ -14181,96 +14188,78 @@ setTimeout(() => {
         return matches;
     }
 
-    function createOrderTabs(allMatches, pageData) {
+    function createOrderTabs(matchData) {
         const forma = document.getElementById('forma');
         if (!forma) return;
 
-        const tabContainer = document.createElement('div');
-        tabContainer.style.cssText = 'margin: 10px 0 5px 0; display: flex; gap: 0; align-items: flex-end;';
+        // Вкладки в стиле ссылок
+        const tabHeader = document.createElement('div');
+        tabHeader.id = 'vsol-tabs-header';
+        tabHeader.style.cssText = 'background: #f8f8f8; border-bottom: 1px solid #ccc; padding: 8px 12px; margin-top: 10px;';
 
-        const tabStyle = (active) => `
-            padding: 6px 16px; cursor: pointer; font-size: 12px; font-weight: bold;
-            border: 1px solid ${active ? '#006600' : '#ccc'};
-            border-bottom: ${active ? '2px solid #fff' : '1px solid #ccc'};
-            background: ${active ? '#fff' : '#f0f0f0'};
-            color: ${active ? '#006600' : '#666'};
-            margin-bottom: -1px; position: relative; z-index: ${active ? 2 : 1};
-        `;
-
-        const tabOrder = document.createElement('div');
+        const tabOrder = document.createElement('a');
+        tabOrder.href = '#';
         tabOrder.textContent = 'Состав';
-        tabOrder.style.cssText = tabStyle(true);
+        tabOrder.style.cssText = 'text-decoration: none; padding: 5px 10px; margin-right: 5px; color: #000; font-weight: bold;';
 
-        const tabCalc = document.createElement('div');
-        tabCalc.textContent = 'Калькулятор';
-        tabCalc.style.cssText = tabStyle(false);
+        const separator = document.createTextNode(' | ');
 
-        // Селектор матча (если матчей > 1)
-        const matchSelect = document.createElement('select');
-        matchSelect.style.cssText = 'margin-left: 8px; margin-bottom: 1px; height: 24px; font-size: 11px; border: 1px solid #aaa; padding: 2px 4px;';
-        allMatches.forEach((m, idx) => {
-            const opt = document.createElement('option');
-            opt.value = idx;
-            opt.textContent = `${m.abbr} ${m.round} — ${m.opponentName} (${m.homeAway})`;
-            matchSelect.appendChild(opt);
-        });
+        const opponentLabel = matchData.homeAway === 'Д' ? '(дома)' : '(в гостях)';
+        const tabCalc = document.createElement('a');
+        tabCalc.href = '#';
+        tabCalc.textContent = `Калькулятор — ${matchData.opponentName} ${opponentLabel}`;
+        tabCalc.style.cssText = 'text-decoration: none; padding: 5px 10px; margin-right: 5px; color: #666; font-weight: normal;';
 
-        tabContainer.appendChild(tabOrder);
-        tabContainer.appendChild(tabCalc);
-        if (allMatches.length > 1) {
-            tabContainer.appendChild(matchSelect);
-        }
-
-        const tabLine = document.createElement('div');
-        tabLine.style.cssText = 'border-bottom: 1px solid #ccc; margin-bottom: 10px;';
+        tabHeader.appendChild(tabOrder);
+        tabHeader.appendChild(separator);
+        tabHeader.appendChild(tabCalc);
 
         const calcContainer = document.createElement('div');
         calcContainer.id = 'order-calc-container';
         calcContainer.style.display = 'none';
 
-        forma.parentNode.insertBefore(tabContainer, forma);
-        forma.parentNode.insertBefore(tabLine, forma);
+        forma.parentNode.insertBefore(tabHeader, forma);
         forma.parentNode.insertBefore(calcContainer, forma.nextSibling);
 
-        let currentMatchIdx = 0;
-        let loadedMatchIdx = -1; // Какой матч загружен
+        let calcLoaded = false;
 
-        async function loadMatch(idx) {
-            const matchData = allMatches[idx];
-            loadedMatchIdx = idx;
-            calcContainer.innerHTML = '<div style="text-align:center; padding:40px; color:#666;">Загрузка данных...</div>';
-            try {
-                await loadAndBuildCalculator(calcContainer, matchData);
-            } catch (e) {
-                console.error('[ORDER] Ошибка загрузки калькулятора:', e);
-                calcContainer.innerHTML = `<div style="text-align:center; padding:40px; color:red;">Ошибка: ${e.message}</div>`;
-                loadedMatchIdx = -1;
+        function setActiveTab(isCalc) {
+            if (isCalc) {
+                tabOrder.style.color = '#666';
+                tabOrder.style.fontWeight = 'normal';
+                tabCalc.style.color = '#000';
+                tabCalc.style.fontWeight = 'bold';
+                forma.style.display = 'none';
+                calcContainer.style.display = '';
+            } else {
+                tabOrder.style.color = '#000';
+                tabOrder.style.fontWeight = 'bold';
+                tabCalc.style.color = '#666';
+                tabCalc.style.fontWeight = 'normal';
+                forma.style.display = '';
+                calcContainer.style.display = 'none';
             }
         }
 
-        tabOrder.addEventListener('click', () => {
-            tabOrder.style.cssText = tabStyle(true);
-            tabCalc.style.cssText = tabStyle(false);
-            forma.style.display = '';
-            calcContainer.style.display = 'none';
+        tabOrder.addEventListener('click', (e) => {
+            e.preventDefault();
+            setActiveTab(false);
         });
 
-        tabCalc.addEventListener('click', async () => {
-            tabCalc.style.cssText = tabStyle(true);
-            tabOrder.style.cssText = tabStyle(false);
-            forma.style.display = 'none';
-            calcContainer.style.display = '';
+        tabCalc.addEventListener('click', async (e) => {
+            e.preventDefault();
+            setActiveTab(true);
 
-            if (loadedMatchIdx !== currentMatchIdx) {
-                await loadMatch(currentMatchIdx);
-            }
-        });
-
-        matchSelect.addEventListener('change', async () => {
-            currentMatchIdx = parseInt(matchSelect.value);
-            // Если калькулятор видим — перезагружаем сразу
-            if (calcContainer.style.display !== 'none') {
-                await loadMatch(currentMatchIdx);
+            if (!calcLoaded) {
+                calcLoaded = true;
+                calcContainer.innerHTML = '<div style="text-align:center; padding:40px; color:#666;">Загрузка данных...</div>';
+                try {
+                    await loadAndBuildCalculator(calcContainer, matchData);
+                } catch (e) {
+                    console.error('[ORDER] Ошибка загрузки калькулятора:', e);
+                    calcContainer.innerHTML = `<div style="text-align:center; padding:40px; color:red;">Ошибка: ${e.message}</div>`;
+                    calcLoaded = false;
+                }
             }
         });
     }
