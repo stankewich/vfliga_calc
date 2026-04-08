@@ -14298,6 +14298,9 @@ setTimeout(() => {
         // Синхронизируем состав из формы
         syncLineupFromOrderForm(isHome);
 
+        // Добавляем кнопку отправки
+        addSubmitButtonToCalc(container, isHome);
+
         console.log('[ORDER] Калькулятор построен');
         console.groupEnd();
     }
@@ -14323,6 +14326,86 @@ setTimeout(() => {
         if (typeof window.__vs_recalculateStrength === 'function') {
             setTimeout(() => window.__vs_recalculateStrength(), 500);
         }
+    }
+
+    function syncCalcToOrderForm(isHome) {
+        const myLineupBlock = isHome ? window.homeLineupBlock : window.awayLineupBlock;
+        if (!myLineupBlock || !myLineupBlock.lineup) {
+            console.warn('[ORDER] Не удалось синхронизировать: lineup не найден');
+            return false;
+        }
+
+        const lineup = myLineupBlock.lineup;
+        const slotEntries = window.currentSlotEntries || [];
+        let synced = 0;
+
+        for (let i = 0; i < Math.min(11, lineup.length); i++) {
+            const slot = lineup[i];
+            if (!slot) continue;
+
+            const playerId = slot.getValue ? slot.getValue() : null;
+            const matchPos = slotEntries[i]?.matchPos || null;
+
+            // Записываем игрока в форму
+            const plrSelect = document.getElementById(`plr_${i}`);
+            if (plrSelect && playerId) {
+                plrSelect.value = playerId;
+                // Триггерим change для Select2
+                if (typeof jQuery !== 'undefined') {
+                    jQuery(`#plr_${i}`).trigger('change');
+                }
+                synced++;
+            }
+
+            // Записываем позицию (для слотов 1-10, слот 0 = GK)
+            if (i > 0 && matchPos) {
+                const posInput = document.querySelector(`input[name="pos[${i}]"]`) ||
+                                 document.querySelector(`select[name="pos[${i}]"]`);
+                if (posInput) {
+                    posInput.value = matchPos;
+                }
+            }
+        }
+
+        console.log(`[ORDER] Синхронизировано ${synced} игроков из калькулятора в форму`);
+        return synced > 0;
+    }
+
+    function addSubmitButtonToCalc(container, isHome) {
+        const btnRow = document.createElement('div');
+        btnRow.style.cssText = 'text-align: center; padding: 10px 0; border-top: 1px solid #ccc; margin-top: 10px;';
+
+        const btnSubmit = document.createElement('a');
+        btnSubmit.href = '#';
+        btnSubmit.className = 'butn-green';
+        btnSubmit.textContent = 'Отправить состав';
+        btnSubmit.style.cssText = 'margin-right: 10px;';
+        btnSubmit.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (syncCalcToOrderForm(isHome)) {
+                // Вызываем оригинальные функции отправки
+                const origBtn = document.getElementById('bt1');
+                if (origBtn) {
+                    origBtn.click();
+                }
+            }
+        });
+
+        const btnBack = document.createElement('a');
+        btnBack.href = '#';
+        btnBack.className = 'butn';
+        btnBack.textContent = 'Вернуться к составу';
+        btnBack.style.cssText = 'padding-left: 10px; padding-right: 10px;';
+        btnBack.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Переключаемся на вкладку "Состав"
+            const tabOrder = document.querySelector('#vsol-tabs-header a:first-child');
+            if (tabOrder) tabOrder.click();
+        });
+
+        btnRow.appendChild(btnSubmit);
+        btnRow.appendChild(btnBack);
+        container.appendChild(btnRow);
     }
 
     // ===== КОНЕЦ ИНТЕГРАЦИИ MNG_ORDER =====
