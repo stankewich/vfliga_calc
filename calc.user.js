@@ -6329,6 +6329,25 @@ function createFormationSelector(formationManager) {
     return select;
 }
 
+function createTacticsSelector(team, onChange) {
+    const select = document.createElement('select');
+    select.className = 'tactics-select';
+    select.innerHTML = `
+        <option value="нормальная">Нормальная</option>
+        <option value="атакующая">Атакующая</option>
+        <option value="оборонительная">Оборонительная</option>
+        <option value="контратака">Контратака</option>
+        <option value="прессинг">Прессинг</option>
+    `;
+    select.value = team.tactics || 'нормальная';
+    select.style.background = 'transparent';
+    select.addEventListener('change', () => {
+        team.tactics = select.value;
+        if (typeof onChange === 'function') onChange();
+    });
+    return select;
+}
+
 function createDummySelect() {
     const select = document.createElement('select');
     select.innerHTML = '<option value="">—</option>';
@@ -9143,17 +9162,19 @@ function createTeamSettingsBlock(team, sideLabel, onChange) {
         if (typeof onChange === 'function') onChange();
     });
 
-    const tacticSelect = createDummySelect();
+    const tacticSelect = createTacticsSelector(team, onChange);
     const defenseSelect = createDefenceTypeSelector(team, onChange);
     const roughSelect = createRoughSelector(team, onChange);
     const moraleSelect = createMoraleSelector(team, onChange);
 
     if (team === window.homeTeam) {
+        window.homeTacticSelect = tacticSelect;
         window.homeDefenceTypeSelect = defenseSelect;
         window.homeRoughSelect = roughSelect;
         window.homeMoraleSelect = moraleSelect;
     }
     if (team === window.awayTeam) {
+        window.awayTacticSelect = tacticSelect;
         window.awayDefenceTypeSelect = defenseSelect;
         window.awayRoughSelect = roughSelect;
         window.awayMoraleSelect = moraleSelect;
@@ -14103,6 +14124,10 @@ setTimeout(() => {
         const myVsMatch = html.match(/var\s+my_vs\s*=\s*(\d+)/);
         result.myVs = myVsMatch ? parseInt(myVsMatch[1]) : 0;
 
+        // v_tactics (тактика: "нормальная", "атакующая" и т.д.)
+        const tacticsMatch = html.match(/var\s+v_tactics\s*=\s*"([^"]+)"/);
+        result.tactics = tacticsMatch ? tacticsMatch[1] : null;
+
         // days[] — массив матчей (многострочный, с вложенными массивами)
         const daysStartMatch = html.match(/var\s+days\s*=\s*\[/);
         if (daysStartMatch) {
@@ -14131,7 +14156,7 @@ setTimeout(() => {
             curr: result.curr, orderDay: result.orderDay,
             matchId: result.matchId, matchname: result.matchname,
             fizatype: result.fizatype, myVs: result.myVs,
-            daysCount: result.days.length
+            tactics: result.tactics, daysCount: result.days.length
         });
 
         return result;
@@ -14141,6 +14166,7 @@ setTimeout(() => {
         console.group('[ORDER] Инициализация на mng_order.php');
 
         const pageData = parseOrderPageData();
+        window.__vs_orderPageData = pageData; // сохраняем для диалога загрузки составов
         if (!pageData.curr || !pageData.days.length) {
             console.warn('[ORDER] Не удалось распарсить данные страницы');
             console.groupEnd();
@@ -14224,7 +14250,26 @@ setTimeout(() => {
 
         let calcLoaded = false;
 
+        // Найти <p> с кнопками оригинальной формы ("Отправить состав", "Автосостав", "Удалить состав", "Назад в ростер")
+        function findOriginalButtonsBlock() {
+            const paragraphs = forma.parentNode.querySelectorAll('p');
+            for (const p of paragraphs) {
+                const text = p.textContent || '';
+                if (text.includes('Отправить состав') || text.includes('Автосостав') ||
+                    text.includes('Удалить состав') || text.includes('Назад в ростер')) {
+                    return p;
+                }
+            }
+            return null;
+        }
+
+        let originalButtonsBlock = null;
+
         function setActiveTab(isCalc) {
+            if (!originalButtonsBlock) {
+                originalButtonsBlock = findOriginalButtonsBlock();
+            }
+
             if (isCalc) {
                 tabOrder.style.color = '#666';
                 tabOrder.style.fontWeight = 'normal';
@@ -14232,6 +14277,9 @@ setTimeout(() => {
                 tabCalc.style.fontWeight = 'bold';
                 forma.style.display = 'none';
                 calcContainer.style.display = '';
+                if (originalButtonsBlock) {
+                    originalButtonsBlock.style.display = 'none';
+                }
             } else {
                 tabOrder.style.color = '#000';
                 tabOrder.style.fontWeight = 'bold';
@@ -14239,6 +14287,9 @@ setTimeout(() => {
                 tabCalc.style.fontWeight = 'normal';
                 forma.style.display = '';
                 calcContainer.style.display = 'none';
+                if (originalButtonsBlock) {
+                    originalButtonsBlock.style.display = '';
+                }
             }
         }
 
@@ -14296,8 +14347,8 @@ setTimeout(() => {
         const ui = createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere);
         container.appendChild(ui);
 
-        // Синхронизируем состав из формы
-        syncLineupFromOrderForm(isHome);
+        // Синхронизация состава из формы убрана — теперь только по кнопке "Импорт из формы"
+        // syncLineupFromOrderForm(isHome);
 
         // Добавляем кнопку отправки
         addSubmitButtonToCalc(container, isHome, matchData);
@@ -14310,13 +14361,17 @@ setTimeout(() => {
         const myLineupBlock = isHome ? window.homeLineupBlock : window.awayLineupBlock;
         if (!myLineupBlock || !myLineupBlock.lineup) return;
 
+        const forma = document.getElementById('forma');
         const lineup = myLineupBlock.lineup;
 
         for (let i = 0; i < Math.min(11, lineup.length); i++) {
             const slot = lineup[i];
             if (!slot) continue;
 
-            const plrSelect = document.getElementById(`plr_${i}`);
+            let plrSelect = document.getElementById(`plr_${i}`);
+            if (!plrSelect && forma) {
+                plrSelect = forma.querySelector(`[name="plr[${i}]"]`);
+            }
             if (plrSelect && plrSelect.value && plrSelect.value !== '-1') {
                 if (slot.setValue) {
                     slot.setValue(plrSelect.value);
@@ -14415,6 +14470,90 @@ setTimeout(() => {
             params.set('captain', captainSelect.value);
         }
 
+        // --- tactics: из калькулятора → v_tactics из pageData → select формы → "нормальная" ---
+        const tacticSelect = isHome ? window.homeTacticSelect : window.awayTacticSelect;
+        let tacticsValue = tacticSelect && tacticSelect.value ? tacticSelect.value : null;
+        if (!tacticsValue) {
+            const pageData = window.__vs_orderPageData;
+            tacticsValue = pageData && pageData.tactics ? pageData.tactics : null;
+        }
+        if (!tacticsValue) {
+            const tacticsFormSelect = forma.querySelector('[name="tactics"]');
+            tacticsValue = tacticsFormSelect ? tacticsFormSelect.value : null;
+        }
+        if (!tacticsValue) {
+            tacticsValue = 'нормальная';
+        }
+        params.delete('tactics');
+        params.set('tactics', tacticsValue);
+
+        // --- fc (ID команды) и order_day из matchData ---
+        if (matchData) {
+            if (matchData.teamId) {
+                params.delete('fc');
+                params.set('fc', String(matchData.teamId));
+            }
+            if (matchData.orderDay) {
+                params.delete('order_day');
+                params.set('order_day', String(matchData.orderDay));
+            }
+        }
+
+        // --- plrs: количество игроков (все plr[N] с валидным ID) ---
+        let plrsCount = 0;
+        for (const [key, value] of params.entries()) {
+            if (/^plr\[\d+\]$/.test(key) && value && value !== '-1') {
+                plrsCount++;
+            }
+        }
+        params.delete('plrs');
+        params.set('plrs', String(plrsCount));
+
+        // --- Роли из калькулятора (sht, uglov, penalty) ---
+        if (myLineupBlock.shtSelect && myLineupBlock.shtSelect.value) {
+            params.delete('sht');
+            params.set('sht', myLineupBlock.shtSelect.value);
+        }
+        if (myLineupBlock.uglovSelect && myLineupBlock.uglovSelect.value) {
+            params.delete('uglov');
+            params.set('uglov', myLineupBlock.uglovSelect.value);
+        }
+        if (myLineupBlock.penaltySelect && myLineupBlock.penaltySelect.value) {
+            params.delete('penalty');
+            params.set('penalty', myLineupBlock.penaltySelect.value);
+        }
+
+        // --- Замены (zmin_start, zmin_end, zcond, zout, zin) из оригинальной формы ---
+        // FormData уже содержит эти поля, но гарантируем наличие всех 5 слотов
+        const subFields = ['zmin_start', 'zmin_end', 'zcond', 'zout', 'zin'];
+        for (const field of subFields) {
+            for (let i = 0; i < 5; i++) {
+                const key = `${field}[${i}]`;
+                if (!params.has(key)) {
+                    const formEl = forma.querySelector(`[name="${key}"]`);
+                    params.set(key, formEl ? formEl.value : '');
+                }
+            }
+        }
+
+        // --- Тактические указания (tmin_start, tmin_end, tcond, tact) из оригинальной формы ---
+        const tacFields = ['tmin_start', 'tmin_end', 'tcond', 'tact'];
+        for (const field of tacFields) {
+            for (let i = 0; i < 5; i++) {
+                const key = `${field}[${i}]`;
+                if (!params.has(key)) {
+                    const formEl = forma.querySelector(`[name="${key}"]`);
+                    params.set(key, formEl ? formEl.value : '');
+                }
+            }
+        }
+
+        // --- memo из textarea оригинальной формы ---
+        if (!params.has('memo')) {
+            const memoEl = forma.querySelector('textarea[name="memo"]');
+            params.set('memo', memoEl ? memoEl.value : '');
+        }
+
         params.set('act', 'save');
         params.set('step', '1');
         params.set('check_order', '0');
@@ -14426,6 +14565,19 @@ setTimeout(() => {
         const params = buildOrderPostData(isHome, matchData);
         if (!params) {
             alert('Не удалось собрать данные для отправки');
+            return;
+        }
+
+        // Валидация: проверяем что все 11 основных слотов (plr[0]..plr[10]) заполнены
+        const missingSlots = [];
+        for (let i = 0; i < 11; i++) {
+            const val = params.get(`plr[${i}]`);
+            if (!val || val === '-1') {
+                missingSlots.push(i === 0 ? 'GK' : `Слот ${i}`);
+            }
+        }
+        if (missingSlots.length > 0) {
+            alert('Основной состав не заполнен! Пустые позиции: ' + missingSlots.join(', '));
             return;
         }
 
@@ -14472,10 +14624,988 @@ setTimeout(() => {
             if (tabOrder) tabOrder.click();
         });
 
+        const btnImport = document.createElement('a');
+        btnImport.href = '#';
+        btnImport.className = 'butn';
+        btnImport.textContent = 'Импорт из формы';
+        btnImport.style.cssText = 'margin-right: 10px; padding-left: 10px; padding-right: 10px;';
+        btnImport.addEventListener('click', (e) => {
+            e.preventDefault();
+            importFromOriginalForm(isHome);
+        });
+
+        const btnLoad = document.createElement('a');
+        btnLoad.href = '#';
+        btnLoad.className = 'butn';
+        btnLoad.textContent = 'Загрузить состав';
+        btnLoad.style.cssText = 'margin-right: 10px; padding-left: 10px; padding-right: 10px;';
+        btnLoad.addEventListener('click', (e) => {
+            e.preventDefault();
+            showLoadLineupDialog(isHome);
+        });
+
+        btnRow.appendChild(btnImport);
+        btnRow.appendChild(btnLoad);
         btnRow.appendChild(btnSubmit);
         btnRow.appendChild(btnBack);
         container.appendChild(btnRow);
     }
+
+    function importFromOriginalForm(isHome) {
+        console.group('[ORDER] Импорт из оригинальной формы');
+
+        const forma = document.getElementById('forma');
+        if (!forma) {
+            console.warn('[ORDER] Форма #forma не найдена');
+            console.groupEnd();
+            return;
+        }
+
+        const myLineupBlock = isHome ? window.homeLineupBlock : window.awayLineupBlock;
+        if (!myLineupBlock || !myLineupBlock.lineup) {
+            console.warn('[ORDER] LineupBlock не найден');
+            console.groupEnd();
+            return;
+        }
+
+        const formationSelect = isHome ? window.homeFormationSelect : window.awayFormationSelect;
+        const styleSelect = isHome ? window.homeStyle : window.awayStyle;
+        const roughSelect = isHome ? window.homeRoughSelect : window.awayRoughSelect;
+        const defenceSelect = isHome ? window.homeDefenceTypeSelect : window.awayDefenceTypeSelect;
+        const moraleSelect = isHome ? window.homeMoraleSelect : window.awayMoraleSelect;
+
+        // --- Маппинги: оригинальная форма → калькулятор ---
+
+        // Стиль: "нормальный" → "norm", "бей-беги" → "bb" и т.д.
+        const playstyleToCalc = {
+            'нормальный': 'norm', 'спартаковский': 'sp', 'тики-така': 'tiki',
+            'бразильский': 'brazil', 'британский': 'brit', 'бей-беги': 'bb', 'катеначчо': 'kat'
+        };
+
+        // Грубость: "0" → "clean", "1" → "rough"
+        const gamestyleToCalc = { '0': 'clean', '1': 'rough' };
+
+        // Защита: "1" → "zonal", "2" → "man"
+        const defenceToCalc = { '1': 'zonal', '2': 'man' };
+
+        // Настрой: "0" → "normal", "1" → "super", "2" → "rest"
+        const moraleToCalc = { '0': 'normal', '1': 'super', '2': 'rest' };
+
+        // --- Чтение значений из формы (с fallback на inline-переменные страницы) ---
+        const pd = window.__vs_orderPageData;
+
+        const formFormation = forma.querySelector('[name="formation"]');
+        const formPlaystyle = forma.querySelector('[name="playstyle"]');
+        const formGamestyle = forma.querySelector('[name="gamestyle"]');
+        const formDefence = forma.querySelector('[name="defence"]');
+        const formMorale = forma.querySelector('[name="morale"]');
+        const formCaptain = forma.querySelector('[name="captain"]');
+
+        // Читаем inline-переменные как fallback
+        const html = document.body ? document.body.innerHTML : '';
+        function readInlineVar(varName) {
+            const m = html.match(new RegExp('var\\s+' + varName + '\\s*=\\s*"([^"]*)"'));
+            return m ? m[1] : null;
+        }
+
+        // --- Формация: "1-X-Y-Z" → "X-Y-Z" ---
+        const rawFormation = (formFormation && formFormation.value) ? formFormation.value : readInlineVar('v_formation');
+        if (rawFormation && formationSelect) {
+            const calcFormation = rawFormation.replace(/^1-/, '');
+            if (formationSelect.querySelector(`option[value="${calcFormation}"]`)) {
+                formationSelect.value = calcFormation;
+                myLineupBlock.applyFormation(calcFormation);
+                console.log('[ORDER] Формация:', rawFormation, '→', calcFormation);
+            } else {
+                console.warn('[ORDER] Формация не найдена в калькуляторе:', calcFormation);
+            }
+        }
+
+        // --- Стиль ---
+        const playstyleVal = (formPlaystyle && formPlaystyle.value) ? formPlaystyle.value : readInlineVar('v_playstyle');
+        if (playstyleVal && styleSelect) {
+            const calcStyle = playstyleToCalc[playstyleVal];
+            if (calcStyle) {
+                styleSelect.value = calcStyle;
+                styleSelect.dispatchEvent(new Event('change'));
+                console.log('[ORDER] Стиль:', playstyleVal, '→', calcStyle);
+            } else {
+                console.warn('[ORDER] Неизвестный стиль:', playstyleVal);
+            }
+        }
+
+        // --- Грубость ---
+        const gamestyleVal = (formGamestyle && formGamestyle.value !== undefined) ? formGamestyle.value : readInlineVar('v_gamestyle');
+        if (gamestyleVal !== null && gamestyleVal !== undefined && roughSelect) {
+            const calcRough = gamestyleToCalc[String(gamestyleVal)];
+            if (calcRough) {
+                roughSelect.value = calcRough;
+                roughSelect.dispatchEvent(new Event('change'));
+                console.log('[ORDER] Грубость:', gamestyleVal, '→', calcRough);
+            }
+        }
+
+        // --- Защита ---
+        const defenceVal = (formDefence && formDefence.value) ? formDefence.value : readInlineVar('v_defence');
+        if (defenceVal && defenceSelect) {
+            const calcDefence = defenceToCalc[String(defenceVal)];
+            if (calcDefence) {
+                defenceSelect.value = calcDefence;
+                defenceSelect.dispatchEvent(new Event('change'));
+                console.log('[ORDER] Защита:', defenceVal, '→', calcDefence);
+            }
+        }
+
+        // --- Настрой ---
+        const moraleVal = (formMorale && formMorale.value !== undefined) ? formMorale.value : readInlineVar('v_morale');
+        if (moraleVal !== null && moraleVal !== undefined && moraleSelect) {
+            const calcMorale = moraleToCalc[String(moraleVal)];
+            if (calcMorale) {
+                moraleSelect.value = calcMorale;
+                moraleSelect.dispatchEvent(new Event('change'));
+                console.log('[ORDER] Настрой:', moraleVal, '→', calcMorale);
+            }
+        }
+
+        // --- Тактика ---
+        const calcTacticSelect = isHome ? window.homeTacticSelect : window.awayTacticSelect;
+        if (calcTacticSelect) {
+            const formTactics = forma.querySelector('[name="tactics"]');
+            let tacticsVal = formTactics ? formTactics.value : null;
+            if (!tacticsVal) {
+                const pd = window.__vs_orderPageData;
+                tacticsVal = pd && pd.tactics ? pd.tactics : null;
+            }
+            if (tacticsVal) {
+                calcTacticSelect.value = tacticsVal;
+                calcTacticSelect.dispatchEvent(new Event('change'));
+                console.log('[ORDER] Тактика:', tacticsVal);
+            }
+        }
+
+        // --- Состав: plr_0..plr_10 ---
+        const lineup = myLineupBlock.lineup;
+        for (let i = 0; i < Math.min(11, lineup.length); i++) {
+            const slot = lineup[i];
+            if (!slot) continue;
+
+            // Пробуем найти элемент по id (plr_0) или по name (plr[0])
+            let plrSelect = document.getElementById(`plr_${i}`);
+            if (!plrSelect) {
+                plrSelect = forma.querySelector(`[name="plr[${i}]"]`);
+            }
+            if (!plrSelect) {
+                plrSelect = forma.querySelector(`select[name="plr_${i}"]`);
+            }
+            if (!plrSelect) continue;
+
+            const playerId = plrSelect.value;
+            if (playerId && playerId !== '-1') {
+                slot.setValue(playerId);
+                console.log(`[ORDER] Слот ${i}: игрок ${playerId}`);
+            }
+            // Если plr_N.value === "-1" — оставляем слот пустым (не трогаем)
+        }
+
+        // --- Капитан ---
+        if (formCaptain && formCaptain.value && myLineupBlock.captainSelect) {
+            // Обновляем опции капитана чтобы включить игроков из состава
+            if (typeof refreshCaptainOptions === 'function') {
+                refreshCaptainOptions(myLineupBlock, isHome ? window.homePlayers : window.awayPlayers);
+            }
+            myLineupBlock.captainSelect.value = formCaptain.value;
+            myLineupBlock.captainSelect.dispatchEvent(new Event('change'));
+            console.log('[ORDER] Капитан:', formCaptain.value);
+        }
+
+        // --- Роли: sht, uglov, penalty ---
+        // Обновляем опции ролей чтобы включить игроков из состава
+        if (myLineupBlock.updateRoleSelectors) {
+            myLineupBlock.updateRoleSelectors();
+        }
+        const formSht = forma.querySelector('[name="sht"]');
+        const formUglov = forma.querySelector('[name="uglov"]');
+        const formPenalty = forma.querySelector('[name="penalty"]');
+        if (formSht && formSht.value && myLineupBlock.shtSelect) {
+            myLineupBlock.shtSelect.value = formSht.value;
+            myLineupBlock.shtSelect.dispatchEvent(new Event('change'));
+            console.log('[ORDER] Штрафные:', formSht.value);
+        }
+        if (formUglov && formUglov.value && myLineupBlock.uglovSelect) {
+            myLineupBlock.uglovSelect.value = formUglov.value;
+            myLineupBlock.uglovSelect.dispatchEvent(new Event('change'));
+            console.log('[ORDER] Угловые:', formUglov.value);
+        }
+        if (formPenalty && formPenalty.value && myLineupBlock.penaltySelect) {
+            myLineupBlock.penaltySelect.value = formPenalty.value;
+            myLineupBlock.penaltySelect.dispatchEvent(new Event('change'));
+            console.log('[ORDER] Пенальти:', formPenalty.value);
+        }
+
+        // --- Пересчёт силы ---
+        if (typeof window.__vs_recalculateStrength === 'function') {
+            setTimeout(() => window.__vs_recalculateStrength(), 300);
+        }
+
+        console.log('[ORDER] Импорт завершён');
+        console.groupEnd();
+    }
+
+    // ===== ЗАГРУЗКА АРХИВА СОСТАВОВ (Task 4.1) =====
+
+    /**
+     * Загружает архив составов из прошлых матчей.
+     * Для каждого прошедшего order_day из days[] загружает страницу mng_order.php,
+     * парсит HTML и извлекает: дату, соперника, формацию, список игроков.
+     *
+     * @param {Object} pageData — результат parseOrderPageData() (curr, orderDay, days)
+     * @returns {Promise<Array<{orderDay:number, day:number, opponent:string, formation:string, players:Array<{slot:number, playerId:string, position:string}> }>>}
+     *
+     * Validates: Requirements 2.1, 2.3
+     */
+    function loadArchiveLineups(pageData) {
+        if (!pageData || !pageData.curr || !pageData.days || !pageData.days.length) {
+            console.warn('[ARCHIVE] Нет данных страницы для загрузки архива');
+            return Promise.resolve([]);
+        }
+
+        const currentOrderDay = pageData.orderDay || 0;
+        const teamId = pageData.curr;
+
+        // Собираем прошедшие матчи (orderDay < текущего) из days[]
+        const pastMatches = [];
+        for (let i = 0; i < pageData.days.length; i++) {
+            const d = pageData.days[i];
+            const orderDay = d[3];
+            if (orderDay && orderDay < currentOrderDay && d[12] && d[12] > 0) {
+                pastMatches.push({
+                    day: d[0],
+                    orderDay: orderDay,
+                    opponentName: d[10] || '',
+                    opponentFullName: d[11] || '',
+                    homeAway: d[14] || ''
+                });
+            }
+        }
+
+        if (!pastMatches.length) {
+            console.log('[ARCHIVE] Нет прошедших матчей в days[]');
+            return Promise.resolve([]);
+        }
+
+        // Ограничиваем количество загружаемых матчей (последние 10)
+        const matchesToLoad = pastMatches.slice(-10);
+        console.log(`[ARCHIVE] Загрузка ${matchesToLoad.length} составов из архива`);
+
+        const promises = matchesToLoad.map(match => {
+            return fetchOrderPageLineup(teamId, match.orderDay).then(lineup => {
+                if (!lineup) return null;
+                return {
+                    orderDay: match.orderDay,
+                    day: match.day,
+                    opponent: match.opponentName,
+                    opponentFull: match.opponentFullName,
+                    homeAway: match.homeAway,
+                    formation: lineup.formation,
+                    players: lineup.players
+                };
+            }).catch(err => {
+                console.warn(`[ARCHIVE] Ошибка загрузки order_day=${match.orderDay}:`, err);
+                return null;
+            });
+        });
+
+        return Promise.all(promises).then(results => {
+            const valid = results.filter(r => r !== null);
+            console.log(`[ARCHIVE] Загружено ${valid.length}/${matchesToLoad.length} составов`);
+            return valid;
+        });
+    }
+
+    /**
+     * Загружает и парсит одну страницу mng_order.php для указанного order_day.
+     * Извлекает формацию и список игроков из HTML формы.
+     *
+     * @param {number} teamId — ID команды
+     * @param {number} orderDay — день заявки
+     * @returns {Promise<{formation:string, players:Array<{slot:number, playerId:string, position:string}>}|null>}
+     */
+    function fetchOrderPageLineup(teamId, orderDay) {
+        const url = `${SITE_CONFIG.BASE_URL}/mng_order.php?order_day=${orderDay}`;
+        return new Promise((resolve, reject) => {
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: url,
+                onload: function(response) {
+                    if (response.status !== 200) {
+                        resolve(null);
+                        return;
+                    }
+                    try {
+                        const result = parseOrderPageHTML(response.responseText);
+                        resolve(result);
+                    } catch (e) {
+                        console.warn('[ARCHIVE] Ошибка парсинга order_day=' + orderDay, e);
+                        resolve(null);
+                    }
+                },
+                onerror: function(err) {
+                    reject(err);
+                }
+            });
+        });
+    }
+
+    /**
+     * Парсит HTML страницы mng_order.php и извлекает формацию и состав.
+     *
+     * @param {string} html — HTML-код страницы
+     * @returns {{formation:string, players:Array<{slot:number, playerId:string, position:string}>}|null}
+     */
+    function parseOrderPageHTML(html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Формация из select[name="formation"] или из inline-скрипта
+        let formation = '';
+        const formationSelect = doc.querySelector('select[name="formation"]');
+        if (formationSelect) {
+            const selectedOpt = formationSelect.querySelector('option[selected]');
+            formation = selectedOpt ? selectedOpt.value : (formationSelect.value || '');
+        }
+        if (!formation) {
+            const formMatch = html.match(/var\s+v_formation\s*=\s*"([^"]+)"/);
+            formation = formMatch ? formMatch[1] : '';
+        }
+
+        // Игроки из select[name^="plr["]
+        const players = [];
+        const plrSelects = doc.querySelectorAll('select[name^="plr["]');
+        for (const sel of plrSelects) {
+            const nameMatch = sel.name.match(/plr\[(\d+)\]/);
+            if (!nameMatch) continue;
+            const slot = parseInt(nameMatch[1]);
+
+            // Определяем выбранного игрока
+            let playerId = '';
+            const selectedOpt = sel.querySelector('option[selected]');
+            if (selectedOpt && selectedOpt.value && selectedOpt.value !== '-1') {
+                playerId = selectedOpt.value;
+            }
+            if (!playerId) continue;
+
+            // Позиция из select[name="pos[N]"]
+            let position = '';
+            const posSelect = doc.querySelector(`select[name="pos[${slot}]"]`);
+            if (posSelect) {
+                const posOpt = posSelect.querySelector('option[selected]');
+                position = posOpt ? posOpt.value : '';
+            }
+
+            players.push({ slot, playerId, position });
+        }
+
+        if (!players.length) return null;
+
+        return { formation, players };
+    }
+
+    // ===== ЗАГРУЗКА ШАБЛОНОВ СОСТАВОВ (Task 4.2) =====
+
+    /**
+     * Загружает список шаблонов составов через AJAX endpoint get_user_orders.php.
+     * Парсит HTML-ответ и извлекает: название шаблона, формацию, список игроков.
+     *
+     * @param {Object} pageData — результат parseOrderPageData() (curr, orderDay, days)
+     * @returns {Promise<Array<{id:string, name:string, formation:string, players:Array<{slot:number, playerId:string, position:string}>}>>}
+     *
+     * Validates: Requirements 2.1, 2.4
+     */
+    function loadTemplateLineups(pageData) {
+        if (!pageData || !pageData.curr) {
+            console.warn('[TEMPLATES] Нет данных страницы для загрузки шаблонов');
+            return Promise.resolve([]);
+        }
+
+        const teamId = pageData.curr;
+        const orderDay = pageData.orderDay || 0;
+        const url = `${SITE_CONFIG.BASE_URL}/ajax/get_user_orders.php`;
+
+        console.log(`[TEMPLATES] Загрузка шаблонов для команды ${teamId}`);
+
+        return new Promise((resolve) => {
+            GM_xmlhttpRequest({
+                method: 'POST',
+                url: url,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                data: new URLSearchParams({
+                    team_id: teamId,
+                    sborn: 0,
+                    template_type: 2,
+                    template_id: orderDay,
+                    order_day: orderDay,
+                    step: 1,
+                    ch1: 1,
+                    ch2: 1,
+                    ch3: 1,
+                    ch4: 1
+                }).toString(),
+                onload: function(response) {
+                    if (response.status !== 200) {
+                        console.warn('[TEMPLATES] HTTP ошибка:', response.status);
+                        resolve([]);
+                        return;
+                    }
+                    try {
+                        const templates = parseTemplatesHTML(response.responseText);
+                        console.log(`[TEMPLATES] Загружено ${templates.length} шаблонов`);
+                        resolve(templates);
+                    } catch (e) {
+                        console.warn('[TEMPLATES] Ошибка парсинга:', e);
+                        resolve([]);
+                    }
+                },
+                onerror: function(err) {
+                    console.warn('[TEMPLATES] Ошибка запроса:', err);
+                    resolve([]);
+                }
+            });
+        });
+    }
+
+    /**
+     * Парсит HTML-ответ с шаблонами составов.
+     * Извлекает название, формацию и список игроков из каждого шаблона.
+     *
+     * @param {string} html — HTML-ответ от get_user_orders.php
+     * @returns {Array<{id:string, name:string, formation:string, players:Array<{slot:number, playerId:string, position:string}>}>}
+     */
+    function parseTemplatesHTML(html) {
+        if (!html || !html.trim()) return [];
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const templates = [];
+
+        // Вариант 1: Шаблоны как строки таблицы с ссылками/данными
+        const rows = doc.querySelectorAll('tr[id*="template"], tr[class*="template"], tr[data-template-id]');
+        if (rows.length > 0) {
+            for (const row of rows) {
+                const template = parseTemplateRow(row, doc);
+                if (template) templates.push(template);
+            }
+            return templates;
+        }
+
+        // Вариант 2: Шаблоны как div-блоки или секции
+        const blocks = doc.querySelectorAll('div[id*="template"], div[class*="template"], div[data-template-id]');
+        if (blocks.length > 0) {
+            for (const block of blocks) {
+                const template = parseTemplateBlock(block);
+                if (template) templates.push(template);
+            }
+            return templates;
+        }
+
+        // Вариант 3: Шаблоны как option-элементы в select
+        const selects = doc.querySelectorAll('select[name*="template"], select[id*="template"]');
+        if (selects.length > 0) {
+            for (const sel of selects) {
+                const options = sel.querySelectorAll('option');
+                for (const opt of options) {
+                    if (opt.value && opt.value !== '' && opt.value !== '-1' && opt.value !== '0') {
+                        templates.push({
+                            id: opt.value,
+                            name: opt.textContent.trim() || `Шаблон ${opt.value}`,
+                            formation: '',
+                            players: []
+                        });
+                    }
+                }
+            }
+            return templates;
+        }
+
+        // Вариант 4: Парсинг ссылок на шаблоны (a[href*="template"])
+        const links = doc.querySelectorAll('a[href*="template"], a[onclick*="template"]');
+        if (links.length > 0) {
+            for (const link of links) {
+                const idMatch = (link.href || link.getAttribute('onclick') || '').match(/template[_\-]?id[=:](\d+)/i);
+                const id = idMatch ? idMatch[1] : '';
+                if (id) {
+                    templates.push({
+                        id: id,
+                        name: link.textContent.trim() || `Шаблон ${id}`,
+                        formation: '',
+                        players: []
+                    });
+                }
+            }
+            return templates;
+        }
+
+        // Вариант 5: Парсинг inline-данных из JavaScript (var templates = [...])
+        const scriptMatch = html.match(/var\s+(?:templates|user_orders|orders)\s*=\s*(\[[\s\S]*?\]);/);
+        if (scriptMatch) {
+            try {
+                const data = JSON.parse(scriptMatch[1]);
+                if (Array.isArray(data)) {
+                    for (const item of data) {
+                        templates.push({
+                            id: String(item.id || item.template_id || ''),
+                            name: item.name || item.title || `Шаблон ${item.id || ''}`,
+                            formation: item.formation || '',
+                            players: Array.isArray(item.players) ? item.players.map((p, idx) => ({
+                                slot: p.slot !== undefined ? p.slot : idx,
+                                playerId: String(p.playerId || p.player_id || p.id || ''),
+                                position: p.position || p.pos || ''
+                            })) : []
+                        });
+                    }
+                    return templates;
+                }
+            } catch (e) {
+                console.warn('[TEMPLATES] Ошибка парсинга JS-данных:', e);
+            }
+        }
+
+        // Вариант 6: Если ответ содержит форму с select[name^="plr["] — один шаблон
+        const plrSelects = doc.querySelectorAll('select[name^="plr["]');
+        if (plrSelects.length > 0) {
+            const result = parseOrderPageHTML(html);
+            if (result && result.players.length > 0) {
+                templates.push({
+                    id: 'current',
+                    name: 'Текущий шаблон',
+                    formation: result.formation,
+                    players: result.players
+                });
+            }
+            return templates;
+        }
+
+        console.log('[TEMPLATES] Не удалось распознать формат шаблонов в ответе');
+        return templates;
+    }
+
+    /**
+     * Парсит строку таблицы как шаблон.
+     */
+    function parseTemplateRow(row, doc) {
+        const id = row.id || row.dataset.templateId || '';
+        const cells = row.querySelectorAll('td');
+        if (!cells.length) return null;
+
+        const name = cells[0] ? cells[0].textContent.trim() : '';
+        let formation = '';
+        let players = [];
+
+        // Ищем формацию в ячейках
+        for (const cell of cells) {
+            const text = cell.textContent.trim();
+            const formMatch = text.match(/\d-\d-\d(?:-\d)?/);
+            if (formMatch) {
+                formation = formMatch[0];
+                break;
+            }
+        }
+
+        // Ищем ссылки на игроков
+        const playerLinks = row.querySelectorAll('a[href*="player.php"]');
+        playerLinks.forEach((link, idx) => {
+            const href = link.href || '';
+            const numMatch = href.match(/num=(\d+)/);
+            if (numMatch) {
+                players.push({
+                    slot: idx,
+                    playerId: numMatch[1],
+                    position: ''
+                });
+            }
+        });
+
+        if (!name && !players.length) return null;
+
+        return {
+            id: id.replace(/\D/g, '') || String(Math.random()).slice(2, 8),
+            name: name || `Шаблон`,
+            formation: formation,
+            players: players
+        };
+    }
+
+    /**
+     * Парсит div-блок как шаблон.
+     */
+    function parseTemplateBlock(block) {
+        const id = block.id || block.dataset.templateId || '';
+        const name = (block.querySelector('h3, h4, .template-name, [class*="name"]') || {}).textContent || '';
+        let formation = '';
+        let players = [];
+
+        // Формация
+        const formEl = block.querySelector('[class*="formation"], [data-formation]');
+        if (formEl) {
+            formation = formEl.textContent.trim() || formEl.dataset.formation || '';
+        }
+        if (!formation) {
+            const text = block.textContent;
+            const formMatch = text.match(/\d-\d-\d(?:-\d)?/);
+            if (formMatch) formation = formMatch[0];
+        }
+
+        // Игроки
+        const playerLinks = block.querySelectorAll('a[href*="player.php"]');
+        playerLinks.forEach((link, idx) => {
+            const href = link.href || '';
+            const numMatch = href.match(/num=(\d+)/);
+            if (numMatch) {
+                players.push({
+                    slot: idx,
+                    playerId: numMatch[1],
+                    position: ''
+                });
+            }
+        });
+
+        if (!name && !players.length) return null;
+
+        return {
+            id: id.replace(/\D/g, '') || String(Math.random()).slice(2, 8),
+            name: name.trim() || 'Шаблон',
+            formation: formation,
+            players: players
+        };
+    }
+
+    // ===== ДИАЛОГ "ЗАГРУЗИТЬ СОСТАВ" (Task 4.3) =====
+
+    /**
+     * Показывает модальный диалог с двумя вкладками: "Архив составов" и "Шаблоны".
+     * При выборе записи — заполняет слоты калькулятора и вызывает пересчёт силы.
+     *
+     * Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5
+     *
+     * @param {boolean} isHome — true если своя команда играет дома
+     */
+    function showLoadLineupDialog(isHome) {
+        console.group('[LOAD_LINEUP] Открытие диалога загрузки состава');
+
+        const pageData = window.__vs_orderPageData || parseOrderPageData();
+
+        // --- Создаём оверлей ---
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) { overlay.remove(); console.groupEnd(); }
+        });
+
+        // --- Модальное окно ---
+        const modal = document.createElement('div');
+        modal.style.cssText = 'background:#fff;border-radius:8px;width:600px;max-width:90vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+
+        // --- Заголовок ---
+        const header = document.createElement('div');
+        header.style.cssText = 'padding:12px 16px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;';
+        const title = document.createElement('span');
+        title.textContent = 'Загрузить состав';
+        title.style.cssText = 'font-weight:bold;font-size:16px;';
+        const closeBtn = document.createElement('span');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = 'cursor:pointer;font-size:18px;color:#888;padding:0 4px;';
+        closeBtn.addEventListener('click', () => { overlay.remove(); console.groupEnd(); });
+        header.appendChild(title);
+        header.appendChild(closeBtn);
+
+        // --- Вкладки ---
+        const tabBar = document.createElement('div');
+        tabBar.style.cssText = 'display:flex;border-bottom:1px solid #ddd;';
+
+        const tabArchive = document.createElement('div');
+        tabArchive.textContent = 'Архив составов';
+        tabArchive.style.cssText = 'flex:1;text-align:center;padding:10px;cursor:pointer;font-weight:bold;border-bottom:2px solid #4a90d9;color:#4a90d9;';
+
+        const tabTemplates = document.createElement('div');
+        tabTemplates.textContent = 'Шаблоны';
+        tabTemplates.style.cssText = 'flex:1;text-align:center;padding:10px;cursor:pointer;color:#888;border-bottom:2px solid transparent;';
+
+        // --- Контент ---
+        const content = document.createElement('div');
+        content.style.cssText = 'flex:1;overflow-y:auto;padding:8px;min-height:200px;';
+
+        // --- Спиннер ---
+        function showSpinner() {
+            content.innerHTML = '<div style="text-align:center;padding:40px;color:#888;">⏳ Загрузка...</div>';
+        }
+
+        // --- Рендер списка архива ---
+        function renderArchiveList(entries) {
+            content.innerHTML = '';
+            if (!entries || !entries.length) {
+                content.innerHTML = '<div style="text-align:center;padding:40px;color:#888;">Нет данных в архиве</div>';
+                return;
+            }
+            const list = document.createElement('div');
+            for (const entry of entries) {
+                const item = document.createElement('div');
+                item.style.cssText = 'padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
+                item.addEventListener('mouseenter', () => { item.style.background = '#f0f6ff'; });
+                item.addEventListener('mouseleave', () => { item.style.background = ''; });
+
+                const info = document.createElement('div');
+                const dayText = entry.day ? `День ${entry.day}` : `#${entry.orderDay}`;
+                const oppText = entry.opponent || 'Неизвестный';
+                const formText = entry.formation ? entry.formation.replace(/^1-/, '') : '—';
+                info.innerHTML = `<b>${dayText}</b> vs ${oppText}`;
+                info.style.cssText = 'font-size:13px;';
+
+                const badge = document.createElement('span');
+                badge.textContent = formText;
+                badge.style.cssText = 'background:#e8f0fe;color:#4a90d9;padding:2px 8px;border-radius:4px;font-size:12px;';
+
+                item.appendChild(info);
+                item.appendChild(badge);
+                item.addEventListener('click', () => {
+                    applyLineupToCalc(isHome, entry.formation, entry.players);
+                    overlay.remove();
+                    console.groupEnd();
+                });
+                list.appendChild(item);
+            }
+            content.appendChild(list);
+        }
+
+        // --- Рендер списка шаблонов ---
+        function renderTemplateList(templates) {
+            content.innerHTML = '';
+            if (!templates || !templates.length) {
+                content.innerHTML = '<div style="text-align:center;padding:40px;color:#888;">Нет шаблонов</div>';
+                return;
+            }
+            const list = document.createElement('div');
+            for (const tmpl of templates) {
+                const item = document.createElement('div');
+                item.style.cssText = 'padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
+                item.addEventListener('mouseenter', () => { item.style.background = '#f0f6ff'; });
+                item.addEventListener('mouseleave', () => { item.style.background = ''; });
+
+                const info = document.createElement('div');
+                info.innerHTML = `<b>${tmpl.name || 'Шаблон'}</b>`;
+                info.style.cssText = 'font-size:13px;';
+
+                const badge = document.createElement('span');
+                const formText = tmpl.formation ? tmpl.formation.replace(/^1-/, '') : '—';
+                badge.textContent = formText;
+                badge.style.cssText = 'background:#e8f0fe;color:#4a90d9;padding:2px 8px;border-radius:4px;font-size:12px;';
+
+                item.appendChild(info);
+                item.appendChild(badge);
+                item.addEventListener('click', () => {
+                    applyLineupToCalc(isHome, tmpl.formation, tmpl.players);
+                    overlay.remove();
+                    console.groupEnd();
+                });
+                list.appendChild(item);
+            }
+            content.appendChild(list);
+        }
+
+        // --- Кэш данных ---
+        let archiveCache = null;
+        let templatesCache = null;
+
+        // --- Переключение вкладок ---
+        tabArchive.addEventListener('click', () => {
+            tabArchive.style.cssText = 'flex:1;text-align:center;padding:10px;cursor:pointer;font-weight:bold;border-bottom:2px solid #4a90d9;color:#4a90d9;';
+            tabTemplates.style.cssText = 'flex:1;text-align:center;padding:10px;cursor:pointer;color:#888;border-bottom:2px solid transparent;';
+            if (archiveCache !== null) {
+                renderArchiveList(archiveCache);
+            } else {
+                showSpinner();
+                loadArchiveLineups(pageData).then(entries => {
+                    archiveCache = entries;
+                    renderArchiveList(entries);
+                });
+            }
+        });
+
+        tabTemplates.addEventListener('click', () => {
+            tabTemplates.style.cssText = 'flex:1;text-align:center;padding:10px;cursor:pointer;font-weight:bold;border-bottom:2px solid #4a90d9;color:#4a90d9;';
+            tabArchive.style.cssText = 'flex:1;text-align:center;padding:10px;cursor:pointer;color:#888;border-bottom:2px solid transparent;';
+            if (templatesCache !== null) {
+                renderTemplateList(templatesCache);
+            } else {
+                showSpinner();
+                loadTemplateLineups(pageData).then(templates => {
+                    templatesCache = templates;
+                    renderTemplateList(templates);
+                });
+            }
+        });
+
+        // --- Сборка модального окна ---
+        tabBar.appendChild(tabArchive);
+        tabBar.appendChild(tabTemplates);
+        modal.appendChild(header);
+        modal.appendChild(tabBar);
+        modal.appendChild(content);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // --- Загружаем архив по умолчанию ---
+        showSpinner();
+        loadArchiveLineups(pageData).then(entries => {
+            archiveCache = entries;
+            renderArchiveList(entries);
+        });
+
+        console.log('[LOAD_LINEUP] Диалог открыт');
+    }
+
+    /**
+     * Применяет загруженный состав (из архива или шаблона) к слотам калькулятора.
+     * Устанавливает формацию и заполняет слоты игроками, затем вызывает пересчёт силы.
+     *
+     * @param {boolean} isHome — true если своя команда играет дома
+     * @param {string} formation — формация (например "1-4-4-2" или "4-4-2")
+     * @param {Array<{slot:number, playerId:string, position:string}>} players — список игроков
+     */
+    function applyLineupToCalc(isHome, formation, players) {
+        console.log('[LOAD_LINEUP] Применение состава:', { formation, playersCount: players ? players.length : 0 });
+
+        const myLineupBlock = isHome ? window.homeLineupBlock : window.awayLineupBlock;
+        if (!myLineupBlock || !myLineupBlock.lineup) {
+            console.warn('[LOAD_LINEUP] LineupBlock не найден');
+            return;
+        }
+
+        // --- Формация ---
+        if (formation) {
+            const calcFormation = formation.replace(/^1-/, '');
+            const formationSelect = isHome ? window.homeFormationSelect : window.awayFormationSelect;
+            if (formationSelect && formationSelect.querySelector(`option[value="${calcFormation}"]`)) {
+                formationSelect.value = calcFormation;
+                myLineupBlock.applyFormation(calcFormation);
+                console.log('[LOAD_LINEUP] Формация:', formation, '→', calcFormation);
+            } else {
+                console.warn('[LOAD_LINEUP] Формация не найдена в калькуляторе:', calcFormation);
+            }
+        }
+
+        // --- Игроки ---
+        if (players && players.length) {
+            const lineup = myLineupBlock.lineup;
+            for (const p of players) {
+                const slot = lineup[p.slot];
+                if (slot && p.playerId && slot.setValue) {
+                    slot.setValue(p.playerId);
+                    console.log(`[LOAD_LINEUP] Слот ${p.slot}: игрок ${p.playerId}`);
+                }
+            }
+        }
+
+        // --- Пересчёт силы ---
+        if (typeof window.__vs_recalculateStrength === 'function') {
+            setTimeout(() => window.__vs_recalculateStrength(), 300);
+        }
+
+        console.log('[LOAD_LINEUP] Состав применён');
+    }
+
+    // ===== ТЕСТЫ МАППИНГА ФОРМАТОВ (Task 1.4) =====
+
+    /**
+     * Unit-тесты для маппинга форматов importFromOriginalForm.
+     * Validates: Requirements 1.3, 1.5
+     *
+     * Вызов из консоли браузера: window.__test_importMappings()
+     * Возвращает { passed, failed, total, details[] }
+     */
+    window.__test_importMappings = function() {
+        const results = { passed: 0, failed: 0, total: 0, details: [] };
+
+        function assert(testName, actual, expected) {
+            results.total++;
+            if (actual === expected) {
+                results.passed++;
+                results.details.push({ status: '✅', test: testName });
+            } else {
+                results.failed++;
+                results.details.push({ status: '❌', test: testName, expected, actual });
+            }
+        }
+
+        // --- Маппинги (дублируем из importFromOriginalForm для тестирования) ---
+        const playstyleToCalc = {
+            'нормальный': 'norm', 'спартаковский': 'sp', 'тики-така': 'tiki',
+            'бразильский': 'brazil', 'британский': 'brit', 'бей-беги': 'bb', 'катеначчо': 'kat'
+        };
+        const gamestyleToCalc = { '0': 'clean', '1': 'rough' };
+        const defenceToCalc = { '1': 'zonal', '2': 'man' };
+        const moraleToCalc = { '0': 'normal', '1': 'super', '2': 'rest' };
+
+        // --- 1. Маппинг стилей (playstyle) ---
+        assert('playstyle: нормальный → norm', playstyleToCalc['нормальный'], 'norm');
+        assert('playstyle: спартаковский → sp', playstyleToCalc['спартаковский'], 'sp');
+        assert('playstyle: тики-така → tiki', playstyleToCalc['тики-така'], 'tiki');
+        assert('playstyle: бразильский → brazil', playstyleToCalc['бразильский'], 'brazil');
+        assert('playstyle: британский → brit', playstyleToCalc['британский'], 'brit');
+        assert('playstyle: бей-беги → bb', playstyleToCalc['бей-беги'], 'bb');
+        assert('playstyle: катеначчо → kat', playstyleToCalc['катеначчо'], 'kat');
+
+        // --- 2. Маппинг грубости (gamestyle) ---
+        assert('gamestyle: 0 → clean', gamestyleToCalc['0'], 'clean');
+        assert('gamestyle: 1 → rough', gamestyleToCalc['1'], 'rough');
+
+        // --- 3. Маппинг защиты (defence) ---
+        assert('defence: 1 → zonal', defenceToCalc['1'], 'zonal');
+        assert('defence: 2 → man', defenceToCalc['2'], 'man');
+
+        // --- 4. Маппинг настроя (morale) ---
+        assert('morale: 0 → normal', moraleToCalc['0'], 'normal');
+        assert('morale: 1 → super', moraleToCalc['1'], 'super');
+        assert('morale: 2 → rest', moraleToCalc['2'], 'rest');
+
+        // --- 5. Маппинг формации: "1-X-Y-Z" → "X-Y-Z" ---
+        function convertFormation(raw) {
+            return raw ? raw.replace(/^1-/, '') : raw;
+        }
+        assert('formation: 1-4-4-2 → 4-4-2', convertFormation('1-4-4-2'), '4-4-2');
+        assert('formation: 1-4-3-3 → 4-3-3', convertFormation('1-4-3-3'), '4-3-3');
+        assert('formation: 1-3-5-2 → 3-5-2', convertFormation('1-3-5-2'), '3-5-2');
+        assert('formation: 1-4-5-1 → 4-5-1', convertFormation('1-4-5-1'), '4-5-1');
+        assert('formation: 1-5-3-2 → 5-3-2', convertFormation('1-5-3-2'), '5-3-2');
+        assert('formation: 4-4-2 (без 1-) → 4-4-2', convertFormation('4-4-2'), '4-4-2');
+
+        // --- 6. Пустые/невалидные значения ---
+        assert('playstyle: пустая строка → undefined', playstyleToCalc[''], undefined);
+        assert('playstyle: неизвестный стиль → undefined', playstyleToCalc['неизвестный'], undefined);
+        assert('gamestyle: пустая строка → undefined', gamestyleToCalc[''], undefined);
+        assert('gamestyle: невалидное значение "2" → undefined', gamestyleToCalc['2'], undefined);
+        assert('defence: пустая строка → undefined', defenceToCalc[''], undefined);
+        assert('defence: невалидное значение "0" → undefined', defenceToCalc['0'], undefined);
+        assert('morale: пустая строка → undefined', moraleToCalc[''], undefined);
+        assert('morale: невалидное значение "3" → undefined', moraleToCalc['3'], undefined);
+        assert('formation: null → null', convertFormation(null), null);
+        assert('formation: undefined → undefined', convertFormation(undefined), undefined);
+        assert('formation: пустая строка → пустая строка', convertFormation(''), '');
+
+        // --- Вывод результатов ---
+        console.group(`[TEST] Маппинг форматов: ${results.passed}/${results.total} passed`);
+        results.details.forEach(d => {
+            if (d.status === '✅') {
+                console.log(`${d.status} ${d.test}`);
+            } else {
+                console.error(`${d.status} ${d.test} — expected: ${JSON.stringify(d.expected)}, got: ${JSON.stringify(d.actual)}`);
+            }
+        });
+        console.groupEnd();
+
+        return results;
+    };
 
     // ===== КОНЕЦ ИНТЕГРАЦИИ MNG_ORDER =====
 
