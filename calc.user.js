@@ -14336,25 +14336,23 @@ setTimeout(() => {
         const lineup = myLineupBlock.lineup;
         const slotEntries = window.currentSlotEntries || [];
 
-        // Сначала собираем ВСЕ данные из оригинальной формы (как базу)
+        // Собираем ВСЕ данные из оригинальной формы как базу
         const forma = document.getElementById('forma');
         if (!forma) return null;
 
         const formData = new FormData(forma);
         const params = new URLSearchParams();
 
-        // Копируем все поля оригинальной формы
         for (const [key, value] of formData.entries()) {
             params.append(key, value);
         }
 
-        // Перезаписываем основной состав из калькулятора (слоты 0-10)
+        // Перезаписываем основной состав из калькулятора
         for (let i = 0; i < 11 && i < lineup.length; i++) {
             const slot = lineup[i];
             const playerId = slot?.getValue ? slot.getValue() : '-1';
             const matchPos = slotEntries[i]?.matchPos || '';
 
-            // Удаляем старые значения и ставим новые
             params.delete(`plr[${i}]`);
             params.set(`plr[${i}]`, playerId || '-1');
 
@@ -14364,7 +14362,59 @@ setTimeout(() => {
             }
         }
 
-        // Принудительно устанавливаем act=save
+        // Маппинг настроек калькулятора → POST параметры
+        const calcSettings = document.getElementById('vs-home-settings-table');
+        if (calcSettings) {
+            // Формация: "4-4-2" → "1-4-4-2"
+            const formationSelect = window.homeFormationSelect || (isHome ? window.homeFormationSelect : window.awayFormationSelect);
+            if (formationSelect && formationSelect.value) {
+                params.delete('formation');
+                params.set('formation', '1-' + formationSelect.value);
+            }
+
+            // Стиль: "norm"→"нормальный", "bb"→"бей-беги" и т.д.
+            const styleMap = {
+                'norm': 'нормальный', 'sp': 'спартаковский', 'tiki': 'тики-така',
+                'brazil': 'бразильский', 'brit': 'британский', 'bb': 'бей-беги', 'kat': 'катеначчо'
+            };
+            const styleSelect = window.homeStyle || (isHome ? window.homeStyle : window.awayStyle);
+            if (styleSelect && styleSelect.value && styleMap[styleSelect.value]) {
+                params.delete('playstyle');
+                params.set('playstyle', styleMap[styleSelect.value]);
+            }
+
+            // Грубость: "clean"→0, "rough"→1
+            const roughMap = { 'clean': '0', 'rough': '1' };
+            if (window.homeRoughSelect && roughMap[window.homeRoughSelect.value] !== undefined) {
+                params.delete('gamestyle');
+                params.set('gamestyle', roughMap[window.homeRoughSelect.value]);
+            }
+
+            // Защита: "zonal"→1, "man"→2
+            const defenceMap = { 'zonal': '1', 'man': '2' };
+            if (window.homeDefenceTypeSelect) {
+                const defVal = window.homeDefenceTypeSelect.value || window.homeDefenceTypeSelect.getValue?.();
+                if (defVal && defenceMap[defVal]) {
+                    params.delete('defence');
+                    params.set('defence', defenceMap[defVal]);
+                }
+            }
+
+            // Настрой: "normal"→0, "super"→1, "rest"→2
+            const moraleMap = { 'normal': '0', 'super': '1', 'rest': '2' };
+            if (window.homeMoraleSelect && moraleMap[window.homeMoraleSelect.value] !== undefined) {
+                params.delete('morale');
+                params.set('morale', moraleMap[window.homeMoraleSelect.value]);
+            }
+        }
+
+        // Капитан из калькулятора
+        const captainSelect = myLineupBlock.captainSelect;
+        if (captainSelect && captainSelect.value) {
+            params.delete('captain');
+            params.set('captain', captainSelect.value);
+        }
+
         params.set('act', 'save');
         params.set('step', '1');
         params.set('check_order', '0');
