@@ -14335,39 +14335,39 @@ setTimeout(() => {
 
         const lineup = myLineupBlock.lineup;
         const slotEntries = window.currentSlotEntries || [];
+
+        // Сначала собираем ВСЕ данные из оригинальной формы (как базу)
+        const forma = document.getElementById('forma');
+        if (!forma) return null;
+
+        const formData = new FormData(forma);
         const params = new URLSearchParams();
 
-        // Копируем hidden inputs из оригинальной формы
-        const forma = document.getElementById('forma');
-        if (forma) {
-            forma.querySelectorAll('input[type="hidden"]').forEach(inp => {
-                if (inp.name) params.append(inp.name, inp.value);
-            });
+        // Копируем все поля оригинальной формы
+        for (const [key, value] of formData.entries()) {
+            params.append(key, value);
         }
 
-        params.set('act', 'save');
-        params.set('step', '1');
-        params.set('check_order', '0');
-
-        // Основной состав из калькулятора
+        // Перезаписываем основной состав из калькулятора (слоты 0-10)
         for (let i = 0; i < 11 && i < lineup.length; i++) {
             const slot = lineup[i];
             const playerId = slot?.getValue ? slot.getValue() : '-1';
             const matchPos = slotEntries[i]?.matchPos || '';
 
+            // Удаляем старые значения и ставим новые
+            params.delete(`plr[${i}]`);
             params.set(`plr[${i}]`, playerId || '-1');
+
             if (i > 0 && matchPos) {
+                params.delete(`pos[${i}]`);
                 params.set(`pos[${i}]`, matchPos);
             }
         }
 
-        // Запасные — из оригинальной формы
-        for (let i = 11; i < 20; i++) {
-            const origSelect = document.getElementById(`plr_${i}`);
-            if (origSelect) {
-                params.set(`plr[${i}]`, origSelect.value || '-1');
-            }
-        }
+        // Принудительно устанавливаем act=save
+        params.set('act', 'save');
+        params.set('step', '1');
+        params.set('check_order', '0');
 
         return params;
     }
