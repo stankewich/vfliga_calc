@@ -14146,26 +14146,27 @@ setTimeout(() => {
             return;
         }
 
-        const matchData = extractMatchFromDays(pageData);
-        if (!matchData) {
-            console.warn('[ORDER] Не найден ближайший матч с соперником');
+        const allMatches = extractAllMatchesFromDays(pageData);
+        if (!allMatches.length) {
+            console.warn('[ORDER] Не найдены матчи с соперниками');
             console.groupEnd();
             return;
         }
 
-        console.log('[ORDER] Ближайший матч:', matchData);
-        createOrderTabs(matchData);
+        console.log('[ORDER] Найдено матчей:', allMatches.length);
+        createOrderTabs(allMatches, pageData);
         console.groupEnd();
     }
 
-    function extractMatchFromDays(pageData) {
+    function extractAllMatchesFromDays(pageData) {
         const days = pageData.days;
-        if (!days || !days.length) return null;
+        if (!days || !days.length) return [];
 
+        const matches = [];
         for (let i = 0; i < days.length; i++) {
             const d = days[i];
             if (d[12] && d[12] > 0) {
-                return {
+                matches.push({
                     day: d[0], abbr: d[1], round: d[2], orderDay: d[3],
                     tournamentName: d[4], tournamentSort: d[5], fizaType: d[6],
                     teamId: pageData.curr,
@@ -14174,18 +14175,18 @@ setTimeout(() => {
                     homeAway: d[14],
                     matchId: pageData.matchId || 0,
                     myRating: pageData.myVs || 0
-                };
+                });
             }
         }
-        return null;
+        return matches;
     }
 
-    function createOrderTabs(matchData) {
+    function createOrderTabs(allMatches, pageData) {
         const forma = document.getElementById('forma');
         if (!forma) return;
 
         const tabContainer = document.createElement('div');
-        tabContainer.style.cssText = 'margin: 10px 0 5px 0; display: flex; gap: 0;';
+        tabContainer.style.cssText = 'margin: 10px 0 5px 0; display: flex; gap: 0; align-items: flex-end;';
 
         const tabStyle = (active) => `
             padding: 6px 16px; cursor: pointer; font-size: 12px; font-weight: bold;
@@ -14201,11 +14202,24 @@ setTimeout(() => {
         tabOrder.style.cssText = tabStyle(true);
 
         const tabCalc = document.createElement('div');
-        tabCalc.textContent = `Калькулятор — ${matchData.opponentName} (${matchData.homeAway})`;
+        tabCalc.textContent = 'Калькулятор';
         tabCalc.style.cssText = tabStyle(false);
+
+        // Селектор матча (если матчей > 1)
+        const matchSelect = document.createElement('select');
+        matchSelect.style.cssText = 'margin-left: 8px; margin-bottom: 1px; height: 24px; font-size: 11px; border: 1px solid #aaa; padding: 2px 4px;';
+        allMatches.forEach((m, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = `${m.abbr} ${m.round} — ${m.opponentName} (${m.homeAway})`;
+            matchSelect.appendChild(opt);
+        });
 
         tabContainer.appendChild(tabOrder);
         tabContainer.appendChild(tabCalc);
+        if (allMatches.length > 1) {
+            tabContainer.appendChild(matchSelect);
+        }
 
         const tabLine = document.createElement('div');
         tabLine.style.cssText = 'border-bottom: 1px solid #ccc; margin-bottom: 10px;';
@@ -14218,7 +14232,21 @@ setTimeout(() => {
         forma.parentNode.insertBefore(tabLine, forma);
         forma.parentNode.insertBefore(calcContainer, forma.nextSibling);
 
-        let calcLoaded = false;
+        let currentMatchIdx = 0;
+        let loadedMatchIdx = -1; // Какой матч загружен
+
+        async function loadMatch(idx) {
+            const matchData = allMatches[idx];
+            loadedMatchIdx = idx;
+            calcContainer.innerHTML = '<div style="text-align:center; padding:40px; color:#666;">Загрузка данных...</div>';
+            try {
+                await loadAndBuildCalculator(calcContainer, matchData);
+            } catch (e) {
+                console.error('[ORDER] Ошибка загрузки калькулятора:', e);
+                calcContainer.innerHTML = `<div style="text-align:center; padding:40px; color:red;">Ошибка: ${e.message}</div>`;
+                loadedMatchIdx = -1;
+            }
+        }
 
         tabOrder.addEventListener('click', () => {
             tabOrder.style.cssText = tabStyle(true);
@@ -14233,16 +14261,16 @@ setTimeout(() => {
             forma.style.display = 'none';
             calcContainer.style.display = '';
 
-            if (!calcLoaded) {
-                calcLoaded = true;
-                calcContainer.innerHTML = '<div style="text-align:center; padding:40px; color:#666;">Загрузка данных...</div>';
-                try {
-                    await loadAndBuildCalculator(calcContainer, matchData);
-                } catch (e) {
-                    console.error('[ORDER] Ошибка загрузки калькулятора:', e);
-                    calcContainer.innerHTML = `<div style="text-align:center; padding:40px; color:red;">Ошибка: ${e.message}</div>`;
-                    calcLoaded = false;
-                }
+            if (loadedMatchIdx !== currentMatchIdx) {
+                await loadMatch(currentMatchIdx);
+            }
+        });
+
+        matchSelect.addEventListener('change', async () => {
+            currentMatchIdx = parseInt(matchSelect.value);
+            // Если калькулятор видим — перезагружаем сразу
+            if (calcContainer.style.display !== 'none') {
+                await loadMatch(currentMatchIdx);
             }
         });
     }
