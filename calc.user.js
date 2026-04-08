@@ -11170,10 +11170,6 @@ function getTournamentType() {
                 window.__vs_recalculateStrength();
             }
 
-            // Синхронизация калькулятор → форма mng_order (если на странице отправки)
-            if (typeof window.__vs_syncCalcToForm === 'function') {
-                window.__vs_syncCalcToForm();
-            }
 
             // Автоматический расчет сыгранности при изменении состава
             setTimeout(async () => {
@@ -14304,12 +14300,7 @@ setTimeout(() => {
         syncLineupFromOrderForm(isHome);
 
         // Добавляем кнопку отправки
-        addSubmitButtonToCalc(container, isHome);
-
-        // Регистрируем автосинхронизацию calc → form
-        window.__vs_syncCalcToForm = () => {
-            syncCalcToOrderForm(isHome);
-        };
+        addSubmitButtonToCalc(container, isHome, matchData);
 
         console.log('[ORDER] Калькулятор построен');
         console.groupEnd();
@@ -14338,34 +14329,75 @@ setTimeout(() => {
         }
     }
 
-    function syncCalcToOrderForm(isHome) {
+    function buildOrderPostData(isHome, matchData) {
         const myLineupBlock = isHome ? window.homeLineupBlock : window.awayLineupBlock;
-        if (!myLineupBlock || !myLineupBlock.lineup) return false;
+        if (!myLineupBlock || !myLineupBlock.lineup) return null;
 
         const lineup = myLineupBlock.lineup;
-        let synced = 0;
+        const slotEntries = window.currentSlotEntries || [];
+        const params = new URLSearchParams();
 
-        for (let i = 0; i < Math.min(11, lineup.length); i++) {
+        // Копируем hidden inputs из оригинальной формы
+        const forma = document.getElementById('forma');
+        if (forma) {
+            forma.querySelectorAll('input[type="hidden"]').forEach(inp => {
+                if (inp.name) params.append(inp.name, inp.value);
+            });
+        }
+
+        params.set('act', 'save');
+        params.set('step', '1');
+        params.set('check_order', '0');
+
+        // Основной состав из калькулятора
+        for (let i = 0; i < 11 && i < lineup.length; i++) {
             const slot = lineup[i];
-            if (!slot) continue;
+            const playerId = slot?.getValue ? slot.getValue() : '-1';
+            const matchPos = slotEntries[i]?.matchPos || '';
 
-            const playerId = slot.getValue ? slot.getValue() : null;
-            if (!playerId) continue;
-
-            const plrSelect = document.getElementById(`plr_${i}`);
-            if (plrSelect && plrSelect.value !== playerId) {
-                plrSelect.value = playerId;
-                synced++;
+            params.set(`plr[${i}]`, playerId || '-1');
+            if (i > 0 && matchPos) {
+                params.set(`pos[${i}]`, matchPos);
             }
         }
 
-        if (synced > 0) {
-            console.log(`[ORDER-SYNC] Синхронизировано ${synced} слотов calc→form`);
+        // Запасные — из оригинальной формы
+        for (let i = 11; i < 20; i++) {
+            const origSelect = document.getElementById(`plr_${i}`);
+            if (origSelect) {
+                params.set(`plr[${i}]`, origSelect.value || '-1');
+            }
         }
-        return synced > 0;
+
+        return params;
     }
 
-    function addSubmitButtonToCalc(container, isHome) {
+    function submitOrderFromCalc(isHome, matchData) {
+        const params = buildOrderPostData(isHome, matchData);
+        if (!params) {
+            alert('Не удалось собрать данные для отправки');
+            return;
+        }
+
+        // Создаём скрытую форму и отправляем POST
+        const hiddenForm = document.createElement('form');
+        hiddenForm.method = 'POST';
+        hiddenForm.action = `/mng_order.php?order_day=${matchData.orderDay}`;
+        hiddenForm.style.display = 'none';
+
+        for (const [key, value] of params.entries()) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            hiddenForm.appendChild(input);
+        }
+
+        document.body.appendChild(hiddenForm);
+        hiddenForm.submit();
+    }
+
+    function addSubmitButtonToCalc(container, isHome, matchData) {
         const btnRow = document.createElement('div');
         btnRow.style.cssText = 'text-align: center; padding: 10px 0; border-top: 1px solid #ccc; margin-top: 10px;';
 
@@ -14376,13 +14408,7 @@ setTimeout(() => {
         btnSubmit.style.cssText = 'margin-right: 10px;';
         btnSubmit.addEventListener('click', (e) => {
             e.preventDefault();
-            if (syncCalcToOrderForm(isHome)) {
-                // Вызываем оригинальные функции отправки
-                const origBtn = document.getElementById('bt1');
-                if (origBtn) {
-                    origBtn.click();
-                }
-            }
+            submitOrderFromCalc(isHome, matchData);
         });
 
         const btnBack = document.createElement('a');
@@ -14392,7 +14418,6 @@ setTimeout(() => {
         btnBack.style.cssText = 'padding-left: 10px; padding-right: 10px;';
         btnBack.addEventListener('click', (e) => {
             e.preventDefault();
-            // Переключаемся на вкладку "Состав"
             const tabOrder = document.querySelector('#vsol-tabs-header a:first-child');
             if (tabOrder) tabOrder.click();
         });
