@@ -11170,6 +11170,11 @@ function getTournamentType() {
                 window.__vs_recalculateStrength();
             }
 
+            // Синхронизация калькулятор → форма mng_order (если на странице отправки)
+            if (typeof window.__vs_syncCalcToForm === 'function') {
+                window.__vs_syncCalcToForm();
+            }
+
             // Автоматический расчет сыгранности при изменении состава
             setTimeout(async () => {
                 try {
@@ -14301,6 +14306,11 @@ setTimeout(() => {
         // Добавляем кнопку отправки
         addSubmitButtonToCalc(container, isHome);
 
+        // Регистрируем автосинхронизацию calc → form
+        window.__vs_syncCalcToForm = () => {
+            syncCalcToOrderForm(isHome);
+        };
+
         console.log('[ORDER] Калькулятор построен');
         console.groupEnd();
     }
@@ -14330,13 +14340,9 @@ setTimeout(() => {
 
     function syncCalcToOrderForm(isHome) {
         const myLineupBlock = isHome ? window.homeLineupBlock : window.awayLineupBlock;
-        if (!myLineupBlock || !myLineupBlock.lineup) {
-            console.warn('[ORDER] Не удалось синхронизировать: lineup не найден');
-            return false;
-        }
+        if (!myLineupBlock || !myLineupBlock.lineup) return false;
 
         const lineup = myLineupBlock.lineup;
-        const slotEntries = window.currentSlotEntries || [];
         let synced = 0;
 
         for (let i = 0; i < Math.min(11, lineup.length); i++) {
@@ -14344,30 +14350,18 @@ setTimeout(() => {
             if (!slot) continue;
 
             const playerId = slot.getValue ? slot.getValue() : null;
-            const matchPos = slotEntries[i]?.matchPos || null;
+            if (!playerId) continue;
 
-            // Записываем игрока в форму
             const plrSelect = document.getElementById(`plr_${i}`);
-            if (plrSelect && playerId) {
+            if (plrSelect && plrSelect.value !== playerId) {
                 plrSelect.value = playerId;
-                // Триггерим change для Select2
-                if (typeof jQuery !== 'undefined') {
-                    jQuery(`#plr_${i}`).trigger('change');
-                }
                 synced++;
-            }
-
-            // Записываем позицию (для слотов 1-10, слот 0 = GK)
-            if (i > 0 && matchPos) {
-                const posInput = document.querySelector(`input[name="pos[${i}]"]`) ||
-                                 document.querySelector(`select[name="pos[${i}]"]`);
-                if (posInput) {
-                    posInput.value = matchPos;
-                }
             }
         }
 
-        console.log(`[ORDER] Синхронизировано ${synced} игроков из калькулятора в форму`);
+        if (synced > 0) {
+            console.log(`[ORDER-SYNC] Синхронизировано ${synced} слотов calc→form`);
+        }
         return synced > 0;
     }
 
