@@ -8296,8 +8296,13 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         } else {
             pool = players.filter(p => p.mainPos !== 'GK' && p.secondPos !== 'GK');
         }
-        const otherSelected = Array.from(selectedPlayerIds).filter(id => id !== currentValue);
-        pool = pool.filter(p => !otherSelected.includes(String(p.id)));
+        // Исключаем выбранных в основе и запасных
+        const allSelected = new Set();
+        lineup.forEach(s => { const v = s.getValue(); if (v && v !== currentValue) allSelected.add(v); });
+        if (typeof substitutes !== 'undefined') {
+            substitutes.forEach(s => { const v = s.getValue(); if (v && v !== currentValue) allSelected.add(v); });
+        }
+        pool = pool.filter(p => !allSelected.has(String(p.id)));
         pool.sort((a, b) => (Number(b.realStr || 0) - Number(a.realStr || 0)));
         return pool;
     }
@@ -8434,6 +8439,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             }
         });
         if (typeof updateCaptainOptionsProxy === 'function') updateCaptainOptionsProxy();
+        if (typeof updateSubstituteOptions === 'function') updateSubstituteOptions();
         if (typeof window.__vs_onLineupChanged === 'function') window.__vs_onLineupChanged();
     }
     let captainSelectRef = null;
@@ -8842,6 +8848,80 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         lineup.push(slotApi);
     }
 
+    // --- ЗАПАСНЫЕ (S1-S9) ---
+    const substitutes = [];
+    const subLabels = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9'];
+    for (let si = 0; si < 9; si++) {
+        const subTr = document.createElement('tr');
+        const subTdLabel = document.createElement('td');
+        subTdLabel.className = 'order-sub';
+        subTdLabel.style.cssText = 'height:20px; font-size:11px; font-weight:bold;';
+        subTdLabel.textContent = subLabels[si];
+
+        // Пул: S1 = только GK, S2-S9 = все кроме GK
+        const isGkSub = (si === 0);
+
+        const subOrders = createSelect2PlayerDropdown({
+            placeholder: isGkSub ? 'выберите запасного вратаря:' : 'выберите запасного игрока:',
+            options: [],
+            widthPx: 271,
+            onChange: (val) => {
+                // Обновляем selectedPlayerIds
+                selectedPlayerIds.clear();
+                lineup.forEach(s => { const v = s.getValue(); if (v) selectedPlayerIds.add(v); });
+                substitutes.forEach(s => { const v = s.getValue(); if (v) selectedPlayerIds.add(v); });
+                updatePlayerSelectOptions();
+                updateSubstituteOptions();
+            }
+        });
+
+        const subSlotApi = {
+            getValue: () => subOrders.getValue ? subOrders.getValue() : '',
+            setValue: (v, label) => { if (subOrders.setValue) subOrders.setValue(v, label); },
+            setOptions: (opts) => { if (subOrders.setOptions) subOrders.setOptions(opts); },
+            isGkSub: isGkSub,
+            slotIndex: 11 + si
+        };
+
+        const subTdSel = document.createElement('td');
+        subTdSel.colSpan = 3;
+        subTdSel.appendChild(subOrders.el);
+
+        subTr.appendChild(subTdLabel);
+        subTr.appendChild(subTdSel);
+        table.appendChild(subTr);
+        substitutes.push(subSlotApi);
+    }
+
+    function updateSubstituteOptions() {
+        substitutes.forEach(sub => {
+            const currentVal = sub.getValue();
+            let pool;
+            if (sub.isGkSub) {
+                pool = players.filter(p => p.mainPos === 'GK' || p.secondPos === 'GK');
+            } else {
+                pool = players.filter(p => p.mainPos !== 'GK' && p.secondPos !== 'GK');
+            }
+            // Исключаем уже выбранных (в основе и запасных)
+            const allSelected = new Set();
+            lineup.forEach(s => { const v = s.getValue(); if (v) allSelected.add(v); });
+            substitutes.forEach(s => { const v = s.getValue(); if (v && v !== currentVal) allSelected.add(v); });
+            pool = pool.filter(p => !allSelected.has(String(p.id)));
+            pool.sort((a, b) => (Number(b.realStr || 0) - Number(a.realStr || 0)));
+
+            const placeholder = sub.isGkSub ? 'выберите запасного вратаря:' : 'выберите запасного игрока:';
+            const opts = [
+                { value: '', label: placeholder, colorClass: 'grD' },
+                ...pool.map(p => ({
+                    value: String(p.id),
+                    label: toOptionLabel(p, p.mainPos, null),
+                    colorClass: 'gr11'
+                }))
+            ];
+            sub.setOptions(opts);
+        });
+    }
+
     function applyFormation(newFormationName) {
         formationName = newFormationName || formationName;
         positions = FORMATIONS[formationName];
@@ -8944,6 +9024,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
     const lineupBlockObj = {
         block: table,
         lineup,
+        substitutes,
         updatePlayerSelectOptions,
         updateRoleSelectors,
         attachCaptainSelect,
