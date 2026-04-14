@@ -6457,16 +6457,16 @@ function createDummySelect() {
         color: white;
     }
 
-    #vsol-calculator-ui .orders-table { width: 100%; border-collapse: separate; table-layout: auto; margin: 0 auto; }
+    #vsol-calculator-ui .orders-table { width: 100%; border-collapse: collapse; table-layout: auto; margin: 0 auto; border-spacing: 0; }
     #vsol-calculator-ui .orders-table tr { height: 20px; }
-    #vsol-calculator-ui .orders-table td { vertical-align: middle; padding: 0; }
+    #vsol-calculator-ui .orders-table td { vertical-align: middle; padding: 0; border: none; }
 
     #vsol-calculator-ui .order { width: 40px; text-align: center; font-weight: bold; background-color: #FFFFBB; }
     #vsol-calculator-ui .order-sub { width: 40px; text-align: center; font-weight: bold; background-color: #dee0dd; }
     #vsol-calculator-ui .txt { text-align: center; }
     #vsol-calculator-ui .mini-pos-cell { width: 40px; background-color: #FFFFBB; }
     #vsol-calculator-ui td.player-cell { width: 271px; }
-    #vsol-calculator-ui td.style-cell { width: 40px; }
+    #vsol-calculator-ui td.style-cell { width: 50px; }
     #vsol-calculator-ui td.form-cell { width: 60px; }
 
     #vsol-calculator-ui .select2 { display: inline-block; position: relative; vertical-align: top; }
@@ -6512,7 +6512,7 @@ function createDummySelect() {
 
     #vsol-calculator-ui .custom-style-select { position: relative; width: 100%; user-select: none; display: block; }
     #vsol-calculator-ui .custom-style-select .selected {
-    border: 1px solid #aaa; padding: 2px 4px 2px 4px; background: #fff;
+    border: 1px solid #aaa; padding: 2px 16px 2px 4px; background: #fff;
     display: flex; align-items: center; justify-content: center; gap: 2px; position: relative;
     height: 20px; min-height: 20px; line-height: 16px; font-size: 11px; box-sizing: border-box; cursor: pointer;
     }
@@ -6524,9 +6524,9 @@ function createDummySelect() {
     transform: translateY(-50%);
     width: 0;
     height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 5px solid #555;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 4px solid #555;
     }
     #vsol-calculator-ui .custom-style-select .icon { width: 14px; height: 14px; }
     #vsol-calculator-ui .custom-style-select .options {
