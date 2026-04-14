@@ -6457,7 +6457,7 @@ function createDummySelect() {
         color: white;
     }
 
-    #vsol-calculator-ui .orders-table { width: 314px; border-collapse: separate; table-layout: fixed; margin: 0 auto; }
+    #vsol-calculator-ui .orders-table { width: 100%; border-collapse: separate; table-layout: auto; margin: 0 auto; }
     #vsol-calculator-ui .orders-table tr { height: 20px; }
     #vsol-calculator-ui .orders-table td { vertical-align: middle; padding: 0; }
 
@@ -6949,7 +6949,7 @@ function createMiniPositionSelect({
 function createOrdersSelect({
     placeholder,
     options,
-    widthPx = 215,
+    widthPx = 271,
     onChange
 }) {
     const wrap = document.createElement('span');
