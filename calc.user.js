@@ -4314,6 +4314,7 @@ function getHomeBonus(percent) {
 }
 
 function parseStadiumCapacity() {
+    // Previewmatch: "Стадион «Филипс» (65 000)"
     const divs = Array.from(document.querySelectorAll('div.lh16'));
     for (const div of divs) {
         const m = div.textContent.match(/Стадион\s+["«][^"»]+["»]\s+\(([\d\s]+)\)/i);
@@ -4322,6 +4323,25 @@ function parseStadiumCapacity() {
             if (!isNaN(cap)) return cap;
         }
     }
+
+    // mng_order: диалог dialog-att содержит "Вместимость стадиона:" с <b>80 000</b>
+    const attDialog = document.getElementById('dialog-att');
+    if (attDialog) {
+        const allDivs = attDialog.querySelectorAll('div.lh16');
+        for (const div of allDivs) {
+            if (div.textContent.includes('Вместимость стадиона')) {
+                const bold = div.querySelector('b');
+                if (bold) {
+                    const cap = parseInt(bold.textContent.replace(/\s/g, ''), 10);
+                    if (!isNaN(cap)) {
+                        console.log('[WEATHER] Вместимость стадиона из dialog-att:', cap);
+                        return cap;
+                    }
+                }
+            }
+        }
+    }
+
     return null;
 }
 
