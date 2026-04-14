@@ -13816,241 +13816,113 @@ function getTournamentType() {
         lineupSection.appendChild(lineupHeaderTable);
         lineupSection.appendChild(lineupBlock.block);
 
-        // Секция ролей (капитан, штрафные, угловые, пенальти)
-        const rolesSection = document.createElement('div');
-        rolesSection.className = 'section';
-        rolesSection.id = `vsol-roles-section-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
+        // Роли (капитан, штрафные, угловые, пенальти) — добавляются в таблицу состава
+        const rolesContainer = document.createElement('div');
+        rolesContainer.id = `vsol-roles-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
 
-        // Заголовок ролей в стиле игры
-        const rolesHeaderTable = document.createElement('table');
-        rolesHeaderTable.style.cssText = `
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 2px;
-        `;
-
-        const rolesHeaderRow = document.createElement('tr');
-        rolesHeaderRow.style.backgroundColor = 'rgb(0, 102, 0)';
-
-        const rolesHeaderCell = document.createElement('td');
-        rolesHeaderCell.className = 'lh18 txtw';
-        rolesHeaderCell.style.cssText = `
-            text-align: center;
-            padding: 4px;
-            color: white;
-            font-weight: bold;
-            font-size: 11px;
-        `;
-        rolesHeaderCell.textContent = 'Настройки ролей';
-
-        rolesHeaderRow.appendChild(rolesHeaderCell);
-        rolesHeaderTable.appendChild(rolesHeaderRow);
-
-        // Добавляем подсказку к заголовку ролей
-        setTimeout(() => {
-            addHelpButton(rolesHeaderCell, 'abilities', 'Способности игроков');
-        }, 100);
-
-        // Создаем таблицу ролей
+        // Создаем мини-таблицу ролей для вставки после состава
         const rolesTable = document.createElement('table');
-        rolesTable.style.cssText = `
-            width: 271px;
-            border-collapse: collapse;
-        `;
-
-        const rolesTbody = document.createElement('tbody');
-
-        // Заголовок таблицы ролей
-        const headerRow = document.createElement('tr');
-        headerRow.style.backgroundColor = 'rgb(0, 102, 0)';
-
-        const roleHeaderCell = document.createElement('td');
-        roleHeaderCell.className = 'lh18 txtw';
-        roleHeaderCell.style.cssText = `
-            width: 40px;
-            text-align: center;
-            padding: 4px;
-            color: white;
-            font-weight: bold;
-            font-size: 11px;
-        `;
-        roleHeaderCell.innerHTML = '<b>Роль</b>';
-
-        const playerHeaderCell = document.createElement('td');
-        playerHeaderCell.className = 'lh18 txtw';
-        playerHeaderCell.style.cssText = `
-            text-align: center;
-            padding: 4px;
-            color: white;
-            font-weight: bold;
-            font-size: 11px;
-        `;
-        playerHeaderCell.innerHTML = '<b>Игрок</b>';
-
-        headerRow.appendChild(roleHeaderCell);
-        headerRow.appendChild(playerHeaderCell);
-        rolesTbody.appendChild(headerRow);
+        rolesTable.className = 'orders-table';
+        rolesTable.style.cssText = 'border-collapse: collapse; border-spacing: 0; width: 100%;';
 
         // Строка капитана
         const captainRowTr = document.createElement('tr');
-
         const captainRoleCell = document.createElement('td');
-        captainRoleCell.className = 'qt';
-        captainRoleCell.style.cssText = `
-            height: 20px;
-            background-color: rgb(255, 255, 187);
-            text-align: center;
-            font-family: Courier New, monospace;
-            font-size: 11px;
-        `;
+        captainRoleCell.className = 'order';
+        captainRoleCell.style.cssText = 'height:20px; font-size:11px;';
         captainRoleCell.title = 'Капитан команды';
         captainRoleCell.innerHTML = '<img src="pics/captbig.png" style="vertical-align:top">';
 
         const captainPlayerCell = document.createElement('td');
-        captainPlayerCell.className = 'txtl';
-
-        // Используем существующий селектор капитана из lineupBlock
+        captainPlayerCell.colSpan = 3;
         if (lineupBlock && lineupBlock.captainSelect) {
-            // Применяем стили к селектору капитана для соответствия таблице
-            lineupBlock.captainSelect.style.cssText = `
-                width: 271px;
-                height: 20px;
-                font-size: 11px;
-                border: 1px solid rgb(170, 170, 170);
-                padding: 2px 4px;
-                box-sizing: border-box;
-                background: white;
-            `;
+            lineupBlock.captainSelect.id = `vsol-captain-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
+            lineupBlock.captainSelect.style.cssText = 'width:100%; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
             captainPlayerCell.appendChild(lineupBlock.captainSelect);
-        } else {
-            // Fallback если селектор не найден
-            captainPlayerCell.innerHTML = `
-                <select style="width:271px; height:20px; font-size:11px;">
-                    <option value="-1" class="grD">некому быть капитаном команды</option>
-                </select>
-            `;
         }
-
         captainRowTr.appendChild(captainRoleCell);
         captainRowTr.appendChild(captainPlayerCell);
-        rolesTbody.appendChild(captainRowTr);
+        rolesTable.appendChild(captainRowTr);
 
         // Строка штрафных
-        const penaltyRow = document.createElement('tr');
+        const shtRow = document.createElement('tr');
+        const shtRoleCell = document.createElement('td');
+        shtRoleCell.className = 'order';
+        shtRoleCell.style.cssText = 'height:20px; font-size:11px;';
+        shtRoleCell.title = 'Исполнитель штрафных ударов';
+        shtRoleCell.textContent = 'Шт';
+        const shtPlayerCell = document.createElement('td');
+        shtPlayerCell.colSpan = 3;
 
-        const penaltyRoleCell = document.createElement('td');
-        penaltyRoleCell.className = 'qt';
-        penaltyRoleCell.style.cssText = `
-            height: 20px;
-            background-color: rgb(255, 255, 187);
-            text-align: center;
-            font-family: Courier New, monospace;
-            font-size: 11px;
-        `;
-        penaltyRoleCell.title = 'Исполнитель штрафных ударов';
-        penaltyRoleCell.textContent = 'Шт';
-
-        const penaltyPlayerCell = document.createElement('td');
-        penaltyPlayerCell.className = 'txtl';
-
-        // Создаем селектор штрафных напрямую
         const shtSelect = document.createElement('select');
+        shtSelect.id = `vsol-sht-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
         shtSelect.tabIndex = -1;
-        shtSelect.style.cssText = 'width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
-
-        const shtDefaultOption = document.createElement('option');
-        shtDefaultOption.value = '-1';
-        shtDefaultOption.className = 'grD';
-        shtDefaultOption.textContent = 'некому исполнять штрафные';
-        shtSelect.appendChild(shtDefaultOption);
-
-        penaltyPlayerCell.appendChild(shtSelect);
-
-        penaltyRow.appendChild(penaltyRoleCell);
-        penaltyRow.appendChild(penaltyPlayerCell);
-        rolesTbody.appendChild(penaltyRow);
+        shtSelect.style.cssText = 'width:100%; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
+        const shtDefault = document.createElement('option');
+        shtDefault.value = '-1';
+        shtDefault.className = 'grD';
+        shtDefault.textContent = 'некому исполнять штрафные';
+        shtSelect.appendChild(shtDefault);
+        shtPlayerCell.appendChild(shtSelect);
+        shtRow.appendChild(shtRoleCell);
+        shtRow.appendChild(shtPlayerCell);
+        rolesTable.appendChild(shtRow);
 
         // Строка угловых
-        const cornerRow = document.createElement('tr');
+        const ugRow = document.createElement('tr');
+        const ugRoleCell = document.createElement('td');
+        ugRoleCell.className = 'order';
+        ugRoleCell.style.cssText = 'height:20px; font-size:11px;';
+        ugRoleCell.title = 'Исполнитель угловых ударов';
+        ugRoleCell.textContent = 'Уг';
+        const ugPlayerCell = document.createElement('td');
+        ugPlayerCell.colSpan = 3;
 
-        const cornerRoleCell = document.createElement('td');
-        cornerRoleCell.className = 'qt';
-        cornerRoleCell.style.cssText = `
-            height: 20px;
-            background-color: rgb(255, 255, 187);
-            text-align: center;
-            font-family: Courier New, monospace;
-            font-size: 11px;
-        `;
-        cornerRoleCell.title = 'Исполнитель угловых ударов';
-        cornerRoleCell.textContent = 'Уг';
-
-        const cornerPlayerCell = document.createElement('td');
-        cornerPlayerCell.className = 'txtl';
-
-        // Создаем селектор угловых напрямую
         const uglovSelect = document.createElement('select');
+        uglovSelect.id = `vsol-uglov-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
         uglovSelect.tabIndex = -1;
-        uglovSelect.style.cssText = 'width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
-
-        const uglovDefaultOption = document.createElement('option');
-        uglovDefaultOption.value = '-1';
-        uglovDefaultOption.className = 'grD';
-        uglovDefaultOption.textContent = 'некому исполнять угловые';
-        uglovSelect.appendChild(uglovDefaultOption);
-
-        cornerPlayerCell.appendChild(uglovSelect);
-
-        cornerRow.appendChild(cornerRoleCell);
-        cornerRow.appendChild(cornerPlayerCell);
-        rolesTbody.appendChild(cornerRow);
+        uglovSelect.style.cssText = 'width:100%; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
+        const ugDefault = document.createElement('option');
+        ugDefault.value = '-1';
+        ugDefault.className = 'grD';
+        ugDefault.textContent = 'некому исполнять угловые';
+        uglovSelect.appendChild(ugDefault);
+        ugPlayerCell.appendChild(uglovSelect);
+        ugRow.appendChild(ugRoleCell);
+        ugRow.appendChild(ugPlayerCell);
+        rolesTable.appendChild(ugRow);
 
         // Строка пенальти
         const penRow = document.createElement('tr');
-
         const penRoleCell = document.createElement('td');
-        penRoleCell.className = 'qt';
-        penRoleCell.style.cssText = `
-            height: 20px;
-            background-color: rgb(255, 255, 187);
-            text-align: center;
-            font-family: Courier New, monospace;
-            font-size: 11px;
-        `;
+        penRoleCell.className = 'order';
+        penRoleCell.style.cssText = 'height:20px; font-size:11px;';
         penRoleCell.title = 'Пенальтист';
         penRoleCell.textContent = 'Пен';
-
         const penPlayerCell = document.createElement('td');
-        penPlayerCell.className = 'txtl';
+        penPlayerCell.colSpan = 3;
 
-        // Создаем селектор пенальти напрямую
         const penaltySelect = document.createElement('select');
+        penaltySelect.id = `vsol-penalty-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
         penaltySelect.tabIndex = -1;
-        penaltySelect.style.cssText = 'width:271px; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
-
-        const penaltyDefaultOption = document.createElement('option');
-        penaltyDefaultOption.value = '-1';
-        penaltyDefaultOption.className = 'grD';
-        penaltyDefaultOption.textContent = 'некому исполнять пенальти';
-        penaltySelect.appendChild(penaltyDefaultOption);
-
+        penaltySelect.style.cssText = 'width:100%; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
+        const penDefault = document.createElement('option');
+        penDefault.value = '-1';
+        penDefault.className = 'grD';
+        penDefault.textContent = 'некому исполнять пенальти';
+        penaltySelect.appendChild(penDefault);
         penPlayerCell.appendChild(penaltySelect);
-
         penRow.appendChild(penRoleCell);
         penRow.appendChild(penPlayerCell);
-        rolesTbody.appendChild(penRow);
+        rolesTable.appendChild(penRow);
 
-        rolesTable.appendChild(rolesTbody);
-        rolesSection.appendChild(rolesHeaderTable);
-        rolesSection.appendChild(rolesTable);
+        rolesContainer.appendChild(rolesTable);
 
-        // Сохраняем ссылки на селекторы стандартных положений в lineupBlock
+        // Сохраняем ссылки на селекторы
         if (lineupBlock) {
             lineupBlock.shtSelect = shtSelect;
             lineupBlock.uglovSelect = uglovSelect;
             lineupBlock.penaltySelect = penaltySelect;
-
-            // Инициализируем селекторы с игроками из текущего состава
             if (lineupBlock.updateRoleSelectors) {
                 lineupBlock.updateRoleSelectors();
             }
@@ -14059,7 +13931,7 @@ function getTournamentType() {
         // Собираем все секции
         content.appendChild(tacticsSection);
         content.appendChild(lineupSection);
-        content.appendChild(rolesSection);
+        content.appendChild(rolesContainer);
 
         return content;
     }
