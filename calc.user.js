@@ -8073,7 +8073,7 @@ function parseWeatherFromPreview() {
             const parts = tempStr.split('-');
             minTemp = parseInt(parts[0]);
             maxTemp = parseInt(parts[1]);
-            temperature = minTemp; // для обратной совместимости
+            temperature = minTemp;
         } else {
             minTemp = maxTemp = parseInt(tempStr);
             temperature = minTemp;
@@ -8086,6 +8086,73 @@ function parseWeatherFromPreview() {
         maxTemp,
         icon: weatherDiv.querySelector('img')?.src || ''
     };
+}
+
+/**
+ * Парсит данные о погоде со страницы mng_order.php.
+ * Формат: <fieldset> с "Прогноз погоды:" + <b>облачно<br>14°-21°</b>
+ * Также доступны inline-переменные: weather_type, min_weather_type, max_weather_type
+ */
+function parseWeatherFromOrderPage() {
+    // Пробуем парсить из fieldset
+    const fieldsets = document.querySelectorAll('fieldset');
+    for (const fs of fieldsets) {
+        if (!fs.textContent.includes('Прогноз погоды')) continue;
+        const bold = fs.querySelector('b');
+        if (!bold) continue;
+        const text = bold.textContent.trim();
+        // Формат: "облачно\n14°-21°" или "облачно\n14°"
+        const parts = text.split(/\n|\r/);
+        const weather = (parts[0] || '').trim();
+        let minTemp = null, maxTemp = null, temperature = '';
+        if (parts[1]) {
+            const tempStr = parts[1].replace(/[°\s]/g, '');
+            const rangeMatch = tempStr.match(/(\d+)-(\d+)/);
+            if (rangeMatch) {
+                minTemp = parseInt(rangeMatch[1]);
+                maxTemp = parseInt(rangeMatch[2]);
+                temperature = minTemp;
+            } else {
+                const singleMatch = tempStr.match(/(\d+)/);
+                if (singleMatch) {
+                    minTemp = maxTemp = parseInt(singleMatch[1]);
+                    temperature = minTemp;
+                }
+            }
+        }
+        if (weather) {
+            const icon = fs.querySelector('img')?.src || '';
+            return { weather, temperature, minTemp, maxTemp, icon };
+        }
+    }
+
+    // Fallback: inline-переменные weather_type
+    const html = document.body ? document.body.innerHTML : '';
+    const WEATHER_TYPES = ['', 'очень жарко', 'жарко', 'солнечно', 'облачно', 'пасмурно', 'дождь', 'снег'];
+    // Не используется напрямую, но может быть полезно в будущем
+    const wtMatch = html.match(/var\s+weather_type\s*=\s*(\d+)/);
+    if (wtMatch) {
+        const wt = parseInt(wtMatch[1]);
+        const weather = WEATHER_TYPES[wt] || '';
+        // Температуру из inline-переменных не извлекаем (нет прямого значения)
+        if (weather) return { weather, temperature: '', minTemp: null, maxTemp: null, icon: '' };
+    }
+
+    return null;
+}
+
+/**
+ * Универсальная функция получения данных о погоде.
+ * Определяет страницу и вызывает соответствующий парсер.
+ */
+function getWeatherData() {
+    // Сначала пробуем previewmatch формат
+    const preview = parseWeatherFromPreview();
+    if (preview) return preview;
+    // Затем mng_order формат
+    const order = parseWeatherFromOrderPage();
+    if (order) return order;
+    return null;
 }
 
 function getWeatherVariants(currentWeather, minTemp, maxTemp) {
@@ -11112,7 +11179,7 @@ function getTournamentType() {
     window.calculatePlayerStrength = calculatePlayerStrength;
 
     function createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere = 0, awayAtmosphere = 0) {
-        const parsedWeather = parseWeatherFromPreview();
+        const parsedWeather = getWeatherData();
         const stadiumCapacity = parseStadiumCapacity() || 0;
 
         // Сохраняем ID команд в глобальные переменные для использования в других функциях
@@ -12112,7 +12179,7 @@ function getTournamentType() {
                 }
 
                 // Получаем варианты погоды
-                const weatherData = parseWeatherFromPreview();
+                const weatherData = getWeatherData();
                 const weatherVariants = weatherData && weatherData.minTemp !== null && weatherData.maxTemp !== null
                     ? getWeatherVariants(weatherData.weather, weatherData.minTemp, weatherData.maxTemp)
                     : null;
