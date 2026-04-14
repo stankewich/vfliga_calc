@@ -6473,20 +6473,25 @@ function createDummySelect() {
     #vsol-calculator-ui .select2-container--orders { width: 271px; }
 
     #vsol-calculator-ui .select2-selection {
-    display: flex; align-items: center; justify-content: space-between;
-    border: 1px solid #aaa; padding: 1px 4px;
+    display: block; position: relative;
+    border: 1px solid #aaa; padding: 1px 20px 1px 4px;
     height: 20px; min-height: 20px; line-height: 18px; font-size: 11px;
     box-sizing: border-box; cursor: pointer; background: #fff;
+    overflow: hidden;
     }
     #vsol-calculator-ui .select2-selection__rendered {
     color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-align: left; display: block; width: 100%;
     font-family: 'Courier New', monospace; font-size: 11px;
+    line-height: 18px;
     }
-    #vsol-calculator-ui .select2-selection__arrow { height: 20px; display: flex; align-items: center; }
+    #vsol-calculator-ui .select2-selection__arrow {
+    position: absolute; right: 4px; top: 0; height: 100%;
+    display: flex; align-items: center;
+    }
     #vsol-calculator-ui .select2-selection__arrow b {
     display: inline-block; border-style: solid; border-width: 5px 4px 0 4px;
-    border-color: #555 transparent transparent transparent; margin-left: 6px;
+    border-color: #555 transparent transparent transparent;
     }
     #vsol-calculator-ui .dropdown-wrapper { display: none; }
     #vsol-calculator-ui .orders-dropdown {
