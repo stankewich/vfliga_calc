@@ -7019,6 +7019,14 @@ function createOrdersSelect({
                     currentValue = String(opt.value || '');
                     rendered.textContent = opt.label;
                     rendered.classList.remove('orders-placeholder');
+                    // Зелёный фон при выборе игрока, белый при очистке
+                    if (currentValue) {
+                        sel.style.backgroundColor = 'rgb(193, 254, 193)';
+                        rendered.style.color = 'rgb(80, 80, 80)';
+                    } else {
+                        sel.style.backgroundColor = '#fff';
+                        rendered.style.color = '';
+                    }
                     close();
                     if (onChange) onChange(currentValue);
                 });
@@ -7042,8 +7050,15 @@ function createOrdersSelect({
         setValue(value, label) {
             currentValue = String(value || '');
             rendered.textContent = label || '';
-            if (!label) rendered.classList.add('orders-placeholder');
-            else rendered.classList.remove('orders-placeholder');
+            if (!label || !value) {
+                rendered.classList.add('orders-placeholder');
+                sel.style.backgroundColor = '#fff';
+                rendered.style.color = '';
+            } else {
+                rendered.classList.remove('orders-placeholder');
+                sel.style.backgroundColor = 'rgb(193, 254, 193)';
+                rendered.style.color = 'rgb(80, 80, 80)';
+            }
         }
     };
 }
