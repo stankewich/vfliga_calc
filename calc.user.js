@@ -6466,7 +6466,7 @@ function createDummySelect() {
     #vsol-calculator-ui .txt { text-align: center; }
     #vsol-calculator-ui .mini-pos-cell { width: 40px; background-color: #FFFFBB; }
     #vsol-calculator-ui td.player-cell { width: 271px; }
-    #vsol-calculator-ui td.style-cell { width: 50px; }
+    #vsol-calculator-ui td.style-cell { width: 40px; min-width: 40px; max-width: 40px; }
     #vsol-calculator-ui td.form-cell { width: 60px; }
 
     #vsol-calculator-ui .select2 { display: inline-block; position: relative; vertical-align: top; }
@@ -6510,7 +6510,7 @@ function createDummySelect() {
 
     #vsol-calculator-ui .mini-pos-cell .select2-selection { height: 20px; min-height: 20px; line-height: 18px; }
 
-    #vsol-calculator-ui .custom-style-select { position: relative; width: 100%; user-select: none; display: block; }
+    #vsol-calculator-ui .custom-style-select { position: relative; width: 40px; min-width: 40px; max-width: 40px; user-select: none; display: block; }
     #vsol-calculator-ui .custom-style-select .selected {
     border: 1px solid #aaa; padding: 2px 16px 2px 4px; background: #fff;
     display: flex; align-items: center; justify-content: center; gap: 2px; position: relative;
@@ -6640,9 +6640,10 @@ const PLAYER_STYLES = [{
 ];
 
 function createCustomStyleSelect(onChange) {
-    console.log(`[SELECT] Создание селектора стилей`);
     const wrapper = document.createElement('div');
     wrapper.className = 'custom-style-select';
+    wrapper.id = `vsol-style-${Math.random().toString(36).substr(2, 9)}`;
+    wrapper.style.width = '40px';
     const selectedDiv = document.createElement('div');
     selectedDiv.className = 'selected';
     const selectedIcon = document.createElement('img');
