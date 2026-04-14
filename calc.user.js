@@ -6457,19 +6457,20 @@ function createDummySelect() {
         color: white;
     }
 
-    #vsol-calculator-ui .orders-table { width: 350px; border-collapse: separate; table-layout: fixed; margin: 0 auto; }
-    #vsol-calculator-ui .orders-table tr { height: 22px; }
+    #vsol-calculator-ui .orders-table { width: 314px; border-collapse: separate; table-layout: fixed; margin: 0 auto; }
+    #vsol-calculator-ui .orders-table tr { height: 20px; }
     #vsol-calculator-ui .orders-table td { vertical-align: middle; padding: 0; }
 
-    #vsol-calculator-ui .order { width: 35px; text-align: center; font-weight: bold; }
+    #vsol-calculator-ui .order { width: 40px; text-align: center; font-weight: bold; background-color: #FFFFBB; }
+    #vsol-calculator-ui .order-sub { width: 40px; text-align: center; font-weight: bold; background-color: #dee0dd; }
     #vsol-calculator-ui .txt { text-align: center; }
-    #vsol-calculator-ui .mini-pos-cell { width: 35px; }
-    #vsol-calculator-ui td.player-cell { width: 215px; }
+    #vsol-calculator-ui .mini-pos-cell { width: 40px; background-color: #FFFFBB; }
+    #vsol-calculator-ui td.player-cell { width: 271px; }
     #vsol-calculator-ui td.style-cell { width: 40px; }
     #vsol-calculator-ui td.form-cell { width: 60px; }
 
     #vsol-calculator-ui .select2 { display: inline-block; position: relative; vertical-align: top; }
-    #vsol-calculator-ui .select2-container--orders { width: 215px; }
+    #vsol-calculator-ui .select2-container--orders { width: 271px; }
 
     #vsol-calculator-ui .select2-selection {
     display: flex; align-items: center; justify-content: space-between;
@@ -6480,6 +6481,7 @@ function createDummySelect() {
     #vsol-calculator-ui .select2-selection__rendered {
     color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-align: left; display: block; width: 100%;
+    font-family: 'Courier New', monospace; font-size: 11px;
     }
     #vsol-calculator-ui .select2-selection__arrow { height: 20px; display: flex; align-items: center; }
     #vsol-calculator-ui .select2-selection__arrow b {
@@ -6489,13 +6491,22 @@ function createDummySelect() {
     #vsol-calculator-ui .dropdown-wrapper { display: none; }
     #vsol-calculator-ui .orders-dropdown {
     position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #aaa;
-    z-index: 10000;
+    z-index: 10000; max-height: 300px; overflow-y: auto;
     }
-    #vsol-calculator-ui .orders-option { padding: 2px 4px; height: 20px; line-height: 16px; font-size: 11px; text-align: left; cursor: pointer; color: rgb(68, 68, 68); }
+    #vsol-calculator-ui .orders-option { padding: 2px 4px; height: 20px; line-height: 16px; font-size: 11px; text-align: left; cursor: pointer; font-family: 'Courier New', monospace; white-space: pre; }
     #vsol-calculator-ui .orders-option:hover { background: rgb(240, 240, 240); }
     #vsol-calculator-ui .orders-option.selected { background: rgb(220, 235, 255); font-weight: bold; }
     #vsol-calculator-ui .orders-option.disabled { color: rgb(187, 187, 187); cursor: default; }
     #vsol-calculator-ui .orders-placeholder { color: rgb(163,163,163); }
+
+    /* Цветовые классы опций (как в mng_order) */
+    #vsol-calculator-ui .orders-option.gr0 { color: #999; }
+    #vsol-calculator-ui .orders-option.gr1 { color: #060; font-weight: bold; }
+    #vsol-calculator-ui .orders-option.gr2 { color: #090; }
+    #vsol-calculator-ui .orders-option.gr3 { color: #009; }
+    #vsol-calculator-ui .orders-option.gr11 { color: #333; }
+    #vsol-calculator-ui .orders-option.gr12 { color: #c00; }
+    #vsol-calculator-ui .orders-option.grD { color: #a3a3a3; font-style: italic; }
 
     #vsol-calculator-ui .mini-pos-cell .select2-selection { height: 20px; min-height: 20px; line-height: 18px; }
 
@@ -6994,9 +7005,12 @@ function createOrdersSelect({
         opts.forEach(opt => {
             const div = document.createElement('div');
             const isSelected = String(opt.value || '') === String(currentValue);
-            div.className = 'orders-option' +
-                (opt.disabled ? ' disabled' : '') +
-                (isSelected ? ' selected' : '');
+            let cls = 'orders-option';
+            if (opt.disabled) cls += ' disabled';
+            if (isSelected) cls += ' selected';
+            if (opt.colorClass) cls += ' ' + opt.colorClass;
+            else if (!opt.value) cls += ' grD';
+            div.className = cls;
             div.textContent = opt.label;
             div.dataset.value = opt.value;
             if (!opt.disabled) {
@@ -8321,24 +8335,60 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         const pos = [p.mainPos, p.secondPos].filter(Boolean).join('/');
         const percent = (Number(p.form) || 0) + '%';
 
+        // Спецухи: извлекаем сокращённые (Л4, Д4 и т.д.)
+        const abilities = (p.abilities || '').trim();
+        const specMatch = abilities.match(/[ЛДГИСМВПР]\d/g);
+        const specStr = specMatch ? specMatch.join(' ') : '';
+
         // Определяем какую силу показывать
         let displayStr;
-
-        // Определяем автоматическую форму игрока
         const tournamentType = getTournamentType();
         const autoFormId = getPhysicalFormIdFromData(p.form, p.form_mod, tournamentType);
 
         if (autoFormId === 'UNKNOWN' || (physicalFormId && physicalFormId !== autoFormId)) {
-            // Форма неизвестна или изменена пользователем - рассчитываем от baseStr
             displayStr = calculatePlayerStr(p, matchPosition, physicalFormId || autoFormId);
         } else {
-            // Форма известна и не изменена - используем realStr из игры с positionModifier
             const realStr = Number(p.realStr) || 0;
             const positionModifier = getPositionModifier(p.mainPos, p.secondPos, matchPosition);
             displayStr = Math.round(realStr * positionModifier);
         }
 
-        return `${p.name.padEnd(16, ' ')} ${pos.padEnd(6, ' ')} ${percent.padStart(3, ' ')}   ${displayStr}`;
+        // Формат: Имя(pad) Спец Поз   %Форма Сила
+        const namePart = p.name.padEnd(17, ' ');
+        const specPart = specStr ? specStr.padEnd(3, ' ') : '  ';
+        const posPart = pos.padEnd(6, ' ');
+        const pctPart = percent.padStart(4, ' ');
+        const strPart = String(displayStr).padStart(4, ' ');
+
+        return `${namePart}${specPart}${posPart}${pctPart}${strPart}`;
+    }
+
+    /**
+     * Определяет CSS-класс цвета для опции игрока в dropdown.
+     * Логика аналогична mng_order: gr1 = основная позиция, gr2 = вторая, gr11 = обычный и т.д.
+     */
+    function getPlayerOptionColorClass(player, slotPosition) {
+        if (!player) return 'grD';
+        const mainPos = player.mainPos || '';
+        const secondPos = player.secondPos || '';
+        const realStr = Number(player.realStr) || 0;
+
+        // GK слот — только GK игроки
+        if (slotPosition === 'GK') {
+            if (mainPos === 'GK') return 'gr11';
+            return 'gr0';
+        }
+
+        // Основная позиция совпадает
+        if (mainPos === slotPosition) return 'gr1';
+        // Вторая позиция совпадает
+        if (secondPos === slotPosition) return 'gr2';
+
+        // Молодой/слабый (realStr < 80)
+        if (realStr < 80) return 'gr2';
+
+        // Обычный
+        return 'gr11';
     }
 
     function updatePlayerSelectOptions() {
@@ -8357,13 +8407,13 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
 
             // Для каждого игрока в dropdown используем его собственную форму
             const playerOpts = pool.map(p => {
-                // Находим слот, в котором находится этот игрок (если он выбран где-то)
                 const playerSlot = lineup.find(s => s.getValue() === String(p.id));
                 const playerFormId = playerSlot ? playerSlot.physicalFormValue : null;
 
                 return {
                     value: String(p.id),
-                    label: toOptionLabel(p, matchPosition, playerFormId)
+                    label: toOptionLabel(p, matchPosition, playerFormId),
+                    colorClass: getPlayerOptionColorClass(p, matchPosition)
                 };
             });
 
