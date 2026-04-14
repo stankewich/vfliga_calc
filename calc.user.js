@@ -15655,6 +15655,108 @@ setTimeout(() => {
 
     // ===== КОНЕЦ ИНТЕГРАЦИИ MNG_ORDER =====
 
+    /**
+     * Создаёт вертикальную колонку (110px) с тактическими настройками команды.
+     * @param {Object} team — объект команды (homeTeam/awayTeam)
+     * @param {string} sideLabel — 'home' | 'away'
+     * @param {string} teamName — название команды
+     * @param {Function} onChange — callback при изменении
+     * @returns {HTMLElement} — td элемент шириной 110px
+     */
+    function createTacticsColumn(team, sideLabel, teamName, onChange) {
+        const td = document.createElement('td');
+        td.style.cssText = 'width:110px; vertical-align:top; padding:4px; font-size:10px;';
+
+        // Заголовок — название команды
+        const header = document.createElement('div');
+        header.style.cssText = 'background:rgb(0,102,0); color:white; text-align:center; padding:3px; font-weight:bold; font-size:10px; margin-bottom:4px;';
+        header.textContent = teamName || (sideLabel === 'home' ? 'Хозяева' : 'Гости');
+        td.appendChild(header);
+
+        function addRow(label, selectEl) {
+            const lbl = document.createElement('div');
+            lbl.style.cssText = 'font-size:9px; color:#666; margin-top:3px; margin-bottom:1px;';
+            lbl.textContent = label;
+            td.appendChild(lbl);
+            selectEl.style.cssText = 'width:100%; height:18px; font-size:10px; border:1px solid #aaa; padding:0 2px; box-sizing:border-box;';
+            td.appendChild(selectEl);
+        }
+
+        // Формация
+        const formationManager = new FormationManager(FORMATIONS);
+        const formationSelect = createFormationSelector(formationManager);
+        if (team.formation) formationSelect.value = team.formation;
+        formationSelect.addEventListener('change', () => {
+            team.formation = formationSelect.value;
+            if (onChange) onChange();
+        });
+        addRow('Формация', formationSelect);
+
+        // Стиль
+        const styleSelect = createStyleSelector();
+        if (team.style) styleSelect.value = team.style;
+        styleSelect.addEventListener('change', () => {
+            team.style = styleSelect.value;
+            if (onChange) onChange();
+        });
+        addRow('Стиль', styleSelect);
+
+        // Тактика
+        const tacticSelect = createTacticsSelector(team, onChange);
+        addRow('Тактика', tacticSelect);
+
+        // Грубость
+        const roughSelect = createRoughSelector(team, onChange);
+        addRow('Грубость', roughSelect);
+
+        // Защита
+        const defenceSelect = createDefenceTypeSelector(team, onChange);
+        addRow('Защита', defenceSelect);
+
+        // Настрой
+        const moraleSelect = createMoraleSelector(team, onChange);
+        addRow('Настрой', moraleSelect);
+
+        // Сохраняем ссылки глобально
+        if (sideLabel === 'home') {
+            window.homeFormationSelect = formationSelect;
+            window.homeStyle = styleSelect;
+            window.homeTacticSelect = tacticSelect;
+            window.homeRoughSelect = roughSelect;
+            window.homeDefenceTypeSelect = defenceSelect;
+            window.homeMoraleSelect = moraleSelect;
+        } else {
+            window.awayFormationSelect = formationSelect;
+            window.awayStyle = styleSelect;
+            window.awayTacticSelect = tacticSelect;
+            window.awayRoughSelect = roughSelect;
+            window.awayDefenceTypeSelect = defenceSelect;
+            window.awayMoraleSelect = moraleSelect;
+        }
+
+        return td;
+    }
+
+    /**
+     * Определяет какая из команд принадлежит пользователю.
+     * @param {Object} pageData — из parseOrderPageData (curr, orderDay, days)
+     * @param {Object} matchData — из extractAllMatchesFromDays (teamId, homeAway)
+     * @returns {{ isHome: boolean, userTeamId: string, opponentTeamId: string }}
+     */
+    function detectUserTeam(pageData, matchData) {
+        const userTeamId = String(pageData.curr);
+        const isHome = matchData.homeAway === 'Д';
+        const homeTeamId = isHome ? userTeamId : String(matchData.opponentId);
+        const awayTeamId = isHome ? String(matchData.opponentId) : userTeamId;
+        return {
+            isHome,
+            userTeamId,
+            opponentTeamId: String(matchData.opponentId),
+            homeTeamId,
+            awayTeamId
+        };
+    }
+
     // ===== РОУТЕР СТРАНИЦ =====
     function isOrderPage() {
         return window.location.pathname.includes('mng_order');
@@ -15666,7 +15768,6 @@ setTimeout(() => {
 
     if (isOrderPage()) {
         initOrderPage();
-    } else if (isPreviewPage()) {
-        init();
     }
+    // previewmatch — калькулятор деактивирован, init() не вызывается
 })();
