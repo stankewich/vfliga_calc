@@ -8094,15 +8094,20 @@ function parseWeatherFromPreview() {
  * Также доступны inline-переменные: weather_type, min_weather_type, max_weather_type
  */
 function parseWeatherFromOrderPage() {
+    console.log('[WEATHER] parseWeatherFromOrderPage: начало парсинга');
     // Пробуем парсить из fieldset
     const fieldsets = document.querySelectorAll('fieldset');
+    console.log('[WEATHER] Найдено fieldset:', fieldsets.length);
     for (const fs of fieldsets) {
         if (!fs.textContent.includes('Прогноз погоды')) continue;
+        console.log('[WEATHER] Найден fieldset с погодой, innerHTML:', fs.innerHTML.substring(0, 200));
         const bold = fs.querySelector('b');
-        if (!bold) continue;
+        if (!bold) { console.log('[WEATHER] <b> не найден в fieldset'); continue; }
         const text = bold.textContent.trim();
+        console.log('[WEATHER] Текст <b>:', JSON.stringify(text));
         // Формат: "облачно\n14°-21°" или "облачно\n14°"
         const parts = text.split(/\n|\r/);
+        console.log('[WEATHER] Части после split:', parts);
         const weather = (parts[0] || '').trim();
         let minTemp = null, maxTemp = null, temperature = '';
         if (parts[1]) {
@@ -8122,6 +8127,7 @@ function parseWeatherFromOrderPage() {
         }
         if (weather) {
             const icon = fs.querySelector('img')?.src || '';
+            console.log('[WEATHER] Результат:', { weather, temperature, minTemp, maxTemp });
             return { weather, temperature, minTemp, maxTemp, icon };
         }
     }
@@ -8129,15 +8135,18 @@ function parseWeatherFromOrderPage() {
     // Fallback: inline-переменные weather_type
     const html = document.body ? document.body.innerHTML : '';
     const WEATHER_TYPES = ['', 'очень жарко', 'жарко', 'солнечно', 'облачно', 'пасмурно', 'дождь', 'снег'];
-    // Не используется напрямую, но может быть полезно в будущем
     const wtMatch = html.match(/var\s+weather_type\s*=\s*(\d+)/);
+    console.log('[WEATHER] Fallback weather_type:', wtMatch ? wtMatch[1] : 'не найден');
     if (wtMatch) {
         const wt = parseInt(wtMatch[1]);
         const weather = WEATHER_TYPES[wt] || '';
-        // Температуру из inline-переменных не извлекаем (нет прямого значения)
-        if (weather) return { weather, temperature: '', minTemp: null, maxTemp: null, icon: '' };
+        if (weather) {
+            console.log('[WEATHER] Fallback результат:', weather);
+            return { weather, temperature: '', minTemp: null, maxTemp: null, icon: '' };
+        }
     }
 
+    console.log('[WEATHER] parseWeatherFromOrderPage: данные не найдены');
     return null;
 }
 
@@ -8146,12 +8155,14 @@ function parseWeatherFromOrderPage() {
  * Определяет страницу и вызывает соответствующий парсер.
  */
 function getWeatherData() {
+    console.log('[WEATHER] getWeatherData: определяем источник погоды');
     // Сначала пробуем previewmatch формат
     const preview = parseWeatherFromPreview();
-    if (preview) return preview;
+    if (preview) { console.log('[WEATHER] Источник: previewmatch', preview); return preview; }
     // Затем mng_order формат
     const order = parseWeatherFromOrderPage();
-    if (order) return order;
+    if (order) { console.log('[WEATHER] Источник: mng_order', order); return order; }
+    console.log('[WEATHER] Погода не найдена ни в одном источнике');
     return null;
 }
 
