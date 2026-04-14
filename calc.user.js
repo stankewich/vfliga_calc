@@ -8103,22 +8103,24 @@ function parseWeatherFromOrderPage() {
         console.log('[WEATHER] Найден fieldset с погодой, innerHTML:', fs.innerHTML.substring(0, 200));
         const bold = fs.querySelector('b');
         if (!bold) { console.log('[WEATHER] <b> не найден в fieldset'); continue; }
-        const text = bold.textContent.trim();
-        console.log('[WEATHER] Текст <b>:', JSON.stringify(text));
-        // Формат: "облачно\n14°-21°" или "облачно\n14°"
-        const parts = text.split(/\n|\r/);
-        console.log('[WEATHER] Части после split:', parts);
-        const weather = (parts[0] || '').trim();
+        // innerHTML содержит <br> между погодой и температурой
+        const boldHtml = bold.innerHTML;
+        console.log('[WEATHER] innerHTML <b>:', JSON.stringify(boldHtml));
+        // Разделяем по <br> или <br/>
+        const htmlParts = boldHtml.split(/<br\s*\/?>/i);
+        const weather = (htmlParts[0] || '').replace(/<[^>]+>/g, '').trim();
         let minTemp = null, maxTemp = null, temperature = '';
-        if (parts[1]) {
-            const tempStr = parts[1].replace(/[°\s]/g, '');
-            const rangeMatch = tempStr.match(/(\d+)-(\d+)/);
+        if (htmlParts[1]) {
+            // Убираем HTML-теги и извлекаем числа
+            const tempText = htmlParts[1].replace(/<[^>]+>/g, '').replace(/[°\s]/g, '');
+            console.log('[WEATHER] tempText после очистки:', JSON.stringify(tempText));
+            const rangeMatch = tempText.match(/(\d+)-(\d+)/);
             if (rangeMatch) {
                 minTemp = parseInt(rangeMatch[1]);
                 maxTemp = parseInt(rangeMatch[2]);
                 temperature = minTemp;
             } else {
-                const singleMatch = tempStr.match(/(\d+)/);
+                const singleMatch = tempText.match(/(\d+)/);
                 if (singleMatch) {
                     minTemp = maxTemp = parseInt(singleMatch[1]);
                     temperature = minTemp;
