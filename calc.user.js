@@ -8861,12 +8861,11 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         // Пул: S1 = только GK, S2-S9 = все кроме GK
         const isGkSub = (si === 0);
 
-        const subOrders = createSelect2PlayerDropdown({
+        const subOrders = createOrdersSelect({
             placeholder: isGkSub ? 'выберите запасного вратаря:' : 'выберите запасного игрока:',
             options: [],
             widthPx: 271,
             onChange: (val) => {
-                // Обновляем selectedPlayerIds
                 selectedPlayerIds.clear();
                 lineup.forEach(s => { const v = s.getValue(); if (v) selectedPlayerIds.add(v); });
                 substitutes.forEach(s => { const v = s.getValue(); if (v) selectedPlayerIds.add(v); });
