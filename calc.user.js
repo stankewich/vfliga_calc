@@ -8158,10 +8158,10 @@ function getWeatherData() {
     console.log('[WEATHER] getWeatherData: определяем источник погоды');
     // Сначала пробуем previewmatch формат
     const preview = parseWeatherFromPreview();
-    if (preview) { console.log('[WEATHER] Источник: previewmatch', preview); return preview; }
+    if (preview && preview.weather) { console.log('[WEATHER] Источник: previewmatch', preview); return preview; }
     // Затем mng_order формат
     const order = parseWeatherFromOrderPage();
-    if (order) { console.log('[WEATHER] Источник: mng_order', order); return order; }
+    if (order && order.weather) { console.log('[WEATHER] Источник: mng_order', order); return order; }
     console.log('[WEATHER] Погода не найдена ни в одном источнике');
     return null;
 }
