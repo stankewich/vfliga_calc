@@ -6227,7 +6227,7 @@ function calculatePlayerStrengthGlobal(player, matchPosition, physicalFormId) {
     // Определяем форму игрока
     let actualFormId = physicalFormId;
     if (!actualFormId || actualFormId === 'FRIENDLY_100') {
-        const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
+        const tournamentType = window.__vs_detectedTournamentType || 'typeC';
         actualFormId = getPhysicalFormIdFromData(player.form, player.form_mod, tournamentType);
     }
 
@@ -6238,7 +6238,7 @@ function calculatePlayerStrengthGlobal(player, matchPosition, physicalFormId) {
 
     // Для товарищеских матчей усталость всегда 25%
     let fatigueModifier;
-    const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
+    const tournamentType = window.__vs_detectedTournamentType || 'typeC';
     if (tournamentType === 'friendly') {
         fatigueModifier = 1 - (25 / 100); // 0.75
     } else {
@@ -8500,7 +8500,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
                         }
 
                         if (slotApi.physicalFormSelect) {
-                            const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
+                            const tournamentType = window.__vs_detectedTournamentType || 'typeC';
                             const autoFormId = getPhysicalFormIdFromData(player.form, player.form_mod, tournamentType);
 
                             // Устанавливаем форму только если она ещё не установлена (null)
@@ -8575,7 +8575,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
 
                 // Автоматически устанавливаем форму на основе данных игрока
                 if (slotApi.physicalFormSelect) {
-                    const tournamentType = document.getElementById('vs_tournament_type')?.value || 'typeC';
+                    const tournamentType = window.__vs_detectedTournamentType || 'typeC';
                     const formId = getPhysicalFormIdFromData(player.form, player.form_mod, tournamentType);
                     slotApi.physicalFormSelect.setValue(formId);
                     slotApi.physicalFormValue = formId;
@@ -9420,13 +9420,7 @@ function detectTournamentTypeFromPage() {
 }
 
 function getTournamentType() {
-    const select = document.getElementById('vs_tournament_type');
-    if (select) {
-        return select.value;
-    }
-
-    // Если селектор еще не создан, пытаемся определить автоматически
-    return detectTournamentTypeFromPage();
+    return window.__vs_detectedTournamentType || detectTournamentTypeFromPage();
 }
 
 // --- MAIN LOGIC ---
@@ -11280,58 +11274,13 @@ function getTournamentType() {
         // Добавляем вкладки команд во вторую ячейку таблицы
         tabsCol.appendChild(teamTabsContainer);
 
-        // Селектор типа турнира в стиле v1.2
-        const tournamentTypeUI = document.createElement('div');
-        tournamentTypeUI.id = 'vsol-tournament-ui';
-
-        // Создаем структуру в стиле v1.2
-        tournamentTypeUI.innerHTML = `
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
-                <tr style="background-color: rgb(0, 102, 0);">
-                    <td class="lh18 txtw" style="text-align: center; padding: 4px; color: white; font-weight: bold; font-size: 11px;">
-                        Настройки турнира
-                    </td>
-                </tr>
-            </table>
-            <table style="border-collapse: collapse;">
-                <tbody>
-                    <tr style="background-color: rgb(0, 102, 0);">
-                        <td class="lh18 txtw" style="width: 80px; text-align: center; padding: 4px; color: white; font-weight: bold; font-size: 11px;">
-                            <b>Параметр</b>
-                        </td>
-                        <td class="lh18 txtw" style="text-align: center; padding: 4px; color: white; font-weight: bold; font-size: 11px;">
-                            <b>Значение</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="qt" style="height: 20px; background-color: rgb(255, 255, 187); text-align: center; font-family: Courier New, monospace; font-size: 11px;" title="Тип турнира">
-                            Турнир
-                        </td>
-                        <td class="txtl" style="background-color: rgb(255, 255, 255);">
-                            <select id="vs_tournament_type" style="width: 271px; height: 20px; font-size: 11px; border: 1px solid rgb(170, 170, 170); padding: 2px 4px; box-sizing: border-box; background: white;">
-                                <option value="friendly">Товарищеский матч</option>
-                                <option value="typeC">Тип C (кубок страны, кубок вызова)</option>
-                                <option value="typeC_international">Международный кубок (C-формы, с бонусом дома)</option>
-                                <option value="typeB">Тип B (чемпионат, кубок межсезонья)</option>
-                                <option value="typeB_cup">КТ (формы B, без домашнего бонуса)</option>
-                                <option value="typeB_amateur">Конференция любительских клубов (тип B)</option>
-                                <option value="all">Все формы</option>
-                            </select>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        `;
-
-        const tournamentSelect = tournamentTypeUI.querySelector('#vs_tournament_type');
-
-        // Автоматически определяем тип турнира
+        // Автоматически определяем тип турнира и применяем к селекторам формы
         const detectedType = detectTournamentTypeFromPage();
-        tournamentSelect.value = detectedType;
+        window.__vs_detectedTournamentType = detectedType;
+        console.log('[TournamentType] Определён тип турнира:', detectedType);
 
         // Функция обновления селекторов формы
         const updatePhysicalFormSelectors = (selectedType) => {
-            // Обновляем все селекторы физ форм и пересчитываем формы игроков
             [homeLineupBlock, awayLineupBlock].forEach((block, blockIdx) => {
                 if (block && block.lineup) {
                     const playersList = blockIdx === 0 ? homePlayers : awayPlayers;
@@ -11339,8 +11288,6 @@ function getTournamentType() {
                         if (slot.physicalFormSelect && slot.physicalFormSelect.setTournamentType) {
                             slot.physicalFormSelect.setTournamentType(selectedType);
                         }
-
-                        // Пересчитываем форму игрока для нового типа турнира
                         const playerId = slot.getValue && slot.getValue();
                         if (playerId) {
                             const player = playersList.find(p => String(p.id) === String(playerId));
@@ -11348,17 +11295,12 @@ function getTournamentType() {
                                 const formId = getPhysicalFormIdFromData(player.form, player.form_mod, selectedType);
                                 slot.physicalFormSelect.setValue(formId);
                                 slot.physicalFormValue = formId;
-
-                                // Пересчитываем realStr
                                 const baseRealStr = Number(player.baseRealStr || player.realStr) || 0;
                                 const modifiedRealStr = applyPhysicalFormToRealStr(baseRealStr, formId);
                                 slot.modifiedRealStr = modifiedRealStr;
                             }
                         }
                     });
-
-                    // Обновляем все опции в селекторах после изменения типа турнира
-                    // Это также обновит отображаемый текст для всех игроков
                     if (block.updatePlayerSelectOptions) {
                         block.updatePlayerSelectOptions();
                     }
@@ -11366,35 +11308,16 @@ function getTournamentType() {
             });
         };
 
-        // Обработчик изменения типа турнира
-        tournamentSelect.addEventListener('change', () => {
-            updatePhysicalFormSelectors(tournamentSelect.value);
-        });
-
-        // Применяем определенный тип турнира к селекторам формы при первичной загрузке
         updatePhysicalFormSelectors(detectedType);
-
-        // Добавляем кнопку подсказки к блоку турнира
-        setTimeout(() => {
-            const tournamentRow = tournamentTypeUI.querySelector('tr:nth-child(2)');
-            if (tournamentRow) {
-                const tournamentCell = tournamentRow.querySelector('td.qt');
-                if (tournamentCell) {
-                    addHelpButton(tournamentCell, 'tournament', 'Тип турнира');
-                }
-            }
-        }, 100);
 
         const title = document.createElement('h3');
         title.textContent = 'Калькулятор силы';
         title.style.position = 'relative';
 
-        // Добавляем индикатор справки
         const helpIndicator = document.createElement('span');
         helpIndicator.innerHTML = ' <small style="color: #666; font-size: 10px;">(F1 - справка, Ctrl+H - горячие клавиши)</small>';
         title.appendChild(helpIndicator);
 
-        container.appendChild(tournamentTypeUI);
         container.appendChild(title);
         container.appendChild(mainTable);
 
