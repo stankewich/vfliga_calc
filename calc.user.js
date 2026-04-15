@@ -20,6 +20,8 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_listValues
 // @downloadURL https://update.greasyfork.org/scripts/555251/Virtual%20Soccer%20Strength%20Analyzer.user.js
 // @updateURL https://update.greasyfork.org/scripts/555251/Virtual%20Soccer%20Strength%20Analyzer.meta.js
 // ==/UserScript==
@@ -732,6 +734,8 @@ const STYLE_VALUES = CONFIG.STYLES.VALUES;
 function VSStorage() {
     const hasGMGet = typeof GM_getValue === 'function';
     const hasGMSet = typeof GM_setValue === 'function';
+    const hasGMDelete = typeof GM_deleteValue === 'function';
+    const hasGMList = typeof GM_listValues === 'function';
     return {
         get(key) {
             try {
@@ -747,6 +751,28 @@ function VSStorage() {
                 if (hasGMSet) return GM_setValue(key, value);
                 localStorage.setItem(key, value);
             } catch (e) {
+            }
+        },
+        delete(key) {
+            try {
+                if (hasGMDelete) return GM_deleteValue(key);
+                localStorage.removeItem(key);
+            } catch (e) {
+            }
+        },
+        listKeys(prefix) {
+            try {
+                let keys = [];
+                if (hasGMList) {
+                    keys = GM_listValues();
+                } else {
+                    for (let i = 0; i < localStorage.length; i++) {
+                        keys.push(localStorage.key(i));
+                    }
+                }
+                return prefix ? keys.filter(k => k.startsWith(prefix)) : keys;
+            } catch (e) {
+                return [];
             }
         }
     };
@@ -4697,148 +4723,7 @@ function addRecalculateSynergyButton() {
     console.log('[UI] Кнопка пересчета сыгранности добавлена');
 }
 
-// === ФУНКЦИИ НАВИГАЦИИ ===
-
-/**
-* Создание улучшенной навигации в заголовке "Сравнение соперников"
-*/
-function createHeaderNavigation() {
-    // Ищем таблицу с "Сравнение соперников"
-    const tables = document.querySelectorAll('table.nol');
-    let comparisonTable = null;
-
-    for (const table of tables) {
-        const cell = table.querySelector('td');
-        if (cell && cell.textContent.includes('Сравнение соперников')) {
-            comparisonTable = table;
-            break;
-        }
-    }
-
-    if (!comparisonTable) {
-        console.warn('[Navigation] Таблица "Сравнение соперников" не найдена');
-        return;
-    }
-
-    const row = comparisonTable.querySelector('tr');
-    if (!row) return;
-
-    // Проверяем, есть ли уже навигация
-    if (row.children.length > 1) {
-        console.log('[Navigation] Навигация уже существует');
-        return;
-    }
-
-    // Добавляем вторую колонку с навигацией
-    const navCell = document.createElement('td');
-    navCell.className = 'lh18 txtr';
-    navCell.style.paddingRight = '10px';
-
-    // Проверяем настройку автоматического открытия калькулятора
-    const autoOpenCalculator = localStorage.getItem('vs_auto_open_calculator') === 'true';
-    const manualCalculatorMode = localStorage.getItem('vs_calculator_mode') === 'true' ||
-                            window.location.hash === '#calculator';
-
-    const isCalculatorMode = autoOpenCalculator || manualCalculatorMode;
-
-    if (isCalculatorMode) {
-        // В режиме калькулятора показываем ссылку на превью + чекбокс
-        navCell.innerHTML = `
-            <div style="gap: 8px; justify-content: flex-end; white-space: nowrap; text-align: right;">
-                <label style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; cursor: pointer; color: #666; margin-right: 8px;">
-                    <input type="checkbox" id="auto-calculator-checkbox" ${autoOpenCalculator ? 'checked' : ''}
-                        style="margin: 0; cursor: pointer; transform: scale(0.9);">
-                    <span>Всегда калькулятор</span>
-                </label>
-                <a href="#" class="mnu" id="nav-preview-link" style="font-weight: bold; color: #0066cc;">← Превью матча</a>
-            </div>
-        `;
-
-        // Добавляем обработчик для возврата к превью
-        setTimeout(() => {
-            const previewLink = document.getElementById('nav-preview-link');
-            const autoCheckbox = document.getElementById('auto-calculator-checkbox');
-
-            if (previewLink) {
-                previewLink.onclick = (e) => {
-                    e.preventDefault();
-                    console.log('Клик по ссылке "← Превью матча"');
-                    console.log('Удаляем localStorage vs_calculator_mode');
-                    localStorage.removeItem('vs_calculator_mode');
-                    console.log('Очищаем hжash');
-                    window.location.hash = '';
-                    console.log('Перенаправляем на превью');
-                    // Прямое перенаправление на превью без hash
-                    window.location.href = window.location.href.split('#')[0];
-                };
-            }
-
-            if (autoCheckbox) {
-                autoCheckbox.onchange = (e) => {
-                    const isChecked = e.target.checked;
-                    console.log('Изменение чекбокса "Всегда калькулятор":', isChecked);
-                    if (isChecked) {
-                        localStorage.setItem('vs_auto_open_calculator', 'true');
-                    } else {
-                        localStorage.removeItem('vs_auto_open_calculator');
-                    }
-                };
-            }
-        }, 100);
-    } else {
-        // В режиме превью показываем ссылку на калькулятор + чекбокс
-        navCell.innerHTML = `
-            <div style="gap: 6px; justify-content: flex-end; text-align: right;">
-                <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 11px; cursor: pointer; color: #666; margin-right: 6px;">
-                    <input type="checkbox" id="auto-calculator-checkbox" ${autoOpenCalculator ? 'checked' : ''}
-                        style="margin: 0; cursor: pointer; transform: scale(0.9);">
-                    <span style="user-select: none;">Всегда калькулятор</span>
-                </label>
-                <a href="#" class="mnu" id="nav-calculator-link" style="font-weight: bold;">Калькулятор силы</a>
-            </div>
-        `;
-
-        // Добавляем обработчик для перехода к калькулятору
-        setTimeout(() => {
-            const calculatorLink = document.getElementById('nav-calculator-link');
-            const autoCheckbox = document.getElementById('auto-calculator-checkbox');
-
-            if (calculatorLink) {
-                calculatorLink.onclick = (e) => {
-                    e.preventDefault();
-                    console.log('Клик по ссылке "Калькулятор силы"');
-                    console.log('Устанавливаем localStorage vs_calculator_mode = true');
-                    localStorage.setItem('vs_calculator_mode', 'true');
-                    console.log('Устеанавливаем hash = #calculator');
-                    window.location.hash = '#calculator';
-                    console.log('Перезагружаем страницу');
-                    window.location.reload();
-                };
-            }
-
-            if (autoCheckbox) {
-                autoCheckbox.onchange = (e) => {
-                    const isChecked = e.target.checked;
-                    console.log('Изменение чекбокса "Всегда калькулятор":', isChecked);
-                    if (isChecked) {
-                        localStorage.setItem('vs_auto_open_calculator', 'true');
-                        // Если включили автоматическое открытие, сразу переходим к калькулятору
-                        localStorage.setItem('vs_calculator_mode', 'true');
-                        window.location.hash = '#calculator';
-                        window.location.reload();
-                    } else {
-                        localStorage.removeItem('vs_auto_open_calculator');
-                    }
-                };
-            }
-        }, 100);
-    }
-
-    row.appendChild(navCell);
-    console.log('[Navigation] Навигация добавлена в заголовок');
-}
-
-// === КОНЕЦ ФУНКЦИЙ НАВИГАЦИИ ===
+// [DEADCODE] createHeaderNavigation — moved to deadcode.js
 
 // === ФУНКЦИИ ОБНОВЛЕНИЯ БОНУСОВ ЛИДЕРОВ ===
 
@@ -6350,15 +6235,18 @@ function createFormationSelector(formationManager) {
 }
 
 function createTacticsSelector(team, onChange) {
+    const TACTICS_OPTIONS = [
+        { value: 'суперзащитная', text: 'Суперзащитная' },
+        { value: 'защитная', text: 'Защитная' },
+        { value: 'нормальная', text: 'Нормальная' },
+        { value: 'атакующая', text: 'Атакующая' },
+        { value: 'все в атаку', text: 'Все в атаку' }
+    ];
     const select = document.createElement('select');
     select.className = 'tactics-select';
-    select.innerHTML = `
-        <option value="нормальная">Нормальная</option>
-        <option value="атакующая">Атакующая</option>
-        <option value="оборонительная">Оборонительная</option>
-        <option value="контратака">Контратака</option>
-        <option value="прессинг">Прессинг</option>
-    `;
+    select.innerHTML = TACTICS_OPTIONS.map(o =>
+        `<option value="${o.value}">${o.text}</option>`
+    ).join('');
     select.value = team.tactics || 'нормальная';
     select.style.background = 'transparent';
     select.addEventListener('change', () => {
@@ -6386,7 +6274,7 @@ function createDummySelect() {
     border-radius: 0; padding: 2px 4px; margin-left: 4px; transition: background 0.2s;
     color: rgb(68, 68, 68); line-height: 16px;
     }
-    #vsol-calculator-ui { width: 800px; margin: 20px auto; padding: 0; background: rgb(249, 249, 249); border: 1px solid rgb(204, 204, 204); border-radius: 6px; box-sizing: border-box; overflow: visible; }
+    #vsol-calculator-ui { max-width: 790px; width: 100%; margin: 20px auto; padding: 0; background: transparent; border: 1px solid rgb(204, 204, 204); border-radius: 6px; box-sizing: border-box; overflow: visible; }
     #vsol-calculator-ui > h3 { padding-top: 15px; padding-bottom: 10px; margin: 0; }
     #vsol-calculator-ui > div:first-child { padding-top: 15px; }
     #vsol-calculator-ui #vsol-synergy-ui {
@@ -6457,7 +6345,7 @@ function createDummySelect() {
         color: white;
     }
 
-    #vsol-calculator-ui .orders-table { width: 100%; border-collapse: collapse; table-layout: auto; margin: 0 auto; border-spacing: 0; }
+    #vsol-calculator-ui .orders-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 0; border-spacing: 0; }
     #vsol-calculator-ui .orders-table tr { height: 20px; }
     #vsol-calculator-ui .orders-table td { vertical-align: middle; padding: 0; border: none; }
 
@@ -6465,12 +6353,12 @@ function createDummySelect() {
     #vsol-calculator-ui .order-sub { width: 40px; text-align: center; font-weight: bold; background-color: #dee0dd; }
     #vsol-calculator-ui .txt { text-align: center; }
     #vsol-calculator-ui .mini-pos-cell { width: 40px; background-color: #FFFFBB; }
-    #vsol-calculator-ui td.player-cell { width: 271px; }
+    #vsol-calculator-ui td.player-cell { }
     #vsol-calculator-ui td.style-cell { width: 40px; min-width: 40px; max-width: 40px; }
-    #vsol-calculator-ui td.form-cell { width: 60px; }
+    #vsol-calculator-ui td.form-cell { width: 60px; min-width: 60px; max-width: 60px; }
 
     #vsol-calculator-ui .select2 { display: inline-block; position: relative; vertical-align: top; }
-    #vsol-calculator-ui .select2-container--orders { width: 271px; }
+    #vsol-calculator-ui .select2-container--orders { }
 
     #vsol-calculator-ui .select2-selection {
     display: block; position: relative;
@@ -6587,6 +6475,7 @@ function createDummySelect() {
     }
 
     .shirts-container {
+    width: 400px;
     pointer-events: none;
     }
 
@@ -6841,12 +6730,12 @@ function createPhysicalFormSelect(onChange, dayType = 'all') {
 function createMiniPositionSelect({
     options,
     bg = '#FFFFBB',
-    widthPx = 40,
+    widthPx = '100%',
     onChange
 }) {
     const wrap = document.createElement('span');
     wrap.className = 'select2 select2-container select2-container--orders';
-    wrap.style.width = widthPx + 'px';
+    wrap.style.width = widthPx;
     const selection = document.createElement('span');
     selection.className = 'selection';
     const sel = document.createElement('span');
@@ -6955,12 +6844,12 @@ function createMiniPositionSelect({
 function createOrdersSelect({
     placeholder,
     options,
-    widthPx = 271,
+    widthPx = '100%',
     onChange
 }) {
     const wrap = document.createElement('span');
     wrap.className = 'select2 select2-container select2-container--orders';
-    wrap.style.width = widthPx + 'px';
+    wrap.style.width = widthPx;
     const selection = document.createElement('span');
     selection.className = 'selection';
     const sel = document.createElement('span');
@@ -8284,7 +8173,7 @@ function logPlayerWeatherCoef({
 }
 
 function getCurrentWeatherFromUI() {
-    const ui = document.getElementById('vsol-weather-ui');
+    const ui = document.getElementById('vsol-match-info');
     if (!ui) return null;
     const selects = ui.querySelectorAll('select');
     if (selects.length < 2) return null;
@@ -8885,7 +8774,6 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         const subOrders = createOrdersSelect({
             placeholder: isGkSub ? 'выберите запасного вратаря:' : 'выберите запасного игрока:',
             options: [],
-            widthPx: 271,
             onChange: (val) => {
                 selectedPlayerIds.clear();
                 lineup.forEach(s => { const v = s.getValue(); if (v) selectedPlayerIds.add(v); });
@@ -9146,6 +9034,67 @@ function makeCaptainRow(lineupBlock) {
     return rowWrap;
 }
 
+/**
+ * Создаёт строку ролей (Шт, Уг, Пен) для блока состава.
+ * Сохраняет ссылки на селекторы в lineupBlock.shtSelect, uglovSelect, penaltySelect.
+ * @param {Object} lineupBlock - объект блока состава
+ * @param {string} sideLabel - 'home' | 'away'
+ * @returns {HTMLElement} контейнер с таблицей ролей
+ */
+function makeRolesRow(lineupBlock, sideLabel) {
+    const rolesContainer = document.createElement('div');
+    rolesContainer.id = `vsol-roles-${sideLabel}`;
+
+    const rolesTable = document.createElement('table');
+    rolesTable.className = 'orders-table';
+    rolesTable.style.cssText = 'border-collapse: collapse; border-spacing: 0; width: 100%;';
+
+    const roles = [
+        { key: 'sht', label: 'Шт', title: 'Исполнитель штрафных ударов', emptyText: 'некому исполнять штрафные' },
+        { key: 'uglov', label: 'Уг', title: 'Исполнитель угловых ударов', emptyText: 'некому исполнять угловые' },
+        { key: 'penalty', label: 'Пен', title: 'Пенальтист', emptyText: 'некому исполнять пенальти' }
+    ];
+
+    roles.forEach(({ key, label, title, emptyText }) => {
+        const tr = document.createElement('tr');
+        const roleCell = document.createElement('td');
+        roleCell.className = 'order';
+        roleCell.style.cssText = 'height:20px; font-size:11px;';
+        roleCell.title = title;
+        roleCell.textContent = label;
+
+        const playerCell = document.createElement('td');
+        playerCell.colSpan = 3;
+
+        const select = document.createElement('select');
+        select.id = `vsol-${key}-${sideLabel}`;
+        select.tabIndex = -1;
+        select.style.cssText = 'width:100%; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '-1';
+        defaultOpt.className = 'grD';
+        defaultOpt.textContent = emptyText;
+        select.appendChild(defaultOpt);
+
+        playerCell.appendChild(select);
+        tr.appendChild(roleCell);
+        tr.appendChild(playerCell);
+        rolesTable.appendChild(tr);
+
+        // Сохраняем ссылку в lineupBlock
+        lineupBlock[key + 'Select'] = select;
+    });
+
+    rolesContainer.appendChild(rolesTable);
+
+    // Обновляем опции селекторов ролей
+    if (lineupBlock.updateRoleSelectors) {
+        lineupBlock.updateRoleSelectors();
+    }
+
+    return rolesContainer;
+}
+
 // --- SETTINGS BLOCK ---
 function createDefenceTypeSelector(team, onChange) {
     const select = document.createElement('select');
@@ -9377,217 +9326,7 @@ function addHelpButton(container, type, title, context = {}) {
 
 // ===== КОНЕЦ СИСТЕМЫ ПОДСКАЗОК =====
 
-function createTeamSettingsBlock(team, sideLabel, onChange) {
-    if (sideLabel === 'home') {
-        if (!window.homeTeam) {
-            window.homeTeam = {
-                defenceType: 'zonal',
-                rough: 'clean',
-                morale: 'normal'
-            };
-        }
-        team = window.homeTeam;
-    } else {
-        if (!window.awayTeam) {
-            window.awayTeam = {
-                defenceType: 'zonal',
-                rough: 'clean',
-                morale: 'normal'
-            };
-        }
-        team = window.awayTeam;
-    }
-    const styleSelector = createStyleSelector();
-    const formationManager = new FormationManager(FORMATIONS);
-    const formationSelector = createFormationSelector(formationManager);
-    if (team.style) styleSelector.value = team.style;
-    styleSelector.addEventListener('change', () => {
-        team.style = styleSelector.value;
-        if (typeof onChange === 'function') onChange();
-    });
-    if (team.formation && [...formationSelector.options].some(o => o.value === team.formation)) {
-        formationSelector.value = team.formation;
-    }
-    formationSelector.addEventListener('change', () => {
-        team.formation = formationSelector.value;
-        if (typeof onChange === 'function') onChange();
-    });
-
-    const tacticSelect = createTacticsSelector(team, onChange);
-    const defenseSelect = createDefenceTypeSelector(team, onChange);
-    const roughSelect = createRoughSelector(team, onChange);
-    const moraleSelect = createMoraleSelector(team, onChange);
-
-    if (team === window.homeTeam) {
-        window.homeTacticSelect = tacticSelect;
-        window.homeDefenceTypeSelect = defenseSelect;
-        window.homeRoughSelect = roughSelect;
-        window.homeMoraleSelect = moraleSelect;
-    }
-    if (team === window.awayTeam) {
-        window.awayTacticSelect = tacticSelect;
-        window.awayDefenceTypeSelect = defenseSelect;
-        window.awayRoughSelect = roughSelect;
-        window.awayMoraleSelect = moraleSelect;
-    }
-
-    // Создаем блок с таблицей 3x4 (заголовок + лейблы + селекторы + отступ)
-    const block = document.createElement('div');
-    block.style.marginBottom = '8px';
-
-    // Заголовок в стиле игры
-    const headerTable = document.createElement('table');
-    headerTable.style.cssText = `
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 2px;
-    `;
-
-    const headerRow = document.createElement('tr');
-    headerRow.style.backgroundColor = 'rgb(0, 102, 0)';
-
-    const headerCell = document.createElement('td');
-    headerCell.className = 'lh18 txtw';
-    headerCell.style.cssText = `
-        text-align: center;
-        padding: 4px;
-        color: white;
-        font-weight: bold;
-        font-size: 11px;
-    `;
-    headerCell.textContent = 'Тактические настройки';
-
-    headerRow.appendChild(headerCell);
-    headerTable.appendChild(headerRow);
-
-    // Основная таблица 3x4
-    const table = document.createElement('table');
-    table.id = team === window.homeTeam ? 'vs-home-settings-table' : 'vs-away-settings-table';
-    table.style.cssText = `
-        width: 100%;
-        border-collapse: collapse;
-        margin: 0 auto;
-    `;
-
-    const teamPrefix = team === window.homeTeam ? 'home' : 'away';
-
-    // Функция для применения стилей к селекторам
-    const applySelectStyles = (selectElement) => {
-        if (selectElement.tagName === 'SELECT') {
-            selectElement.style.cssText = `
-                width: 120px;
-                height: 19px;
-                font-size: 11px;
-                border: 1px solid rgb(170, 170, 170);
-                border-radius: 0;
-                padding: 1px 4px;
-                box-sizing: border-box;
-                background: transparent;
-                color: rgb(68, 68, 68);
-                line-height: 16px;
-                margin: 1px auto;
-                display: block;
-            `;
-        }
-    };
-
-    // Применяем стили ко всем селекторам
-    applySelectStyles(formationSelector);
-    applySelectStyles(tacticSelect);
-    applySelectStyles(styleSelector);
-    applySelectStyles(defenseSelect);
-    applySelectStyles(roughSelect);
-    applySelectStyles(moraleSelect);
-
-    // Строка 1: Заголовки (Формация | Тактика | Стиль)
-    const labelRow1 = document.createElement('tr');
-    labelRow1.id = `vs-${teamPrefix}-labels-row1`;
-    labelRow1.style.height = '22px';
-
-    const createLabelCell = (text) => {
-        const td = document.createElement('td');
-        td.className = 'lh22 txt';
-        td.style.cssText = `
-            text-align: center;
-            font-size: 11px;
-            font-weight: bold;
-            line-height: 22px;
-            min-height: 22px;
-            width: 33.33%;
-            padding: 0 4px;
-        `;
-        td.textContent = text;
-        return td;
-    };
-
-    labelRow1.appendChild(createLabelCell('Формация'));
-    labelRow1.appendChild(createLabelCell('Тактика'));
-    labelRow1.appendChild(createLabelCell('Стиль'));
-
-    // Строка 2: Селекторы (формация | тактика | стиль)
-    const selectRow1 = document.createElement('tr');
-    selectRow1.id = `vs-${teamPrefix}-selects-row1`;
-    selectRow1.style.height = '22px';
-
-    const createSelectCell = (selectElement) => {
-        const td = document.createElement('td');
-        td.className = 'txt';
-        td.style.cssText = `
-            text-align: center;
-            vertical-align: middle;
-            padding: 1px 4px;
-            width: 33.33%;
-        `;
-        td.appendChild(selectElement);
-        return td;
-    };
-
-    selectRow1.appendChild(createSelectCell(formationSelector));
-    selectRow1.appendChild(createSelectCell(tacticSelect));
-    selectRow1.appendChild(createSelectCell(styleSelector));
-
-    // Строка 3: Заголовки (Защита | Грубость | Настрой)
-    const labelRow2 = document.createElement('tr');
-    labelRow2.id = `vs-${teamPrefix}-labels-row2`;
-    labelRow2.style.height = '22px';
-
-    labelRow2.appendChild(createLabelCell('Защита'));
-    labelRow2.appendChild(createLabelCell('Грубость'));
-    labelRow2.appendChild(createLabelCell('Настрой'));
-
-    // Строка 4: Селекторы (защита | грубость | настрой)
-    const selectRow2 = document.createElement('tr');
-    selectRow2.id = `vs-${teamPrefix}-selects-row2`;
-    selectRow2.style.height = '22px';
-
-    selectRow2.appendChild(createSelectCell(defenseSelect));
-    selectRow2.appendChild(createSelectCell(roughSelect));
-    selectRow2.appendChild(createSelectCell(moraleSelect));
-
-    // Собираем таблицу
-    table.appendChild(labelRow1);
-    table.appendChild(selectRow1);
-    table.appendChild(labelRow2);
-    table.appendChild(selectRow2);
-
-    // Собираем блок
-    block.appendChild(headerTable);
-    block.appendChild(table);
-
-    team._styleSelector = styleSelector;
-    team._formationSelector = formationSelector;
-
-    // Добавляем кнопку подсказки для стиля игры
-    setTimeout(() => {
-        const styleCell = table.querySelector('tr:nth-child(1) td:nth-child(3)'); // Ячейка "Стиль"
-        if (styleCell) {
-            addHelpButton(styleCell, 'collision', 'Коллизии стилей');
-        }
-    }, 100);
-
-    return block;
-}
-
+// [DEADCODE] createTeamSettingsBlock — moved to deadcode.js
 // Вспомогательные функции для определения типа турнира
 function parseMatchInfo(html) {
     // Расширенный список возможных названий турниров
@@ -9716,213 +9455,79 @@ function getTournamentType() {
 
     // УДАЛЕНО: Функция loadLineupFromOrder - загрузка составов из sending form исключена
 
-    // Создание кнопки для открытия калькулятора в новой вкладке
-    // Создание кнопки для открытия калькулятора в новой вкладке
-    function createCalculatorButton() {
-        console.group('[ButtonCreate] Создание навигации в заголовке');
+    // [DEADCODE] createCalculatorButton — moved to deadcode.js
 
-        // Вместо создания кнопки, добавляем навигацию в заголовок
-        createHeaderNavigation();
-
-        console.log('Навигация добавлена в заголовок');
-        console.groupEnd();
-
-        // Возвращаем пустой div, чтобы не ломать существующую логику
-        const placeholder = document.createElement('div');
-        placeholder.style.display = 'none';
-        return placeholder;
-    }
-
-
-
-    async function init() {
-        console.group('[INIT] Инициализация VF Liga Calculator');
-
-        // Диагностика localStorage
-        console.log('Диагностика localStorage:');
-        console.log('vs_auto_open_calculator:', localStorage.getItem('vs_auto_open_calculator'));
-        console.log('vs_calculator_mode:', localStorage.getItem('vs_calculator_mode'));
-        console.log('vs_manual_preview_mode:', localStorage.getItem('vs_manual_preview_mode'));
-        console.log('window.location.hash:', window.location.hash);
-
-        console.log('Замена иконок команд...');
-        replaceTeamIcons();
-
-        // Проверяем, находимся ли мы в режиме калькулятора
-        // Логика: калькулятор открывается если:
-        // 1. Пользователь включил "Всегда калькулятор" ИЛИ
-        // 2. Есть ручной переход к калькулятору (hash/storage)
-        const autoOpenCalculator = localStorage.getItem('vs_auto_open_calculator') === 'true';
-        const manualCalculatorMode = localStorage.getItem('vs_calculator_mode') === 'true' ||
-                                window.location.hash === '#calculator';
-
-        // Если нет автоматического режима и нет явного hash, очищаем ручной режим
-        if (!autoOpenCalculator && window.location.hash !== '#calculator') {
-            console.log('Очищаем ручной режим калькулятора (нет автоматического режима)');
-            localStorage.removeItem('vs_calculator_mode');
-        }
-
-        const isCalculatorMode = autoOpenCalculator || manualCalculatorMode;
-
-        console.log('Детальная проверка режима работы:');
-        console.log('Автоматическое открытие калькулятора:', autoOpenCalculator);
-        console.log('Ручной режим калькулятора (hash/storage):', manualCalculatorMode);
-        console.log('Итоговый режим:', isCalculatorMode ? 'КАЛЬКУЛЯТОР' : 'ПРЕВЬЮ');
-        console.log('Полный URL:', window.location.href);
-
-        if (!isCalculatorMode) {
-            console.log('Режим превью - создаем только кнопки');
-            // Если не в режиме калькулятора, показываем только кнопки
-            const buttonContainer = createCalculatorButton();
-            const comparisonTable = document.querySelector('table.tobl');
-            if (comparisonTable && comparisonTable.parentNode) {
-                comparisonTable.parentNode.insertBefore(buttonContainer, comparisonTable.nextSibling);
-                console.log('Кнопки добавлены на страницу превью');
-            } else {
-                console.warn('Не найдена таблица для вставки кнопок');
-            }
-            console.groupEnd();
-            return;
-        }
-
-        console.log('🧮 Режим калькулятора - инициализируем полный интерфейс');
-
-        // Парсим рейтинги команд ДО удаления строк и сохраняем глобально
-        window.cachedTeamRatings = parseTeamsRatingFromPage();
-        console.log('Рейтинги команд:', window.cachedTeamRatings);
-
-        // Удаляем ненужные строки из таблицы статистики
-        removeUnwantedStatsRows();
-
-        // Режим калькулятора - показываем полный интерфейс
-        const teamLinks = document.querySelectorAll('table.tobl a[href^="roster.php?num="]');
-        console.log('🔗 Найдено ссылок на команды:', teamLinks.length);
-
-        if (teamLinks.length < 2) {
-            console.error('Недостаточно ссылок на команды для инициализации калькулятора');
-            console.groupEnd();
-            return;
-        }
-
-        const homeTeamId = new URL(teamLinks[0].href).searchParams.get('num');
-        const awayTeamId = new URL(teamLinks[1].href).searchParams.get('num');
-        console.log('ID команды хозяев:', homeTeamId);
-        console.log('ID команды гостей:', awayTeamId);
-
-        if (!homeTeamId || !awayTeamId) {
-            console.error('Не удалось извлечь ID команд');
-            console.groupEnd();
-            return;
-        }
-
-        let tournamentType;
-        try {
-            console.log('Определение типа турнира...');
-            const info = parseMatchInfo(document.body.innerHTML);
-            tournamentType = info.tournamentType;
-            console.log('Тип турнира:', tournamentType);
-        } catch (e) {
-            console.error('Ошибка при определении типа турнира:', e.message);
-            alert(e.message);
-            console.groupEnd();
-            return;
-        }
-
-        console.log('Загрузка данных команд...');
-        const [homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere] = await Promise.all([
-            loadTeamRoster(homeTeamId, tournamentType),
-            loadTeamRoster(awayTeamId, tournamentType),
-            loadTeamAtmosphere(homeTeamId),
-            loadTeamAtmosphere(awayTeamId)
-        ]);
-
-        console.log('Загружено игроков хозяев:', homePlayers.length);
-        console.log('Загружено игроков гостей:', awayPlayers.length);
-        console.log('Атмосфера хозяев:', homeAtmosphere);
-        console.log('Атмосфера гостей:', awayAtmosphere);
-        const oldUI = document.getElementById('vsol-calculator-ui');
-        if (oldUI) oldUI.remove();
-        const ui = createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere);
-
-        // Добавляем навигацию в заголовок (если еще не добавлена)
-        createHeaderNavigation();
-
-        const comparisonTable = document.querySelector('table.tobl');
-        if (comparisonTable && comparisonTable.parentNode) {
-            comparisonTable.parentNode.insertBefore(ui, comparisonTable.nextSibling);
-        }
-
-        // Добавляем кнопку пересчета сыгранности
-        setTimeout(() => {
-            addRecalculateSynergyButton();
-        }, 2000);
-
-        console.log('Инициализация калькулятора завершена');
-        console.groupEnd();
-    }
+    // [DEADCODE] init() — moved to deadcode.js
 
 
 
 
-    function createWeatherUI(defaultWeather, defaultTemp, iconUrl, stadiumCapacity = 0) {
+    function createWeatherUI(defaultWeather, defaultTemp, iconUrl, stadiumCapacity = 0, homeTeamId = null, awayTeamId = null) {
         const container = document.createElement('div');
-        container.id = 'vsol-weather-ui';
+        container.id = 'vsol-match-info';
 
-        // Создаем структуру в стиле v1.2
+        // Эмблемы по бокам от таблицы погоды
+        const homeEmblemHtml = homeTeamId != null
+            ? `<td id="vsol-emblem-home" style="width:1%; vertical-align:middle; text-align:center; padding:4px; background:rgb(255,255,255);">
+                <img src="pics/teams80/${homeTeamId}.png" height="80" onerror="this.style.display='none'" style="display:block;">
+               </td>` : '';
+        const awayEmblemHtml = awayTeamId != null
+            ? `<td id="vsol-emblem-away" style="width:1%; vertical-align:middle; text-align:center; padding:4px; background:rgb(255,255,255);">
+                <img src="pics/teams80/${awayTeamId}.png" height="80" onerror="this.style.display='none'" style="display:block;">
+               </td>` : '';
+
+        const emblemColspan = 1 + (homeTeamId != null ? 1 : 0) + (awayTeamId != null ? 1 : 0);
+
         container.innerHTML = `
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
                 <tr style="background-color: rgb(0, 102, 0);">
-                    <td class="lh18 txtw" style="text-align: center; padding: 4px; color: white; font-weight: bold; font-size: 11px;">
+                    <td class="lh18 txtw" colspan="${emblemColspan}" style="text-align: center; padding: 4px; color: white; font-weight: bold; font-size: 11px;">
                         Информация о матче
                     </td>
                 </tr>
-            </table>
-            <table style="border-collapse: collapse;">
-                <tbody>
-                    <tr style="background-color: rgb(0, 102, 0);">
-                        <td class="lh18 txtw" style="width: 80px; text-align: center; padding: 4px; color: white; font-weight: bold; font-size: 11px;">
-                            <b>Параметр</b>
-                        </td>
-                        <td class="lh18 txtw" style="text-align: center; padding: 4px; color: white; font-weight: bold; font-size: 11px;">
-                            <b>Значение</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="qt" style="height: 20px; background-color: rgb(255, 255, 187); text-align: center; font-family: Courier New, monospace; font-size: 11px;" title="Погодные условия">
-                            ${iconUrl ? `<img src="${iconUrl}" height="16" style="vertical-align: top;">` : 'Погода'}
-                        </td>
-                        <td class="txtl" style="background-color: rgb(255, 255, 255);">
-                            <select id="vsol-weather-select" style="width: 271px; height: 20px; font-size: 11px; border: 1px solid rgb(170, 170, 170); padding: 2px 4px; box-sizing: border-box; background: white;">
-                                <option value="очень жарко">очень жарко</option>
-                                <option value="жарко">жарко</option>
-                                <option value="солнечно">солнечно</option>
-                                <option value="облачно">облачно</option>
-                                <option value="пасмурно">пасмурно</option>
-                                <option value="дождь">дождь</option>
-                                <option value="снег">снег</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="qt" style="height: 20px; background-color: rgb(255, 255, 187); text-align: center; font-family: Courier New, monospace; font-size: 11px;" title="Температура воздуха">
-                            Темп
-                        </td>
-                        <td class="txtl" style="background-color: rgb(255, 255, 255);">
-                            <select id="vsol-temperature-select" style="width: 271px; height: 20px; font-size: 11px; border: 1px solid rgb(170, 170, 170); padding: 2px 4px; box-sizing: border-box; background: white;">
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="qt" style="height: 20px; background-color: rgb(255, 255, 187); text-align: center; font-family: Courier New, monospace; font-size: 11px;" title="Посещаемость стадиона">
-                            <img src="https://cdn-icons-png.flaticon.com/128/1259/1259792.png" height="16" style="vertical-align: top;">
-                        </td>
-                        <td class="txtl" style="background-color: rgb(255, 255, 255); padding: 2px 4px;">
-                            <input type="number" id="vs_home_attendance" min="0" max="${stadiumCapacity}" value="${stadiumCapacity}"
-                                style="width: 120px; height: 16px; font-size: 11px; border: 1px solid rgb(170, 170, 170); padding: 2px; box-sizing: border-box; background: white;">
-                            <span style="font-size: 11px; color: rgb(102, 102, 102); margin-left: 4px;">/ ${stadiumCapacity}</span>
-                        </td>
-                    </tr>
-                </tbody>
+                <tr>
+                    ${homeEmblemHtml}
+                    <td style="vertical-align:top;">
+                        <table style="width:auto; border-collapse: collapse;">
+                            <tr>
+                                <td class="qt" style="height: 20px; width:80px; background-color: rgb(255, 255, 187); text-align: center; font-family: Courier New, monospace; font-size: 11px;" title="Погодные условия">
+                                    ${iconUrl ? `<img src="${iconUrl}" height="16" style="vertical-align: top;">` : 'Погода'}
+                                </td>
+                                <td class="txtl" style="background-color: rgb(255, 255, 255);">
+                                    <select id="vsol-weather-select" style="width: 100%; height: 20px; font-size: 11px; font-family: Courier New, monospace; border: 1px solid rgb(170, 170, 170); padding: 2px 4px; box-sizing: border-box; background: white; cursor: pointer;">
+                                        <option value="очень жарко">очень жарко</option>
+                                        <option value="жарко">жарко</option>
+                                        <option value="солнечно">солнечно</option>
+                                        <option value="облачно">облачно</option>
+                                        <option value="пасмурно">пасмурно</option>
+                                        <option value="дождь">дождь</option>
+                                        <option value="снег">снег</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="qt" style="height: 20px; background-color: rgb(255, 255, 187); text-align: center; font-family: Courier New, monospace; font-size: 11px;" title="Температура воздуха">
+                                    Темп
+                                </td>
+                                <td class="txtl" style="background-color: rgb(255, 255, 255);">
+                                    <select id="vsol-temperature-select" style="width: 100%; height: 20px; font-size: 11px; font-family: Courier New, monospace; border: 1px solid rgb(170, 170, 170); padding: 2px 4px; box-sizing: border-box; background: white; cursor: pointer;">
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="qt" style="height: 20px; background-color: rgb(255, 255, 187); text-align: center; font-family: Courier New, monospace; font-size: 11px;" title="Посещаемость стадиона">
+                                    <img src="https://cdn-icons-png.flaticon.com/128/1259/1259792.png" height="16" style="vertical-align: top;">
+                                </td>
+                                <td class="txtl" style="background-color: rgb(255, 255, 255); padding: 2px 4px;">
+                                    <input type="number" id="vs_home_attendance" min="0" max="${stadiumCapacity}" value="${stadiumCapacity}"
+                                        style="width: 120px; height: 16px; font-size: 11px; border: 1px solid rgb(170, 170, 170); padding: 2px; box-sizing: border-box; background: white;">
+                                    <span style="font-size: 11px; color: rgb(102, 102, 102); margin-left: 4px;">/ ${stadiumCapacity}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                    ${awayEmblemHtml}
+                </tr>
             </table>
         `;
 
@@ -9968,15 +9573,17 @@ function getTournamentType() {
             document.body.prepend(container);
         }
 
+        // Загрузка эмблем клубов через replaceTeamIcons
+        if (homeTeamId != null || awayTeamId != null) {
+            replaceTeamIcons();
+        }
+
         // Добавляем кнопки подсказок к блоку погоды
         setTimeout(() => {
             // Подсказка для погоды
-            const weatherRow = container.querySelector('tr:nth-child(2)');
-            if (weatherRow) {
-                const weatherCell = weatherRow.querySelector('td.qt');
-                if (weatherCell) {
-                    addHelpButton(weatherCell, 'weather', 'Влияние погоды');
-                }
+            const weatherCell = container.querySelector('td.qt[title="Погодные условия"]');
+            if (weatherCell) {
+                addHelpButton(weatherCell, 'weather', 'Влияние погоды');
             }
         }, 100);
 
@@ -11362,45 +10969,149 @@ function getTournamentType() {
     window.showFieldPlayerHint = showFieldPlayerHint;
     window.calculatePlayerStrength = calculatePlayerStrength;
 
-    function createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere = 0, awayAtmosphere = 0) {
+    // [DEADCODE] createUI — moved to deadcode.js
+
+    // --- Словарь федераций (страна → fedId) для отображения флагов ---
+    const FED = {'Австралия':1,'Австрия':2,'Азербайджан':3,'Албания':4,'Алжир':5,'Американские Виргинские о-ва':218,'Американское Самоа':206,'Ангилья':214,'Англия':6,'Ангола':7,'Андорра':8,'Антигуа и Барбуда':190,'Аргентина':10,'Армения':11,'Аруба':188,'Афганистан':12,'Багамские о-ва':192,'Бангладеш':13,'Барбадос':14,'Бахрейн':15,'Беларусь':16,'Белиз':17,'Бельгия':18,'Бенин':22,'Бермудские о-ва':19,'Болгария':20,'Боливия':21,'Босния и Герцеговина':23,'Ботсвана':24,'Бразилия':25,'Британские Виргинские о-ва':195,'Бруней':26,'Буркина Фасо':27,'Буркина-Фасо':27,'Бурунди':28,'Бутан':198,'Вануату':29,'Венгрия':30,'Венесуэла':31,'Восточный Тимор':215,'Вьетнам':181,'Габон':32,'Гаити':184,'Гайана':37,'Гамбия':33,'Гана':34,'Гваделупа':35,'Гватемала':36,'Гвиана':220,'Гвинея':38,'Гвинея-Бисау':39,'Германия':40,'Гибралтар':41,'Гондурас':43,'Гонконг':44,'Гренада':45,'Греция':47,'Грузия':48,'Гуам':182,'Дания':49,'Джибути':51,'Доминика':52,'Доминиканская Республика':185,'ДР Конго':54,'Египет':53,'Замбия':55,'Зимбабве':56,'Израиль':57,'Индия':179,'Индонезия':58,'Иордания':59,'Ирак':60,'Иран':61,'Ирландия':62,'Исландия':63,'Испания':64,'Италия':65,'Йемен':66,'Кабо-Верде':67,'Казахстан':68,'Каймановы о-ва':186,'Камбоджа':69,'Камерун':70,'Канада':71,'Катар':72,'Кения':73,'Кипр':74,'Китай':75,'КНДР':130,'Колумбия':76,'Коморские о-ва':209,'Конго':77,'Коста-Рика':78,"Кот-д'Ивуар":79,'Кот-Дивуар':79,'Куба':80,'Кувейт':81,'Кыргызстан':82,'Кюрасао':9,'Лаос':83,'Латвия':84,'Лесото':85,'Либерия':86,'Ливан':87,'Ливия':88,'Литва':89,'Лихтенштейн':90,'Люксембург':91,'Маврикий':199,'Мавритания':92,'Мадагаскар':93,'Макао':210,'Малави':95,'Малайзия':96,'Мали':97,'Мальдивы':98,'Мальта':99,'Марокко':100,'Мартиника':204,'Мексика':101,'Мозамбик':103,'Молдова':104,'Монголия':106,'Монтсеррат':216,'Мьянма':183,'Намибия':107,'Непал':108,'Нигер':109,'Нигерия':110,'Нидерланды':42,'Никарагуа':111,'Новая Зеландия':113,'Новая Каледония':205,'Норвегия':114,'О-ва Кука':115,'ОАЭ':178,'Оман':116,'Пакистан':117,'Палестина':211,'Панама':118,'Папуа Новая Гвинея':112,'Парагвай':119,'Перу':120,'Польша':121,'Португалия':122,'Пуэрто-Рико':123,'Реюньон':208,'Россия':124,'Руанда':125,'Румыния':126,'Сальвадор':127,'Самоа':196,'Сан-Марино':128,'Саудовская Аравия':129,'Северная Ирландия':131,'Северная Македония':94,'Сейшельские о-ва':180,'Сенегал':132,'Сент-Винсент':133,'Сент-Винсент и Гренадины':133,'Сент-Китс и Невис':187,'Сент-Люсия':194,'Сербия':174,'Сингапур':134,'Сирия':135,'Словакия':136,'Словения':137,'Соломоновы о-ва':200,'Сомали':138,'Судан':139,'Суринам':140,'США':141,'Сьерра Леоне':142,'Таджикистан':143,'Таиланд':145,'Таити':201,'Тайвань':212,'Танзания':146,'Теркс и Кайкос':213,'Того':147,'Тонга':202,'Тринидад и Тобаго':148,'Тувалу':219,'Тунис':149,'Туркменистан':150,'Турция':151,'Уганда':152,'Узбекистан':153,'Украина':154,'Уругвай':155,'Уэльс':156,'Фареры':157,'Фиджи':191,'Филиппины':158,'Финляндия':159,'Франция':160,'Хорватия':161,'ЦАР':162,'Чад':193,'Черногория':189,'Чехия':163,'Чили':164,'Швейцария':165,'Швеция':166,'Шотландия':167,'Шри Ланка':168,'Шри-Ланка':168,'Эквадор':169,'Экваториальная Гвинея':203,'Эритрея':170,'Эсватини':197,'Эстония':171,'Эфиопия':172,'ЮАР':173,'Южная Корея':175,'Южный Судан':217,'Ямайка':176,'Япония':177,'Бонэйр':195};
+
+    /**
+     * Создаёт элемент <img> с флагом страны по fedId.
+     * @param {number|string} fedId — ID федерации (из FED или из URL /cntr/{fedId}.gif)
+     * @param {string} [country] — название страны (для title)
+     * @returns {HTMLImageElement}
+     */
+    function makeFlagImg(fedId, country) {
+        var img = document.createElement('img');
+        img.src = '/cntr/' + fedId + '.gif';
+        img.title = country || '';
+        img.alt = '';
+        img.style.cssText = 'vertical-align:top; margin:3px 3px 0 0; width:20px; height:14px; border:0';
+        return img;
+    }
+
+    /**
+     * Новый макет калькулятора: трёхколоночный (тактика | поле | тактика) + два блока составов.
+     * Заменяет createUI. Убирает систему вкладок, показывает обе команды одновременно.
+     *
+     * Строка 1: <table> 620px — createTacticsColumn('home') 110px | fieldCol 400px | createTacticsColumn('away') 110px
+     * Строка 2: <div> 620px — homeLineupBlock 310px | awayLineupBlock 310px
+     *
+     * @param {string|number} homeTeamId
+     * @param {string|number} awayTeamId
+     * @param {Array} homePlayers
+     * @param {Array} awayPlayers
+     * @param {number} homeAtmosphere
+     * @param {number} awayAtmosphere
+     * @param {Object} [pageData] — данные страницы из parseOrderPageData (для определения команды пользователя)
+     * @param {Object} [matchData] — данные матча из extractAllMatchesFromDays (для кнопок управления)
+     * @returns {HTMLElement} контейнер калькулятора
+     */
+    function createLayout(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere = 0, awayAtmosphere = 0, pageData = null, matchData = null) {
         const parsedWeather = getWeatherData();
         const stadiumCapacity = parseStadiumCapacity() || 0;
 
-        // Сохраняем ID команд в глобальные переменные для использования в других функциях
+        // Сохраняем ID команд в глобальные переменные
         window.homeTeamId = homeTeamId;
         window.awayTeamId = awayTeamId;
-        const weatherUI = createWeatherUI(parsedWeather?.weather, parsedWeather?.temperature, parsedWeather?.icon, stadiumCapacity);
+        // Сохраняем pageData глобально для доступа из кнопок кэширования (task 7.3)
+        if (pageData) window.__vs_pageData = pageData;
+        const weatherUI = createWeatherUI(parsedWeather?.weather, parsedWeather?.temperature, parsedWeather?.icon, stadiumCapacity, homeTeamId, awayTeamId);
         const container = document.createElement('div');
         container.id = 'vsol-calculator-ui';
         container.appendChild(weatherUI.container);
-        const homeTeamObj = {
-            defenceType: 'zonal',
-            rough: 'clean',
-            morale: 'normal'
-        };
-        const awayTeamObj = {
-            defenceType: 'zonal',
-            rough: 'clean',
-            morale: 'normal'
-        };
+
+        // Объекты команд
+        const homeTeamObj = { defenceType: 'zonal', rough: 'clean', morale: 'normal' };
+        const awayTeamObj = { defenceType: 'zonal', rough: 'clean', morale: 'normal' };
         window.homeTeam = homeTeamObj;
         window.awayTeam = awayTeamObj;
-        const homeSettingsBlock = createTeamSettingsBlock(homeTeamObj, 'home', saveAllStates);
-        const awaySettingsBlock = createTeamSettingsBlock(awayTeamObj, 'away', saveAllStates);
+
+        // Извлекаем названия команд
+        function extractTeamNames() {
+            const matchHeader = document.querySelector('tr[bgcolor="#006600"] td.txtw');
+            if (matchHeader) {
+                const teamLinks = matchHeader.querySelectorAll('a.mnuw');
+                if (teamLinks.length >= 2) {
+                    const homeEmblem = teamLinks[0].querySelector('img')?.src || '';
+                    const awayEmblem = teamLinks[1].querySelector('img')?.src || '';
+                    const teamNamesEls = matchHeader.querySelectorAll('a.mnuw b');
+                    return {
+                        home: teamNamesEls[0]?.textContent.trim() || 'Команда хозяев',
+                        away: teamNamesEls[1]?.textContent.trim() || 'Команда гостей',
+                        homeEmblem,
+                        awayEmblem
+                    };
+                }
+            }
+            return { home: 'Команда хозяев', away: 'Команда гостей', homeEmblem: '', awayEmblem: '' };
+        }
+
+        // Извлекаем countryId (federation ID) хозяев и гостей из флагов на странице
+        function extractCountryIds() {
+            // Стратегия 1: искать /cntr/ флаги в заголовке матча
+            var matchHeader = document.querySelector('tr[bgcolor="#006600"] td.txtw');
+            if (matchHeader) {
+                var imgs = matchHeader.querySelectorAll('img');
+                var ids = [];
+                for (var i = 0; i < imgs.length; i++) {
+                    var src = imgs[i].src || '';
+                    var m = src.match(/\/cntr\/(\d+)\.gif/);
+                    if (m) ids.push(m[1]);
+                }
+                if (ids.length >= 2) {
+                    return { homeCountryId: ids[0], awayCountryId: ids[1] };
+                }
+                if (ids.length === 1) {
+                    return { homeCountryId: ids[0], awayCountryId: null };
+                }
+            }
+            // Стратегия 2: искать /cntr/ флаги по всей странице (рядом с командами)
+            var allCntrImgs = document.querySelectorAll('img[src*="/cntr/"]');
+            var allIds = [];
+            for (var j = 0; j < allCntrImgs.length; j++) {
+                var src2 = allCntrImgs[j].src || '';
+                var m2 = src2.match(/\/cntr\/(\d+)\.gif/);
+                if (m2 && allIds.indexOf(m2[1]) === -1) allIds.push(m2[1]);
+            }
+            if (allIds.length >= 2) {
+                return { homeCountryId: allIds[0], awayCountryId: allIds[1] };
+            }
+            // Стратегия 3: fallback — null
+            return {
+                homeCountryId: allIds.length > 0 ? allIds[0] : null,
+                awayCountryId: null
+            };
+        }
+
+        const teamNames = extractTeamNames();
+        const countryIds = extractCountryIds();
+
+        // Тактические колонки (вместо createTeamSettingsBlock + вкладок)
+        const homeTacticsCol = createTacticsColumn(homeTeamObj, 'home', teamNames.home, saveAllStates, countryIds.homeCountryId);
+        const awayTacticsCol = createTacticsColumn(awayTeamObj, 'away', teamNames.away, saveAllStates, countryIds.awayCountryId);
+
         const homeStyle = window.homeTeam._styleSelector;
         const awayStyle = window.awayTeam._styleSelector;
         const homeFormationSelect = window.homeTeam._formationSelector;
         const awayFormationSelect = window.awayTeam._formationSelector;
+
+        // Блоки составов
         const homeLineupBlock = createTeamLineupBlock(homePlayers, "4-4-2", "home");
         const awayLineupBlock = createTeamLineupBlock(awayPlayers, "4-4-2", "away");
-        const homeCaptainRow = makeCaptainRow(homeLineupBlock);
-        const awayCaptainRow = makeCaptainRow(awayLineupBlock);
+
+        // Капитан и роли — внутрь тактических колонок
+        homeTacticsCol.attachCaptainAndRoles(homeLineupBlock);
+        awayTacticsCol.attachCaptainAndRoles(awayLineupBlock);
+
+        // Глобальные ссылки
         window.homeStyle = homeStyle;
         window.awayStyle = awayStyle;
         window.homeFormationSelect = homeFormationSelect;
         window.awayFormationSelect = awayFormationSelect;
         window.homeLineupBlock = homeLineupBlock;
         window.awayLineupBlock = awayLineupBlock;
+
+        // Восстановление состояния
         const homeSaved = loadTeamState(CONFIG.STORAGE_KEYS.HOME);
         const awaySaved = loadTeamState(CONFIG.STORAGE_KEYS.AWAY);
         if (homeSaved) {
@@ -11411,7 +11122,7 @@ function getTournamentType() {
             setTeamState(awaySaved, awayStyle, awayFormationSelect, awayLineupBlock.captainSelect,
                 awayLineupBlock, awayPlayers);
         }
-        // ✅ Восстановление morale — ПОСЛЕ создания селекторов
+        // Восстановление morale
         if (homeSaved?.morale && window.homeMoraleSelect) {
             window.homeTeam.morale = homeSaved.morale;
             window.homeMoraleSelect.value = homeSaved.morale;
@@ -11421,50 +11132,46 @@ function getTournamentType() {
             window.awayMoraleSelect.value = awaySaved.morale;
         }
 
+        // Обработчик изменения состава
         window.__vs_onLineupChanged = () => {
             refreshCaptainOptions(homeLineupBlock, homePlayers);
             refreshCaptainOptions(awayLineupBlock, awayPlayers);
             saveAllStates();
-
-            // Обновляем отображение футболок при изменении состава
             if (typeof window.__updateShirtsDisplay === 'function') {
                 window.__updateShirtsDisplay();
             }
-
-            // Автоматически пересчитываем силу при изменении позиций
             if (typeof window.__vs_recalculateStrength === 'function') {
                 window.__vs_recalculateStrength();
             }
-
-
-            // Автоматический расчет сыгранности при изменении состава
             setTimeout(async () => {
                 try {
-                    // Определяем какая команда изменилась и обновляем сыгранность
                     const homePlayerIds = extractPlayerIdsFromLineup(homeLineupBlock.lineup);
                     const awayPlayerIds = extractPlayerIdsFromLineup(awayLineupBlock.lineup);
-
-                    // Обновляем сыгранность для обеих команд если есть достаточно игроков
                     if (homePlayerIds.length >= 4) {
                         updateTeamSynergy('home', homeLineupBlock.lineup, window.homeTeamId);
                     }
-
                     if (awayPlayerIds.length >= 4) {
                         updateTeamSynergy('away', awayLineupBlock.lineup, window.awayTeamId);
                     }
                 } catch (error) {
                     console.error('[AutoSynergy] Ошибка автоматического расчета:', error);
                 }
-            }, 500); // Небольшая задержка чтобы UI успел обновиться
+            }, 500);
         };
-        const mainTable = document.createElement('table');
-        mainTable.style.width = '800px'; // Увеличиваем ширину для двух колонок
-        mainTable.style.margin = '0 auto 10px auto';
-        mainTable.style.borderCollapse = 'separate';
-        mainTable.style.tableLayout = 'fixed';
+
+        // ===== СТРОКА 1: Трёхколоночный макет (тактика | поле | тактика) =====
+        const row1Table = document.createElement('table');
+        row1Table.style.maxWidth = '790px';
+        row1Table.style.width = '100%';
+        row1Table.style.margin = '0 auto 10px auto';
+        row1Table.style.borderCollapse = 'separate';
+        row1Table.style.tableLayout = 'fixed';
         const tr1 = document.createElement('tr');
 
-        // Первая ячейка - поле
+        // Левая колонка — тактика хозяев (110px)
+        tr1.appendChild(homeTacticsCol);
+
+        // Центральная колонка — поле (400px)
         const fieldCol = document.createElement('td');
         fieldCol.style.width = '400px';
         fieldCol.style.height = '566px';
@@ -11472,60 +11179,49 @@ function getTournamentType() {
             "url('https://github.com/stankewich/vfliga_calc/blob/main/img/field_01.webp?raw=true') no-repeat center center";
         fieldCol.style.backgroundSize = 'contain';
         fieldCol.style.verticalAlign = 'top';
-
-        // Вторая ячейка - вкладки команд
-        const tabsCol = document.createElement('td');
-        tabsCol.style.width = '394px';
-        tabsCol.style.verticalAlign = 'top';
-
         tr1.appendChild(fieldCol);
-        tr1.appendChild(tabsCol);
-        mainTable.appendChild(tr1);
 
-        // НОВАЯ СТРУКТУРА: Создаем вкладки команд вместо таблицы составов
-        // Извлекаем названия команд из заголовка матча
-        function extractTeamNames() {
-            const matchHeader = document.querySelector('tr[bgcolor="#006600"] td.txtw');
-            if (matchHeader) {
-                const teamLinks = matchHeader.querySelectorAll('a.mnuw');
-                if (teamLinks.length >= 2) {
-                    // Извлекаем эмблемы команд
-                    const homeEmblem = teamLinks[0].querySelector('img')?.src || '';
-                    const awayEmblem = teamLinks[1].querySelector('img')?.src || '';
+        // Правая колонка — тактика гостей (110px)
+        tr1.appendChild(awayTacticsCol);
 
-                    // Извлекаем названия команд
-                    const teamNames = matchHeader.querySelectorAll('a.mnuw b');
+        row1Table.appendChild(tr1);
 
-                    return {
-                        home: teamNames[0]?.textContent.trim() || 'Команда хозяев',
-                        away: teamNames[1]?.textContent.trim() || 'Команда гостей',
-                        homeEmblem,
-                        awayEmblem
-                    };
-                }
-            }
-            // Fallback к заглушкам если не найдено
-            return {
-                home: 'Команда хозяев',
-                away: 'Команда гостей',
-                homeEmblem: '',
-                awayEmblem: ''
-            };
+        // ===== СТРОКА 2: Два блока составов (310px + 310px) =====
+        const row2Container = document.createElement('div');
+        row2Container.style.maxWidth = '790px';
+        row2Container.style.width = '100%';
+        row2Container.style.margin = '0 auto 10px auto';
+        row2Container.style.display = 'flex';
+        row2Container.style.gap = '0px';
+
+        // Блок хозяев
+        const homeLineupWrapper = document.createElement('div');
+        homeLineupWrapper.style.cssText = 'flex:1; min-width:0; vertical-align:top;';
+        homeLineupWrapper.appendChild(homeLineupBlock.block);
+
+        // Блок гостей
+        const awayLineupWrapper = document.createElement('div');
+        awayLineupWrapper.style.cssText = 'flex:1; min-width:0; vertical-align:top;';
+        awayLineupWrapper.appendChild(awayLineupBlock.block);
+
+        // Определяем команду пользователя и добавляем кнопки управления
+        if (pageData && matchData) {
+            const userTeamInfo = detectUserTeam(pageData, matchData);
+            const userLineupWrapper = userTeamInfo.isHome ? homeLineupWrapper : awayLineupWrapper;
+            createUserTeamButtons(userLineupWrapper, userTeamInfo.isHome, matchData);
+            console.log('[createLayout] Кнопки управления добавлены в блок', userTeamInfo.isHome ? 'хозяев' : 'гостей');
+
+            // Кнопки управления составом соперника
+            const opponentLineupWrapper = userTeamInfo.isHome ? awayLineupWrapper : homeLineupWrapper;
+            const opponentSideLabel = userTeamInfo.isHome ? 'away' : 'home';
+            createOpponentTeamButtons(opponentLineupWrapper, opponentSideLabel);
+            console.log('[createLayout] Кнопки соперника добавлены в блок', userTeamInfo.isHome ? 'гостей' : 'хозяев');
         }
 
-        const teamNames = extractTeamNames();
-        const homeTeamName = teamNames.home;
-        const awayTeamName = teamNames.away;
+        row2Container.appendChild(homeLineupWrapper);
+        row2Container.appendChild(awayLineupWrapper);
 
-        const homeTabContent = createTeamTabContent(homeSettingsBlock, homeLineupBlock, homeTeamName);
-        const awayTabContent = createTeamTabContent(awaySettingsBlock, awayLineupBlock, awayTeamName);
-
-        const teamTabsContainer = createTeamTabsContainer(homeTeamName, awayTeamName, homeTabContent, awayTabContent);
-
-        // Добавляем вкладки команд во вторую ячейку таблицы
-        tabsCol.appendChild(teamTabsContainer);
-
-        // Автоматически определяем тип турнира и применяем к селекторам формы
+        // Автоматически определяем тип турнира
         const detectedType = detectTournamentTypeFromPage();
         window.__vs_detectedTournamentType = detectedType;
         console.log('[TournamentType] Определён тип турнира:', detectedType);
@@ -11558,25 +11254,14 @@ function getTournamentType() {
                 }
             });
         };
-
         updatePhysicalFormSelectors(detectedType);
 
-        const title = document.createElement('h3');
-        title.textContent = 'Калькулятор силы';
-        title.style.position = 'relative';
+        container.appendChild(row1Table);
+        container.appendChild(row2Container);
 
-        const helpIndicator = document.createElement('span');
-        helpIndicator.innerHTML = ' <small style="color: #666; font-size: 10px;">(F1 - справка, Ctrl+H - горячие клавиши)</small>';
-        title.appendChild(helpIndicator);
-
-        container.appendChild(title);
-        container.appendChild(mainTable);
-
-        // Блок бонусов в стиле v1.2
+        // Блок бонусов (идентичен createUI)
         const synergyWrap = document.createElement('div');
         synergyWrap.id = 'vsol-synergy-ui';
-
-        // Создаем структуру в стиле v1.2
         synergyWrap.innerHTML = `
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
                 <tr style="background-color: rgb(0, 102, 0);">
@@ -11658,16 +11343,8 @@ function getTournamentType() {
             </table>
         `;
 
-        // Создаем объекты для совместимости с существующим кодом
-        const synergyHomeUI = {
-            block: synergyWrap,
-            input: synergyWrap.querySelector('#vs_synergy_home')
-        };
-
-        const synergyAwayUI = {
-            block: synergyWrap,
-            input: synergyWrap.querySelector('#vs_synergy_away')
-        };
+        const synergyHomeUI = { block: synergyWrap, input: synergyWrap.querySelector('#vs_synergy_home') };
+        const synergyAwayUI = { block: synergyWrap, input: synergyWrap.querySelector('#vs_synergy_away') };
 
         const leadershipHomeUI = {
             block: synergyWrap,
@@ -11678,7 +11355,6 @@ function getTournamentType() {
             attBonus: synergyWrap.querySelector('#vs-leadership-home-att-bonus'),
             attValue: synergyWrap.querySelector('#vs-leadership-home-att-value')
         };
-
         const leadershipAwayUI = {
             block: synergyWrap,
             defBonus: synergyWrap.querySelector('#vs-leadership-away-def-bonus'),
@@ -11688,103 +11364,42 @@ function getTournamentType() {
             attBonus: synergyWrap.querySelector('#vs-leadership-away-att-bonus'),
             attValue: synergyWrap.querySelector('#vs-leadership-away-att-value')
         };
-
-        // Сохраняем ссылки на UI элементы лидерства для глобального доступа
         window.leadershipHomeUI = leadershipHomeUI;
         window.leadershipAwayUI = leadershipAwayUI;
 
         container.appendChild(synergyWrap);
 
-        // Добавляем кнопки подсказок к блоку бонусов
+        // Подсказки к бонусам
         setTimeout(() => {
-            // Подсказка для сыгранности
             const synergyRow = synergyWrap.querySelector('tr:nth-child(2)');
-            if (synergyRow) {
-                const synergyCell = synergyRow.querySelector('td.qt');
-                if (synergyCell) {
-                    addHelpButton(synergyCell, 'synergy', 'Бонус сыгранности');
-                }
-            }
-
-            // Подсказка для командной игры
+            if (synergyRow) { const c = synergyRow.querySelector('td.qt'); if (c) addHelpButton(c, 'synergy', 'Бонус сыгранности'); }
             const teamworkRow = synergyWrap.querySelector('tr:nth-child(3)');
-            if (teamworkRow) {
-                const teamworkCell = teamworkRow.querySelector('td.qt');
-                if (teamworkCell) {
-                    addHelpButton(teamworkCell, 'teamwork', 'Командная игра');
-                }
-            }
-
-            // Подсказка для атмосферы
+            if (teamworkRow) { const c = teamworkRow.querySelector('td.qt'); if (c) addHelpButton(c, 'teamwork', 'Командная игра'); }
             const atmosphereRow = synergyWrap.querySelector('tr:nth-child(4)');
-            if (atmosphereRow) {
-                const atmosphereCell = atmosphereRow.querySelector('td.qt');
-                if (atmosphereCell) {
-                    addHelpButton(atmosphereCell, 'atmosphere', 'Атмосфера в команде');
-                }
-            }
-
-            // Подсказка для лидерства
+            if (atmosphereRow) { const c = atmosphereRow.querySelector('td.qt'); if (c) addHelpButton(c, 'atmosphere', 'Атмосфера в команде'); }
             const leadershipRow = synergyWrap.querySelector('tr:nth-child(5)');
-            if (leadershipRow) {
-                const leadershipCell = leadershipRow.querySelector('td.qt');
-                if (leadershipCell) {
-                    addHelpButton(leadershipCell, 'leadership', 'Бонусы лидеров');
-                }
-            }
+            if (leadershipRow) { const c = leadershipRow.querySelector('td.qt'); if (c) addHelpButton(c, 'leadership', 'Бонусы лидеров'); }
         }, 100);
 
+        // Восстановление сыгранности
         if (homeSaved && typeof homeSaved.synergyHomePercent !== 'undefined') {
             setSynergyPercentHome(homeSaved.synergyHomePercent);
         }
         if (awaySaved && typeof awaySaved.synergyAwayPercent !== 'undefined') {
             setSynergyPercentAway(awaySaved.synergyAwayPercent);
         }
-        synergyHomeUI.input.addEventListener('input', () => {
-            clampSynergyInput(synergyHomeUI.input);
-            saveAllStates();
-        });
-        synergyHomeUI.input.addEventListener('change', () => {
-            clampSynergyInput(synergyHomeUI.input);
-            saveAllStates();
-        });
-        synergyAwayUI.input.addEventListener('input', () => {
-            clampSynergyInput(synergyAwayUI.input);
-            saveAllStates();
-        });
-        synergyAwayUI.input.addEventListener('change', () => {
-            clampSynergyInput(synergyAwayUI.input);
-            saveAllStates();
-        });
+        synergyHomeUI.input.addEventListener('input', () => { clampSynergyInput(synergyHomeUI.input); saveAllStates(); });
+        synergyHomeUI.input.addEventListener('change', () => { clampSynergyInput(synergyHomeUI.input); saveAllStates(); });
+        synergyAwayUI.input.addEventListener('input', () => { clampSynergyInput(synergyAwayUI.input); saveAllStates(); });
+        synergyAwayUI.input.addEventListener('change', () => { clampSynergyInput(synergyAwayUI.input); saveAllStates(); });
+
+        // Применяем формации
         homeLineupBlock.applyFormation(homeFormationSelect.value || '4-4-2');
         awayLineupBlock.applyFormation(awayFormationSelect.value || '4-4-2');
         refreshCaptainOptions(homeLineupBlock, homePlayers);
         refreshCaptainOptions(awayLineupBlock, awayPlayers);
 
-        function onStyleChange(repaintStyleCollision, saveAllStates) {
-            repaintStyleCollision();
-            saveAllStates();
-        }
-
-        function makeFormationHandler(lineupBlock, formationSelect, players, applyFormation, refreshCaptainOptions,
-            saveAllStates) {
-            return () => {
-                applyFormation(lineupBlock.lineup, formationSelect.value, lineupBlock);
-                refreshCaptainOptions(lineupBlock, players);
-                saveAllStates();
-            };
-        }
-
-        function makeCaptainHandler(saveAllStates) {
-            return () => {
-                saveAllStates();
-                // Пересчитываем силу команд при смене капитана
-                if (typeof window.__vs_recalculateStrength === 'function') {
-                    window.__vs_recalculateStrength();
-                }
-            };
-        }
-
+        // Обработчики стилей и формаций
         function repaintStyleCollision() {
             const homeTeamStyleId = homeStyle.value || 'norm';
             const awayTeamStyleId = awayStyle.value || 'norm';
@@ -11792,8 +11407,21 @@ function getTournamentType() {
             paintStyleSelectByCollision(homeStyle, info.teamStatus);
             paintStyleSelectByCollision(awayStyle, info.oppStatus);
         }
-        homeStyle.addEventListener('change', () => onStyleChange(repaintStyleCollision, saveAllStates));
-        awayStyle.addEventListener('change', () => onStyleChange(repaintStyleCollision, saveAllStates));
+        function onStyleChange() {
+            repaintStyleCollision();
+            saveAllStates();
+        }
+        function makeCaptainHandler() {
+            return () => {
+                saveAllStates();
+                if (typeof window.__vs_recalculateStrength === 'function') {
+                    window.__vs_recalculateStrength();
+                }
+            };
+        }
+
+        homeStyle.addEventListener('change', onStyleChange);
+        awayStyle.addEventListener('change', onStyleChange);
         homeFormationSelect.addEventListener('change', () => {
             homeLineupBlock.applyFormation(homeFormationSelect.value);
             refreshCaptainOptions(homeLineupBlock, homePlayers);
@@ -11804,9 +11432,11 @@ function getTournamentType() {
             refreshCaptainOptions(awayLineupBlock, awayPlayers);
             saveAllStates();
         });
-        homeLineupBlock.captainSelect.addEventListener('change', makeCaptainHandler(saveAllStates));
-        awayLineupBlock.captainSelect.addEventListener('change', makeCaptainHandler(saveAllStates));
+        homeLineupBlock.captainSelect.addEventListener('change', makeCaptainHandler());
+        awayLineupBlock.captainSelect.addEventListener('change', makeCaptainHandler());
         repaintStyleCollision();
+
+        // Кнопка очистки
         const clearBtn = document.createElement('button');
         clearBtn.textContent = 'Очистить состав';
         clearBtn.style.marginTop = '15px';
@@ -11821,12 +11451,8 @@ function getTournamentType() {
             awayFormationSelect.value = Object.keys(FORMATIONS)[0];
             homeLineupBlock.applyFormation(homeFormationSelect.value);
             awayLineupBlock.applyFormation(awayFormationSelect.value);
-            homeLineupBlock.lineup.forEach(slot => {
-                slot.setValue('', '');
-            });
-            awayLineupBlock.lineup.forEach(slot => {
-                slot.setValue('', '');
-            });
+            homeLineupBlock.lineup.forEach(slot => { slot.setValue('', ''); });
+            awayLineupBlock.lineup.forEach(slot => { slot.setValue('', ''); });
             homeLineupBlock.captainSelect.value = '';
             awayLineupBlock.captainSelect.value = '';
             refreshCaptainOptions(homeLineupBlock, homePlayers);
@@ -11838,15 +11464,13 @@ function getTournamentType() {
         };
         container.appendChild(clearBtn);
 
-        // Функция для пересчета силы команд
+        // Функция пересчёта силы команд (идентична createUI)
         let isCalculating = false;
         window.__vs_recalculateStrength = async () => {
-            // Защита от повторного вызова
             if (isCalculating) {
                 console.log('[Calc] Already calculating, skipping...');
                 return;
             }
-
             isCalculating = true;
 
             const wt = getCurrentWeatherFromUI();
@@ -11857,33 +11481,22 @@ function getTournamentType() {
             }
             const stadiumCapacityLocal = stadiumCapacity;
             const homeAttendanceInput = document.getElementById('vs_home_attendance');
-            const homeAttendance = homeAttendanceInput ? parseInt(homeAttendanceInput.value, 10) :
-                stadiumCapacityLocal;
-            const homeAttendancePercent = stadiumCapacityLocal ? Math.round((homeAttendance /
-                stadiumCapacityLocal) * 100) : -1;
+            const homeAttendance = homeAttendanceInput ? parseInt(homeAttendanceInput.value, 10) : stadiumCapacityLocal;
+            const homeAttendancePercent = stadiumCapacityLocal ? Math.round((homeAttendance / stadiumCapacityLocal) * 100) : -1;
             const userSynergyHome = getSynergyPercentHome() / 100;
             const userSynergyAway = getSynergyPercentAway() / 100;
             const homeTeamStyleId = mapCustomStyleToStyleId(homeStyle.value);
             const awayTeamStyleId = mapCustomStyleToStyleId(awayStyle.value);
+
             async function computeTeamStrength(lineup, players, teamStyleId, sideLabel, opponentTeamStyleId,
                 homeBonusPercent = -1, userSynergy = 0, atmosphereValue = 0, weatherOverride = null, temperatureOverride = null) {
-                const teamRatings = window.cachedTeamRatings || parseTeamsRatingFromPage() || {
-                    home: 0,
-                    away: 0
-                };
+                const teamRatings = window.cachedTeamRatings || parseTeamsRatingFromPage() || { home: 0, away: 0 };
                 const moraleMode = (sideLabel === 'home' ? (window.homeTeam && window.homeTeam.morale) :
                     (window.awayTeam && window.awayTeam.morale)) || 'normal';
-                const moraleBounds = getMoraleBonusBounds({
-                    homeRating: teamRatings.home,
-                    awayRating: teamRatings.away,
-                    sideLabel
-                });
+                const moraleBounds = getMoraleBonusBounds({ homeRating: teamRatings.home, awayRating: teamRatings.away, sideLabel });
 
-                // Бонус дома для турниров типа B и международных кубков
                 const tournamentType = getTournamentType();
-                const hasHomeBonus = tournamentType === 'typeB' ||
-                                    tournamentType === 'typeB_amateur' ||
-                                    tournamentType === 'typeC_international';
+                const hasHomeBonus = tournamentType === 'typeB' || tournamentType === 'typeB_amateur' || tournamentType === 'typeC_international';
                 const homeBonusValue = hasHomeBonus ? getHomeBonus(homeBonusPercent) : 0;
 
                 const myStyleId = teamStyleId || 'norm';
@@ -11892,29 +11505,17 @@ function getTournamentType() {
                     const id = slot.getValue && slot.getValue();
                     return id ? players.find(p => String(p.id) === String(id)) : null;
                 }).filter(Boolean);
-                const {
-                    teamIBonusByPlayer,
-                    teamIBonusTotal
-                } = getTeamIBonusForLineup(inLineupPlayers, lineup);
-                const captainSelectEl = sideLabel === 'home' ? homeLineupBlock.captainSelect :
-                    awayLineupBlock.captainSelect;
-                const {
-                    captainId,
-                    captainPlayer,
-                    dummyEntries
-                } = buildCaptainContext(lineup, players, captainSelectEl);
+                const { teamIBonusByPlayer, teamIBonusTotal } = getTeamIBonusForLineup(inLineupPlayers, lineup);
+                const captainSelectEl = sideLabel === 'home' ? homeLineupBlock.captainSelect : awayLineupBlock.captainSelect;
+                const { captainId, captainPlayer, dummyEntries } = buildCaptainContext(lineup, players, captainSelectEl);
                 const teamCaptainPercent = estimateCaptainPercent(captainPlayer, dummyEntries) || 0;
                 let captainBonus = 0;
                 if (captainPlayer && teamCaptainPercent !== 0) {
                     const captainRealStr = Number(captainPlayer.realStr) || 0;
                     captainBonus = captainRealStr * teamCaptainPercent;
                 }
-                const {
-                    teamStatus,
-                    teamBonus
-                } = getCollisionInfo(myStyleId, oppStyleId);
+                const { teamStatus, teamBonus } = getCollisionInfo(myStyleId, oppStyleId);
 
-                // Используем переданные значения погоды или берем из UI
                 const actualWeather = weatherOverride !== null ? weatherOverride : wt.weather;
                 const actualTemperature = temperatureOverride !== null ? temperatureOverride : wt.temperature;
 
@@ -11924,55 +11525,29 @@ function getTournamentType() {
                     const player = players.find(p => String(p.id) === String(playerId));
                     if (!player) return resolve(null);
                     const playerCustomStyle = slot.customStyleValue || 'norm';
-                    const playerStyleId = KNOWN_STYLE_IDS.has(playerCustomStyle) ?
-                        playerCustomStyle : 'norm';
+                    const playerStyleId = KNOWN_STYLE_IDS.has(playerCustomStyle) ? playerCustomStyle : 'norm';
                     const styleNumeric = STYLE_VALUES[playerStyleId] ?? 0;
                     const requestedStrength = Number(player.baseStrength) || 0;
                     getWeatherStrengthValueCached(styleNumeric, actualTemperature, actualWeather,
                         requestedStrength, (res) => {
                             if (!res || !res.found) {
                                 console.warn('[Calc] WeatherStrength not found', {
-                                    side: sideLabel,
-                                    player: player?.name,
-                                    playerStyleId,
-                                    teamStyleId: myStyleId,
-                                    weather: actualWeather,
-                                    temperature: actualTemperature,
-                                    strengthRow: requestedStrength,
-                                    error: res?.error
+                                    side: sideLabel, player: player?.name, playerStyleId,
+                                    teamStyleId: myStyleId, weather: actualWeather,
+                                    temperature: actualTemperature, strengthRow: requestedStrength, error: res?.error
                                 });
-                                return resolve({
-                                    player,
-                                    weatherStr: null,
-                                    wasNormalized: false,
-                                    playerStyleId,
-                                    teamStyleId: myStyleId
-                                });
+                                return resolve({ player, weatherStr: null, wasNormalized: false, playerStyleId, teamStyleId: myStyleId });
                             }
                             const ws = parseNumericWeatherStr(res.weatherStr);
-
-                            // Логируем ws для отладки
                             console.log('[Weather] Player WS calculated', {
-                                player: player.name,
-                                baseStr: player.baseStrength,
-                                temperature: actualTemperature,
-                                weather: actualWeather,
-                                weatherStr: res.weatherStr,
-                                ws: ws,
-                                method: res.details?.method,
-                                interpolated: res.interpolated,
-                                lowerPoint: res.details?.lowerPoint,
+                                player: player.name, baseStr: player.baseStrength,
+                                temperature: actualTemperature, weather: actualWeather,
+                                weatherStr: res.weatherStr, ws: ws, method: res.details?.method,
+                                interpolated: res.interpolated, lowerPoint: res.details?.lowerPoint,
                                 upperPoint: res.details?.upperPoint
                             });
-
-                            resolve({
-                                player,
-                                weatherStr: (ws == null || ws === 0) ? null :
-                                    ws,
-                                wasNormalized: !!res.details.wasNormalized,
-                                playerStyleId,
-                                teamStyleId: myStyleId
-                            });
+                            resolve({ player, weatherStr: (ws == null || ws === 0) ? null : ws,
+                                wasNormalized: !!res.details.wasNormalized, playerStyleId, teamStyleId: myStyleId });
                         });
                 }));
                 const results = await Promise.all(tasks);
@@ -11989,50 +11564,29 @@ function getTournamentType() {
                 let totalAtmosphereBonus = 0;
                 const slotEntries = lineup.map((slot, idx) => {
                     const playerId = slot.getValue && slot.getValue();
-                    const player = playerId ? players.find(p => String(p.id) === String(
-                        playerId)) : null;
+                    const player = playerId ? players.find(p => String(p.id) === String(playerId)) : null;
                     const matchPos = slot.posValue || null;
-                    return player ? {
-                        idx,
-                        slot,
-                        player,
-                        matchPos
-                    } : null;
+                    return player ? { idx, slot, player, matchPos } : null;
                 }).filter(Boolean);
 
-                // Сохраняем slotEntries для Chemistry системы с customStyleValue
                 window.currentSlotEntries = slotEntries.map(entry => ({
-                    ...entry,
-                    customStyleValue: entry.slot.customStyleValue || entry.player.hidden_style || 'norm'
+                    ...entry, customStyleValue: entry.slot.customStyleValue || entry.player.hidden_style || 'norm'
                 }));
                 const team = {
                     positions: slotEntries.map(e => e.matchPos),
                     realStr: slotEntries.map(e => Number(e.player.realStr) || 0),
                     contribution: slotEntries.map(e => 0),
-                    defenceType: (sideLabel === 'home' ? (window.homeTeam && window.homeTeam
-                        .defenceType) : (window.awayTeam && window.awayTeam.defenceType)) ||
-                        'zonal',
-                    rough: (sideLabel === 'home' ? (window.homeTeam && window.homeTeam.rough) : (
-                        window.awayTeam && window.awayTeam.rough)) || 'clean',
-                    morale: (sideLabel === 'home' ? (window.homeTeam && window.homeTeam.morale) : (
-                        window.awayTeam && window.awayTeam.morale)) || 'normal',
+                    defenceType: (sideLabel === 'home' ? (window.homeTeam && window.homeTeam.defenceType) : (window.awayTeam && window.awayTeam.defenceType)) || 'zonal',
+                    rough: (sideLabel === 'home' ? (window.homeTeam && window.homeTeam.rough) : (window.awayTeam && window.awayTeam.rough)) || 'clean',
+                    morale: (sideLabel === 'home' ? (window.homeTeam && window.homeTeam.morale) : (window.awayTeam && window.awayTeam.morale)) || 'normal',
                     log: [],
                     name: sideLabel
                 };
                 const opponent = {
-                    positions: (sideLabel === 'home' ? (window.awayLineupBlock && window
-                        .awayLineupBlock.lineup.map(slot => slot.posValue)) : (window
-                            .homeLineupBlock && window.homeLineupBlock.lineup.map(slot => slot
-                                .posValue))) || []
+                    positions: (sideLabel === 'home' ? (window.awayLineupBlock && window.awayLineupBlock.lineup.map(slot => slot.posValue)) : (window.homeLineupBlock && window.homeLineupBlock.lineup.map(slot => slot.posValue))) || []
                 };
-                const totalRoughBonus = roughBonus({
-                    team,
-                    slotEntries
-                }) || 0;
-                defenceTypeBonus({
-                    team,
-                    opponent
-                });
+                const totalRoughBonus = roughBonus({ team, slotEntries }) || 0;
+                defenceTypeBonus({ team, opponent });
                 const bonusActive = team.contribution.some(v => v > 0);
                 const defenceTypeWinStatus = bonusActive ? 'win' : 'lose';
                 if (sideLabel === 'home' && window.homeDefenceTypeSelect) {
@@ -12042,31 +11596,19 @@ function getTournamentType() {
                     window.awayDefenceTypeSelect.setHighlight(defenceTypeWinStatus);
                 }
                 totalDefenceTypeBonus = team.contribution.reduce((s, v) => s + (Number(v) || 0), 0);
-                const leadersByLine = {
-                    DEF: [],
-                    MID: [],
-                    ATT: []
-                };
+
+                const leadersByLine = { DEF: [], MID: [], ATT: [] };
                 slotEntries.forEach(entry => {
                     const line = getLineByMatchPos(entry.matchPos);
-                    if (!line) {
-                        console.log(`[LEADERSHIP] Игрок ${entry.player.name} (${entry.matchPos}): линия не определена, пропускаем`);
-                        return;
-                    }
+                    if (!line) { console.log(`[LEADERSHIP] Игрок ${entry.player.name} (${entry.matchPos}): линия не определена, пропускаем`); return; }
                     console.log(`[LEADERSHIP] Проверка игрока: ${entry.player.name} (${entry.matchPos}), линия: ${line}, abilities: "${entry.player.abilities}"`);
                     const abilities = parseAbilities(entry.player.abilities);
                     console.log(`[LEADERSHIP] Распарсенные способности:`, abilities);
                     const leaderAb = abilities.find(a => a.type === 'Л');
-                    if (!leaderAb) {
-                        console.log(`[LEADERSHIP] У игрока ${entry.player.name} нет способности Л`);
-                        return;
-                    }
+                    if (!leaderAb) { console.log(`[LEADERSHIP] У игрока ${entry.player.name} нет способности Л`); return; }
                     const lvl = Math.max(1, Math.min(4, Number(leaderAb.level) || 1));
                     console.log(`[LEADERSHIP] Найден лидер: ${entry.player.name} (ID: ${entry.player.id}), позиция: ${entry.matchPos}, линия: ${line}, уровень Л: ${lvl}`);
-                    leadersByLine[line].push({
-                        entry,
-                        level: lvl
-                    });
+                    leadersByLine[line].push({ entry, level: lvl });
                 });
                 const leadershipBonusByPlayerId = new Map();
                 console.log(`[LEADERSHIP] Лидеры по линиям для команды ${sideLabel}:`, {
@@ -12081,96 +11623,65 @@ function getTournamentType() {
                         return;
                     }
                     const leader = leaders[0];
-
-                    // Используем calculatedRealStr вместо realStr для корректного расчета
                     const leaderSlot = leader.entry.slot;
                     let leaderCalculatedStr = 0;
                     if (leaderSlot && leaderSlot.posValue && leaderSlot.physicalFormValue) {
-                        leaderCalculatedStr = calculatePlayerStrengthGlobal(
-                            leader.entry.player,
-                            leaderSlot.posValue,
-                            leaderSlot.physicalFormValue
-                        );
+                        leaderCalculatedStr = calculatePlayerStrengthGlobal(leader.entry.player, leaderSlot.posValue, leaderSlot.physicalFormValue);
                     } else {
                         leaderCalculatedStr = Number(leader.entry.player.realStr) || 0;
                     }
-
                     const coeff = LEADERSHIP_LEVEL_COEFF[leader.level] || 0;
                     const perPlayerBonus = leaderCalculatedStr * coeff;
                     console.log(`[LEADERSHIP] Линия ${line}: лидер ${leader.entry.player.name}, сила: ${leaderCalculatedStr.toFixed(2)}, коэфф: ${coeff}, бонус на игрока: ${perPlayerBonus.toFixed(2)}`);
                     slotEntries.forEach(entry => {
                         const l = getLineByMatchPos(entry.matchPos);
-                        if (l !== line) {
-                            return;
-                        }
+                        if (l !== line) return;
                         const prev = leadershipBonusByPlayerId.get(String(entry.player.id)) || 0;
                         leadershipBonusByPlayerId.set(String(entry.player.id), prev + perPlayerBonus);
                         console.log(`[LEADERSHIP] Применен бонус к игроку ${entry.player.name} (${entry.matchPos}): +${perPlayerBonus.toFixed(2)}`);
                     });
                 });
+
                 results.forEach(entry => {
                     if (!entry || !entry.player) return;
-                    const slotEntryIdx = slotEntries.findIndex(e => String(e.player.id) === String(entry
-                        .player.id));
+                    const slotEntryIdx = slotEntries.findIndex(e => String(e.player.id) === String(entry.player.id));
                     if (slotEntryIdx < 0) return;
 
-                    // НОВАЯ ЛОГИКА: Рассчитываем силу игрока на основе baseStr с модификаторами
                     const slotEntry = slotEntries[slotEntryIdx];
-                    const slot = slotEntry.slot;  // Используем slot из slotEntry
-                    const idx = slotEntry.idx;    // Используем оригинальный индекс
+                    const slot = slotEntry.slot;
+                    const idx = slotEntry.idx;
                     const baseStr = Number(entry.player.baseStrength) || 0;
                     const ws = Number(entry.weatherStr);
 
                     if (!ws || ws === 0) {
-                        console.warn('[Calc] Skip player due to invalid WeatherStrength', {
-                            side: sideLabel,
-                            name: entry.player.name,
-                            baseStr,
-                            ws
-                        });
+                        console.warn('[Calc] Skip player due to invalid WeatherStrength', { side: sideLabel, name: entry.player.name, baseStr, ws });
                         return;
                     }
-
                     const denom = ws / (baseStr || 1);
                     if (!Number.isFinite(denom) || denom === 0) {
-                        console.warn('[Calc] Skip player due to invalid denominator', {
-                            side: sideLabel,
-                            name: entry.player.name,
-                            baseStr,
-                            ws,
-                            denom
-                        });
+                        console.warn('[Calc] Skip player due to invalid denominator', { side: sideLabel, name: entry.player.name, baseStr, ws, denom });
                         return;
                     }
 
-                    // Шаг 1: Получаем все модификаторы для baseStr
-                    // Если форма не установлена вручную, определяем автоматически
                     let actualFormId = slot?.physicalFormValue;
                     if (!actualFormId) {
                         const tournamentType = getTournamentType();
                         actualFormId = getPhysicalFormIdFromData(entry.player.form, entry.player.form_mod, tournamentType);
                     }
-
                     const physicalFormModifier = getPhysicalFormModifier(actualFormId);
                     const fatigueModifier = getFatigueBonus(entry.player.fatigue);
                     const realityModifier = getRealityBonus(entry.player.real_status, entry.player.real_sign);
-
                     const playerMatchPos = idx >= 0 ? slotEntries[idx]?.matchPos : null;
                     const playerMainPos = entry.player.mainPos || null;
                     const playerSecondPos = entry.player.secondPos || null;
                     const positionModifier = getPositionModifier(playerMainPos, playerSecondPos, playerMatchPos);
-
-                    // Шаг 2: Вычисляем calculatedRealStr = baseStr * все модификаторы
                     const calculatedRealStr = baseStr * physicalFormModifier * fatigueModifier * realityModifier * positionModifier;
-
-                    // Шаг 3: Вычисляем contribBase = calculatedRealStr * denom
                     const contribBase = calculatedRealStr * denom;
-                    // Шаг 4: Бонусы от contribBase
+
                     const abilityBonusesDetailed = getAbilitiesBonusesDetailed(entry.player.abilities, myStyleId);
                     const abilitiesBonus = getAbilitiesBonusForStyleId(entry.player.abilities, myStyleId);
                     const favoriteStyleBonus = getFavoriteStyleBonus(myStyleId, entry.playerStyleId);
 
-                    // Вратарские способности (только для GK)
                     let goalkeeperBonus = 0;
                     if (playerMatchPos === 'GK') {
                         const hasSW = slotEntries.some(e => e.matchPos === 'SW');
@@ -12189,11 +11700,7 @@ function getTournamentType() {
                     const positionBonusForPlayer = contribBase * positionBonus;
                     totalPositionBonus += positionBonusForPlayer;
 
-                    const moraleBonusForPlayer = getMoraleBonusForPlayer({
-                        moraleMode,
-                        contribBase,
-                        bounds: moraleBounds
-                    });
+                    const moraleBonusForPlayer = getMoraleBonusForPlayer({ moraleMode, contribBase, bounds: moraleBounds });
                     totalMoraleBonus += moraleBonusForPlayer;
 
                     const atmosphereBonusForPlayer = getAtmosphereBonus(contribBase, atmosphereValue);
@@ -12209,44 +11716,32 @@ function getTournamentType() {
                     }
 
                     const defenceTypeBonusForPlayer = idx >= 0 ? (team.contribution[idx] || 0) : 0;
-
                     const totalBonus = abilitiesBonus + favoriteStyleBonus + goalkeeperBonus;
                     const contribWithIndividualBonuses = contribBase * (1 + totalBonus);
 
-                    // Шаг 5: Бонусы от calculatedRealStr
                     const isCaptain = captainId && String(entry.player.id) === String(captainId);
-                    // Капитанский бонус: если это капитан, бонус 0, иначе вычисляем от calculatedRealStr капитана
                     let captainBonusForPlayer = 0;
                     if (!isCaptain && captainPlayer && teamCaptainPercent !== 0) {
-                        // Находим slot капитана для получения его позиции и формы
                         const captainSlot = lineup.find(s => {
                             const pid = s.getValue && s.getValue();
                             return pid && String(pid) === String(captainId);
                         });
-
                         let captainCalculatedStr;
                         if (captainSlot && captainSlot.posValue) {
-                            // Вычисляем calculatedRealStr капитана с учетом всех модификаторов
                             const captainBaseStr = Number(captainPlayer.baseStrength) || 0;
-
-                            // Форма капитана
                             let captainFormId = captainSlot.physicalFormValue;
                             if (!captainFormId) {
                                 const tournamentType = getTournamentType();
                                 captainFormId = getPhysicalFormIdFromData(captainPlayer.form, captainPlayer.form_mod, tournamentType);
                             }
-
                             const captainPhysicalFormModifier = getPhysicalFormModifier(captainFormId);
                             const captainFatigueModifier = getFatigueBonus(captainPlayer.fatigue);
                             const captainRealityModifier = getRealityBonus(captainPlayer.real_status, captainPlayer.real_sign);
                             const captainPositionModifier = getPositionModifier(captainPlayer.mainPos, captainPlayer.secondPos, captainSlot.posValue);
-
                             captainCalculatedStr = captainBaseStr * captainPhysicalFormModifier * captainFatigueModifier * captainRealityModifier * captainPositionModifier;
                         } else {
-                            // Fallback на realStr если нет данных о позиции
                             captainCalculatedStr = Number(captainPlayer.realStr) || 0;
                         }
-
                         captainBonusForPlayer = captainCalculatedStr * teamCaptainPercent;
                     }
 
@@ -12257,91 +11752,51 @@ function getTournamentType() {
                     console.log(`[LEADERSHIP] Игрок ${entry.player.name} (ID: ${entry.player.id}): бонус лидерства = ${leadershipBonusForPlayer.toFixed(2)}`);
                     totalLeadershipBonus += leadershipBonusForPlayer;
 
-                    // teamIBonus добавляется к каждому игроку
                     const teamIBonusForPlayer = teamIBonusTotal;
                     totalTeamIBonus += teamIBonusForPlayer;
 
                     const contribution = contribWithIndividualBonuses +
-                        captainBonusForPlayer +
-                        collisionWinBonusForPlayer +
-                        chemistryBonusForPlayer +
-                        homeBonusForPlayer +
-                        leadershipBonusForPlayer +
-                        synergyBonusForPlayer +
-                        roughBonusForPlayer +
-                        defenceTypeBonusForPlayer +
-                        positionBonusForPlayer +
-                        moraleBonusForPlayer +
-                        atmosphereBonusForPlayer +
-                        teamIBonusForPlayer;
+                        captainBonusForPlayer + collisionWinBonusForPlayer + chemistryBonusForPlayer +
+                        homeBonusForPlayer + leadershipBonusForPlayer + synergyBonusForPlayer +
+                        roughBonusForPlayer + defenceTypeBonusForPlayer + positionBonusForPlayer +
+                        moraleBonusForPlayer + atmosphereBonusForPlayer + teamIBonusForPlayer;
                     total += contribution;
 
                     console.log('[Calc] Player contribution', {
-                        side: sideLabel,
-                        name: entry.player.name,
-                        baseStr,
-                        weatherStr: ws,
-                        calculatedRealStr,
-                        contribBase,
-                        moraleMode,
+                        side: sideLabel, name: entry.player.name, baseStr, weatherStr: ws,
+                        calculatedRealStr, contribBase, moraleMode,
                         moraleBonusForPlayer: moraleBonusForPlayer.toFixed(2),
                         leadershipBonusForPlayer: leadershipBonusForPlayer.toFixed(2),
-                        moraleBounds: {
-                            super: moraleBounds.superBonus,
-                            rest: moraleBounds.restBonus
-                        },
+                        moraleBounds: { super: moraleBounds.superBonus, rest: moraleBounds.restBonus },
                         contribution
                     });
                 });
-                // teamIBonusTotal уже добавлен к каждому игроку, не добавляем отдельно
-                const nonCaptainCount = results.filter(entry => entry && entry.player && (!captainId ||
-                    String(entry.player.id) !== String(captainId))).length;
+
+                const nonCaptainCount = results.filter(entry => entry && entry.player && (!captainId || String(entry.player.id) !== String(captainId))).length;
                 const totalCaptainBonus = (Number(captainBonus) || 0) * nonCaptainCount;
 
                 console.log('[Calc] Team total', {
-                    side: sideLabel,
-                    total,
-                    moraleMode,
-                    moraleBounds: {
-                        super: moraleBounds.superBonus,
-                        rest: moraleBounds.restBonus
-                    },
-                    totalTeamIBonus,
-                    totalCaptainBonus,
-                    totalCollisionWinBonus,
-                    totalSynergyBonus,
-                    totalChemistryBonus,
-                    totalHomeBonus,
-                    totalDefenceTypeBonus,
-                    totalLeadershipBonus,
-                    totalRoughBonus,
-                    totalPositionBonus,
-                    totalMoraleBonus,
-                    atmosphereValue,
-                    totalAtmosphereBonus
+                    side: sideLabel, total, moraleMode,
+                    moraleBounds: { super: moraleBounds.superBonus, rest: moraleBounds.restBonus },
+                    totalTeamIBonus, totalCaptainBonus, totalCollisionWinBonus, totalSynergyBonus,
+                    totalChemistryBonus, totalHomeBonus, totalDefenceTypeBonus, totalLeadershipBonus,
+                    totalRoughBonus, totalPositionBonus, totalMoraleBonus, atmosphereValue, totalAtmosphereBonus
                 });
 
-                // Обновляем отображение бонусов лидеров в UI
                 updateLeadershipBonusesDisplay(sideLabel, leadershipBonusByPlayerId, slotEntries);
-
-                // Обновляем отображение командной игры в UI
                 updateTeamworkDisplay(sideLabel, totalTeamIBonus);
-
-                // Обновляем отображение атмосферы в UI
                 updateAtmosphereDisplay(sideLabel, atmosphereValue, totalAtmosphereBonus);
 
-                return total
+                return total;
             }
+
             try {
-                // Удаляем предыдущий результат
                 const oldResult = container.querySelector('.vsol-result');
                 if (oldResult) oldResult.remove();
 
-                // Проверяем, есть ли игроки в составах
                 const homeHasPlayers = homeLineupBlock.lineup.some(slot => slot.getValue && slot.getValue());
                 const awayHasPlayers = awayLineupBlock.lineup.some(slot => slot.getValue && slot.getValue());
 
-                // Если составы пусты, показываем сообщение
                 if (!homeHasPlayers || !awayHasPlayers) {
                     const resultDiv = document.createElement('div');
                     resultDiv.className = 'vsol-result';
@@ -12362,13 +11817,10 @@ function getTournamentType() {
                     return;
                 }
 
-                // Получаем варианты погоды
                 const weatherData = getWeatherData();
                 const weatherVariants = weatherData && weatherData.minTemp !== null && weatherData.maxTemp !== null
-                    ? getWeatherVariants(weatherData.weather, weatherData.minTemp, weatherData.maxTemp)
-                    : null;
+                    ? getWeatherVariants(weatherData.weather, weatherData.minTemp, weatherData.maxTemp) : null;
 
-                // Если нет вариантов погоды, делаем один расчет
                 if (!weatherVariants) {
                     const [homeStrength, awayStrength] = await Promise.all([
                         computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
@@ -12376,7 +11828,6 @@ function getTournamentType() {
                         computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
                             'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere)
                     ]);
-
                     const resultDiv = document.createElement('div');
                     resultDiv.className = 'vsol-result';
                     resultDiv.style.marginTop = '15px';
@@ -12387,69 +11838,51 @@ function getTournamentType() {
                     return;
                 }
 
-                // Делаем 4 расчета: пользовательский + 3 варианта погоды
                 const calculations = await Promise.all([
-                    // Пользовательский выбор (первый)
                     Promise.all([
                         computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
-                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere,
-                            wt.weather, wt.temperature),
+                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere, wt.weather, wt.temperature),
                         computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
-                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere,
-                            wt.weather, wt.temperature)
+                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere, wt.weather, wt.temperature)
                     ]),
-                    // Минимум
                     Promise.all([
                         computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
-                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere,
-                            weatherVariants.min.weather, weatherVariants.min.temperature),
+                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere, weatherVariants.min.weather, weatherVariants.min.temperature),
                         computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
-                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere,
-                            weatherVariants.min.weather, weatherVariants.min.temperature)
+                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere, weatherVariants.min.weather, weatherVariants.min.temperature)
                     ]),
-                    // Средний
                     Promise.all([
                         computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
-                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere,
-                            weatherVariants.avg.weather, weatherVariants.avg.temperature),
+                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere, weatherVariants.avg.weather, weatherVariants.avg.temperature),
                         computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
-                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere,
-                            weatherVariants.avg.weather, weatherVariants.avg.temperature)
+                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere, weatherVariants.avg.weather, weatherVariants.avg.temperature)
                     ]),
-                    // Максимум
                     Promise.all([
                         computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
-                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere,
-                            weatherVariants.max.weather, weatherVariants.max.temperature),
+                            'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere, weatherVariants.max.weather, weatherVariants.max.temperature),
                         computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
-                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere,
-                            weatherVariants.max.weather, weatherVariants.max.temperature)
+                            'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere, weatherVariants.max.weather, weatherVariants.max.temperature)
                     ])
                 ]);
 
-                const teamNames = extractTeamNames();
-
-                // Создаем таблицу с результатами
+                const teamNamesResult = extractTeamNames();
                 const resultDiv = document.createElement('div');
                 resultDiv.className = 'vsol-result';
                 resultDiv.style.marginTop = '15px';
 
                 let tableHTML = `<table style="width:100%; border-collapse:collapse; border:1px solid #ddd;"><tbody>`;
-
-                // Заголовок с названиями команд
                 tableHTML += `
                     <tr bgcolor="#006600">
                         <td class="lh20 txtw" colspan="3" style="text-align:center;">
-                            ${teamNames.homeEmblem ? `<img src="${teamNames.homeEmblem}" style="vertical-align:middle; margin-right:5px;" width="16" height="16">` : ''}
-                            <b>${teamNames.home}</b>
+                            ${teamNamesResult.homeEmblem ? `<img src="${teamNamesResult.homeEmblem}" style="vertical-align:middle; margin-right:5px;" width="16" height="16">` : ''}
+                            <b>${teamNamesResult.home}</b>
                             <span style="margin:0 10px;">—</span>
-                            ${teamNames.awayEmblem ? `<img src="${teamNames.awayEmblem}" style="vertical-align:middle; margin-right:5px;" width="16" height="16">` : ''}
-                            <b>${teamNames.away}</b>
+                            ${teamNamesResult.awayEmblem ? `<img src="${teamNamesResult.awayEmblem}" style="vertical-align:middle; margin-right:5px;" width="16" height="16">` : ''}
+                            <b>${teamNamesResult.away}</b>
                         </td>
                     </tr>
                 `;
 
-                // Первая строка - пользовательский выбор
                 const [userHomeStr, userAwayStr] = calculations[0];
                 const userDiff = userHomeStr - userAwayStr;
                 const userHomePercent = userHomeStr + userAwayStr > 0 ? Math.round((userHomeStr / (userHomeStr + userAwayStr)) * 100) : 50;
@@ -12467,26 +11900,19 @@ function getTournamentType() {
                     </tr>
                 `;
 
-                // Строки с вариантами расчетов (min, avg, max)
                 const variants = ['min', 'avg', 'max'];
                 variants.forEach((variant, idx) => {
-                    const [homeStr, awayStr] = calculations[idx + 1]; // +1 потому что первый элемент - пользовательский
+                    const [homeStr, awayStr] = calculations[idx + 1];
                     const diff = homeStr - awayStr;
                     const homePercent = homeStr + awayStr > 0 ? Math.round((homeStr / (homeStr + awayStr)) * 100) : 50;
                     const awayPercent = 100 - homePercent;
-
                     const variantData = weatherVariants[variant];
                     const isAvg = variant === 'avg';
                     const bgColor = isAvg ? ' bgcolor="#fff9db"' : '';
-
-                    // Динамическая ширина колонок на основе процентов
                     const homeWidth = Math.round(331 * (homePercent / 100));
                     const awayWidth = 331 - homeWidth;
-
-                    // Разница показывается только у выигрывающей команды
                     const homeDiff = diff > 0 ? `<span class="lh12 up" style="padding-left:2px">+${Math.round(diff)}</span>` : '';
                     const awayDiff = diff < 0 ? `<span class="lh12 up" style="padding-left:2px">+${Math.round(Math.abs(diff))}</span>` : '';
-
                     tableHTML += `
                         <tr${bgColor}>
                             <td class="lh18 txt" width="240" style="border:1px solid #ddd;">${variantData.weather}, ${variantData.temperature}°</td>
@@ -12501,7 +11927,6 @@ function getTournamentType() {
                 container.appendChild(resultDiv);
             } catch (e) {
                 console.error('Ошибка расчёта:', e);
-
                 const resultDiv = document.createElement('div');
                 resultDiv.className = 'vsol-result';
                 resultDiv.style.marginTop = '15px';
@@ -12523,6 +11948,7 @@ function getTournamentType() {
             }
         };
 
+        // Кнопка расчёта
         const btn = document.createElement('button');
         btn.textContent = 'Рассчитать силу';
         btn.style.marginTop = '15px';
@@ -12543,16 +11969,10 @@ function getTournamentType() {
         refreshShirtsBtn.title = 'Очистить кэш и загрузить футболки заново';
         refreshShirtsBtn.onclick = async () => {
             if (!homeTeamId || !awayTeamId) return;
-
-            // Очищаем кэш
             try {
                 localStorage.removeItem(getShirtsCacheKey(homeTeamId));
                 localStorage.removeItem(getShirtsCacheKey(awayTeamId));
-
-
-                // Перезагружаем футболки
                 await initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock, awayLineupBlock);
-
                 alert('Футболки успешно обновлены!');
             } catch (error) {
                 console.error('[Shirts] Failed to refresh:', error);
@@ -12561,13 +11981,13 @@ function getTournamentType() {
         };
         container.appendChild(refreshShirtsBtn);
 
-        // Инициализируем систему футболок
+        // Инициализация системы футболок
         if (homeTeamId && awayTeamId && fieldCol) {
             initializeShirtsSystem(homeTeamId, awayTeamId, fieldCol, homeFormationSelect, awayFormationSelect, homeLineupBlock, awayLineupBlock)
                 .catch(err => console.error('[Shirts] Failed to initialize:', err));
         }
 
-        // Первый автоматический расчет после загрузки
+        // Первый автоматический расчет
         setTimeout(() => {
             if (typeof window.__vs_recalculateStrength === 'function') {
                 window.__vs_recalculateStrength();
@@ -13666,296 +13086,11 @@ function getTournamentType() {
         initializeKeyboardShortcuts();
     }
 
-    // ===== НОВЫЕ ФУНКЦИИ ДЛЯ ВКЛАДОК КОМАНД =====
+    // [DEADCODE] createTeamTabsContainer — moved to deadcode.js
 
-    function createTeamTabsContainer(homeTeamName, awayTeamName, homeContent, awayContent) {
-        const tabsContainer = document.createElement('div');
-        tabsContainer.className = 'team-tabs-container';
-        tabsContainer.id = 'vsol-team-tabs-container';
-        tabsContainer.style.cssText = `
-            background: white;
-            box-sizing: border-box;
-        `;
+    // [DEADCODE] showTeamTab — moved to deadcode.js
 
-        // Заголовок с вкладками
-        const tabsHeader = document.createElement('div');
-        tabsHeader.className = 'tabs-header';
-        tabsHeader.id = 'vsol-tabs-header';
-        tabsHeader.style.cssText = `
-            background: rgb(248, 248, 248);
-            border-bottom: 1px solid rgb(204, 204, 204);
-            padding: 8px 12px;
-        `;
-
-        const homeTabLink = document.createElement('a');
-        homeTabLink.href = '#';
-        homeTabLink.className = 'tab-link active';
-        homeTabLink.id = 'tab-home';
-        homeTabLink.textContent = homeTeamName + ' (дома)';
-        homeTabLink.style.cssText = `
-            text-decoration: none;
-            padding: 5px 10px;
-            margin-right: 5px;
-            color: rgb(0, 0, 0);
-            font-weight: bold;
-        `;
-
-        const separator = document.createTextNode(' | ');
-
-        const awayTabLink = document.createElement('a');
-        awayTabLink.href = '#';
-        awayTabLink.className = 'tab-link';
-        awayTabLink.id = 'tab-away';
-        awayTabLink.textContent = awayTeamName + ' (в гостях)';
-        awayTabLink.style.cssText = `
-            text-decoration: none;
-            padding: 5px 10px;
-            margin-right: 5px;
-            color: rgb(102, 102, 102);
-            font-weight: normal;
-        `;
-
-        // Обработчики переключения вкладок
-        homeTabLink.onclick = (e) => {
-            e.preventDefault();
-            showTeamTab('home');
-        };
-
-        awayTabLink.onclick = (e) => {
-            e.preventDefault();
-            showTeamTab('away');
-        };
-
-        tabsHeader.appendChild(homeTabLink);
-        tabsHeader.appendChild(separator);
-        tabsHeader.appendChild(awayTabLink);
-
-        // Контент вкладок
-        const homeTabContent = document.createElement('div');
-        homeTabContent.id = 'tab-content-home';
-        homeTabContent.className = 'tab-content active';
-        homeTabContent.style.cssText = `
-            display: block;
-        `;
-        homeTabContent.appendChild(homeContent);
-
-        const awayTabContent = document.createElement('div');
-        awayTabContent.id = 'tab-content-away';
-        awayTabContent.className = 'tab-content';
-        awayTabContent.style.cssText = `
-            display: none;
-        `;
-        awayTabContent.appendChild(awayContent);
-
-        tabsContainer.appendChild(tabsHeader);
-        tabsContainer.appendChild(homeTabContent);
-        tabsContainer.appendChild(awayTabContent);
-
-        return tabsContainer;
-    }
-
-    function showTeamTab(tabName) {
-        // Скрываем все вкладки
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.style.display = 'none';
-            content.classList.remove('active');
-        });
-
-        // Убираем активный класс со всех ссылок
-        document.querySelectorAll('.tab-link').forEach(link => {
-            link.classList.remove('active');
-            link.style.fontWeight = 'normal';
-            link.style.color = 'rgb(102, 102, 102)';
-        });
-
-        // Показываем нужную вкладку
-        const targetContent = document.getElementById(`tab-content-${tabName}`);
-        const targetLink = document.getElementById(`tab-${tabName}`);
-
-        if (targetContent) {
-            targetContent.style.display = 'block';
-            targetContent.classList.add('active');
-        }
-
-        if (targetLink) {
-            targetLink.classList.add('active');
-            targetLink.style.fontWeight = 'bold';
-            targetLink.style.color = 'rgb(0, 0, 0)';
-        }
-    }
-
-    function createTeamTabContent(teamSettings, lineupBlock, teamName) {
-        const content = document.createElement('div');
-        content.id = `vsol-team-content-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
-
-        // Секция тактических настроек
-        const tacticsSection = document.createElement('div');
-        tacticsSection.className = 'section';
-        tacticsSection.id = `vsol-tactics-section-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
-        tacticsSection.style.marginBottom = '20px';
-
-        // Добавляем настройки напрямую без дополнительной обертки
-        tacticsSection.appendChild(teamSettings);
-
-        // Секция состава
-        const lineupSection = document.createElement('div');
-        lineupSection.className = 'section';
-        lineupSection.id = `vsol-lineup-section-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
-        lineupSection.style.marginBottom = '20px';
-
-        // Заголовок состава в стиле игры
-        const lineupHeaderTable = document.createElement('table');
-        lineupHeaderTable.style.cssText = `
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 2px;
-        `;
-
-        const lineupHeaderRow = document.createElement('tr');
-        lineupHeaderRow.style.backgroundColor = 'rgb(0, 102, 0)';
-
-        const lineupHeaderCell = document.createElement('td');
-        lineupHeaderCell.className = 'lh18 txtw';
-        lineupHeaderCell.style.cssText = `
-            text-align: center;
-            padding: 4px;
-            color: white;
-            font-weight: bold;
-            font-size: 11px;
-        `;
-        lineupHeaderCell.textContent = 'Состав';
-
-        lineupHeaderRow.appendChild(lineupHeaderCell);
-        lineupHeaderTable.appendChild(lineupHeaderRow);
-
-        // Добавляем подсказку к заголовку состава
-        setTimeout(() => {
-            addHelpButton(lineupHeaderCell, 'player_selection', 'Выбор игроков');
-        }, 100);
-
-        // Добавляем состав напрямую без дополнительной обертки
-        lineupSection.appendChild(lineupHeaderTable);
-        lineupSection.appendChild(lineupBlock.block);
-
-        // Роли (капитан, штрафные, угловые, пенальти) — добавляются в таблицу состава
-        const rolesContainer = document.createElement('div');
-        rolesContainer.id = `vsol-roles-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
-
-        // Создаем мини-таблицу ролей для вставки после состава
-        const rolesTable = document.createElement('table');
-        rolesTable.className = 'orders-table';
-        rolesTable.style.cssText = 'border-collapse: collapse; border-spacing: 0; width: 100%;';
-
-        // Строка капитана
-        const captainRowTr = document.createElement('tr');
-        const captainRoleCell = document.createElement('td');
-        captainRoleCell.className = 'order';
-        captainRoleCell.style.cssText = 'height:20px; font-size:11px;';
-        captainRoleCell.title = 'Капитан команды';
-        captainRoleCell.innerHTML = '<img src="pics/captbig.png" style="vertical-align:top">';
-
-        const captainPlayerCell = document.createElement('td');
-        captainPlayerCell.colSpan = 3;
-        if (lineupBlock && lineupBlock.captainSelect) {
-            lineupBlock.captainSelect.id = `vsol-captain-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
-            lineupBlock.captainSelect.style.cssText = 'width:100%; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
-            captainPlayerCell.appendChild(lineupBlock.captainSelect);
-        }
-        captainRowTr.appendChild(captainRoleCell);
-        captainRowTr.appendChild(captainPlayerCell);
-        rolesTable.appendChild(captainRowTr);
-
-        // Строка штрафных
-        const shtRow = document.createElement('tr');
-        const shtRoleCell = document.createElement('td');
-        shtRoleCell.className = 'order';
-        shtRoleCell.style.cssText = 'height:20px; font-size:11px;';
-        shtRoleCell.title = 'Исполнитель штрафных ударов';
-        shtRoleCell.textContent = 'Шт';
-        const shtPlayerCell = document.createElement('td');
-        shtPlayerCell.colSpan = 3;
-
-        const shtSelect = document.createElement('select');
-        shtSelect.id = `vsol-sht-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
-        shtSelect.tabIndex = -1;
-        shtSelect.style.cssText = 'width:100%; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
-        const shtDefault = document.createElement('option');
-        shtDefault.value = '-1';
-        shtDefault.className = 'grD';
-        shtDefault.textContent = 'некому исполнять штрафные';
-        shtSelect.appendChild(shtDefault);
-        shtPlayerCell.appendChild(shtSelect);
-        shtRow.appendChild(shtRoleCell);
-        shtRow.appendChild(shtPlayerCell);
-        rolesTable.appendChild(shtRow);
-
-        // Строка угловых
-        const ugRow = document.createElement('tr');
-        const ugRoleCell = document.createElement('td');
-        ugRoleCell.className = 'order';
-        ugRoleCell.style.cssText = 'height:20px; font-size:11px;';
-        ugRoleCell.title = 'Исполнитель угловых ударов';
-        ugRoleCell.textContent = 'Уг';
-        const ugPlayerCell = document.createElement('td');
-        ugPlayerCell.colSpan = 3;
-
-        const uglovSelect = document.createElement('select');
-        uglovSelect.id = `vsol-uglov-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
-        uglovSelect.tabIndex = -1;
-        uglovSelect.style.cssText = 'width:100%; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
-        const ugDefault = document.createElement('option');
-        ugDefault.value = '-1';
-        ugDefault.className = 'grD';
-        ugDefault.textContent = 'некому исполнять угловые';
-        uglovSelect.appendChild(ugDefault);
-        ugPlayerCell.appendChild(uglovSelect);
-        ugRow.appendChild(ugRoleCell);
-        ugRow.appendChild(ugPlayerCell);
-        rolesTable.appendChild(ugRow);
-
-        // Строка пенальти
-        const penRow = document.createElement('tr');
-        const penRoleCell = document.createElement('td');
-        penRoleCell.className = 'order';
-        penRoleCell.style.cssText = 'height:20px; font-size:11px;';
-        penRoleCell.title = 'Пенальтист';
-        penRoleCell.textContent = 'Пен';
-        const penPlayerCell = document.createElement('td');
-        penPlayerCell.colSpan = 3;
-
-        const penaltySelect = document.createElement('select');
-        penaltySelect.id = `vsol-penalty-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
-        penaltySelect.tabIndex = -1;
-        penaltySelect.style.cssText = 'width:100%; height:20px; font-size:11px; border:1px solid rgb(170,170,170); padding:2px 4px; box-sizing:border-box; background:white;';
-        const penDefault = document.createElement('option');
-        penDefault.value = '-1';
-        penDefault.className = 'grD';
-        penDefault.textContent = 'некому исполнять пенальти';
-        penaltySelect.appendChild(penDefault);
-        penPlayerCell.appendChild(penaltySelect);
-        penRow.appendChild(penRoleCell);
-        penRow.appendChild(penPlayerCell);
-        rolesTable.appendChild(penRow);
-
-        rolesContainer.appendChild(rolesTable);
-
-        // Сохраняем ссылки на селекторы
-        if (lineupBlock) {
-            lineupBlock.shtSelect = shtSelect;
-            lineupBlock.uglovSelect = uglovSelect;
-            lineupBlock.penaltySelect = penaltySelect;
-            if (lineupBlock.updateRoleSelectors) {
-                lineupBlock.updateRoleSelectors();
-            }
-        }
-
-        // Собираем все секции
-        content.appendChild(tacticsSection);
-        content.appendChild(lineupSection);
-        content.appendChild(rolesContainer);
-
-        return content;
-    }
+    // [DEADCODE] createTeamTabContent — moved to deadcode.js
 
     // ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ ДЛЯ ИНТЕРАКТИВНЫХ КАЛЬКУЛЯТОРОВ =====
 
@@ -14261,6 +13396,13 @@ setTimeout(() => {
         return matches;
     }
 
+    function detectUserTeam(pageData, matchData) {
+        const userTeamId = String(pageData.curr);
+        const isHome = matchData.homeAway === 'Д';
+        const opponentTeamId = String(matchData.opponentId);
+        return { isHome, userTeamId, opponentTeamId };
+    }
+
     function createOrderTabs(matchData) {
         const forma = document.getElementById('forma');
         if (!forma) return;
@@ -14280,7 +13422,7 @@ setTimeout(() => {
         const opponentLabel = matchData.homeAway === 'Д' ? '(дома)' : '(в гостях)';
         const tabCalc = document.createElement('a');
         tabCalc.href = '#';
-        tabCalc.textContent = `Калькулятор — ${matchData.opponentName} ${opponentLabel}`;
+        tabCalc.textContent = 'Калькулятор';
         tabCalc.style.cssText = 'text-decoration: none; padding: 5px 10px; margin-right: 5px; color: #666; font-weight: normal;';
 
         tabHeader.appendChild(tabOrder);
@@ -14390,14 +13532,9 @@ setTimeout(() => {
             : { home: oppRating, away: myRating };
 
         container.innerHTML = '';
-        const ui = createUI(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere);
+        const pageData = window.__vs_orderPageData || null;
+        const ui = createLayout(homeTeamId, awayTeamId, homePlayers, awayPlayers, homeAtmosphere, awayAtmosphere, pageData, matchData);
         container.appendChild(ui);
-
-        // Синхронизация состава из формы убрана — теперь только по кнопке "Импорт из формы"
-        // syncLineupFromOrderForm(isHome);
-
-        // Добавляем кнопку отправки
-        addSubmitButtonToCalc(container, isHome, matchData);
 
         console.log('[ORDER] Калькулятор построен');
         console.groupEnd();
@@ -14645,57 +13782,759 @@ setTimeout(() => {
         hiddenForm.submit();
     }
 
-    function addSubmitButtonToCalc(container, isHome, matchData) {
-        const btnRow = document.createElement('div');
-        btnRow.style.cssText = 'text-align: center; padding: 10px 0; border-top: 1px solid #ccc; margin-top: 10px;';
+    // ===== БЛОКИ ЗАМЕН И ТАКТИЧЕСКИХ УКАЗАНИЙ (Task 7.1) =====
 
+    /**
+     * Создаёт блок замен (5 слотов) для блока состава пользователя.
+     * Каждый слот: zmin_start, zmin_end, zcond, zout, zin
+     * @param {string} sideLabel — 'home' | 'away'
+     * @returns {HTMLElement} контейнер с блоком замен
+     */
+    function createSubstitutionSlots(sideLabel) {
+        const CONDITIONS = [
+            {v:'0',t:'без условия'},{v:'12',t:'счет устраивает'},{v:'13',t:'счет не устраивает'},
+            {v:'1',t:'проигрываем'},{v:'14',t:'проигрываем один мяч'},{v:'2',t:'проигрываем два мяча'},
+            {v:'16',t:'проигрываем ≥ 2 мячей'},{v:'3',t:'проигрываем ≥ 3 мячей'},
+            {v:'4',t:'ничья'},{v:'5',t:'выигрываем'},{v:'15',t:'выигрываем один мяч'},
+            {v:'6',t:'выигрываем два мяча'},{v:'17',t:'выигрываем ≥ 2 мячей'},{v:'7',t:'выигрываем ≥ 3 мячей'},
+            {v:'8',t:'удаление у нас'},{v:'9',t:'удаление у соперника'},
+            {v:'10',t:'не проигрываем'},{v:'11',t:'не выигрываем'}
+        ];
+        const container = document.createElement('div');
+        container.id = `vsol-substitutions-${sideLabel}`;
+        container.style.cssText = 'margin-top:4px;';
+
+        const header = document.createElement('div');
+        header.id = `vsol-subs-header-${sideLabel}`;
+        header.style.cssText = 'background:#006600;color:white;font-size:10px;font-weight:bold;text-align:center;padding:2px 4px;display:flex;justify-content:space-between;align-items:center;';
+        const headerText = document.createElement('span');
+        headerText.textContent = 'Замены';
+        const btnGroup = document.createElement('span');
+        const btnAdd = document.createElement('button');
+        btnAdd.id = `vsol-subs-add-${sideLabel}`;
+        btnAdd.textContent = '+';
+        btnAdd.style.cssText = 'background:#fff;color:#006600;border:1px solid #fff;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:4px;line-height:14px;';
+        const btnRemove = document.createElement('button');
+        btnRemove.id = `vsol-subs-remove-${sideLabel}`;
+        btnRemove.textContent = '−';
+        btnRemove.style.cssText = 'background:#fff;color:#c00;border:1px solid #fff;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:2px;line-height:14px;';
+        btnGroup.appendChild(btnAdd);
+        btnGroup.appendChild(btnRemove);
+        header.appendChild(headerText);
+        header.appendChild(btnGroup);
+        container.appendChild(header);
+
+        const table = document.createElement('table');
+        table.id = `vsol-subs-table-${sideLabel}`;
+        table.style.cssText = 'border-collapse:collapse;width:100%;font-size:10px;';
+        const thead = document.createElement('tr');
+        thead.style.cssText = 'background:#e8e8e8;';
+        ['С','До','Условие','Уходит','Выходит'].forEach(text => {
+            const th = document.createElement('td');
+            th.style.cssText = 'font-size:9px;text-align:center;padding:1px 2px;border:1px solid #ccc;';
+            th.textContent = text;
+            thead.appendChild(th);
+        });
+        table.appendChild(thead);
+
+        const slots = [];
+        const cellCss = 'border:1px solid #ccc;padding:1px;';
+        const inputCss = 'width:100%;font-size:10px;border:1px solid #aaa;padding:1px;box-sizing:border-box;height:18px;';
+        const selectCss = 'width:100%;font-size:9px;border:1px solid #aaa;padding:0;box-sizing:border-box;height:18px;';
+
+        function addSlot() {
+            const i = slots.length;
+            const tr = document.createElement('tr');
+            tr.id = `vsol-sub-${sideLabel}-${i}`;
+            const slotData = {};
+
+            const tdStart = document.createElement('td');
+            tdStart.style.cssText = cellCss;
+            const inpStart = document.createElement('input');
+            inpStart.type = 'text'; inpStart.name = `zmin_start[${i}]`;
+            inpStart.style.cssText = inputCss; inpStart.maxLength = 3;
+            tdStart.appendChild(inpStart); slotData.start = inpStart; tr.appendChild(tdStart);
+
+            const tdEnd = document.createElement('td');
+            tdEnd.style.cssText = cellCss;
+            const inpEnd = document.createElement('input');
+            inpEnd.type = 'text'; inpEnd.name = `zmin_end[${i}]`;
+            inpEnd.style.cssText = inputCss; inpEnd.maxLength = 3;
+            tdEnd.appendChild(inpEnd); slotData.end = inpEnd; tr.appendChild(tdEnd);
+
+            const tdCond = document.createElement('td');
+            tdCond.style.cssText = cellCss;
+            const selCond = document.createElement('select');
+            selCond.name = `zcond[${i}]`; selCond.style.cssText = selectCss;
+            const optEmpty = document.createElement('option'); optEmpty.value = ''; optEmpty.textContent = '-'; selCond.appendChild(optEmpty);
+            CONDITIONS.forEach(c => { const o = document.createElement('option'); o.value = c.v; o.textContent = c.t; selCond.appendChild(o); });
+            tdCond.appendChild(selCond); slotData.cond = selCond; tr.appendChild(tdCond);
+
+            const tdOut = document.createElement('td');
+            tdOut.style.cssText = cellCss;
+            const selOut = document.createElement('select');
+            selOut.name = `zout[${i}]`; selOut.style.cssText = selectCss;
+            const optOut = document.createElement('option'); optOut.value = ''; optOut.textContent = '-'; selOut.appendChild(optOut);
+            tdOut.appendChild(selOut); slotData.out = selOut; tr.appendChild(tdOut);
+
+            const tdIn = document.createElement('td');
+            tdIn.style.cssText = cellCss;
+            const selIn = document.createElement('select');
+            selIn.name = `zin[${i}]`; selIn.style.cssText = selectCss;
+            const optIn = document.createElement('option'); optIn.value = ''; optIn.textContent = '-'; selIn.appendChild(optIn);
+            tdIn.appendChild(selIn); slotData.in = selIn; tr.appendChild(tdIn);
+
+            table.appendChild(tr);
+            slots.push(slotData);
+        }
+
+        for (let i = 0; i < 5; i++) addSlot();
+
+        btnAdd.addEventListener('click', () => { if (slots.length < 10) addSlot(); });
+        btnRemove.addEventListener('click', () => {
+            if (slots.length > 1) {
+                const last = table.lastElementChild;
+                if (last && last !== thead) { table.removeChild(last); slots.pop(); }
+            }
+        });
+
+        container.appendChild(table);
+        container._slots = slots;
+        return container;
+    }
+
+    /**
+     * Создаёт блок тактических указаний (5 слотов) для блока состава пользователя.
+     * Каждый слот: tmin_start, tmin_end, tcond, tact
+     * @param {string} sideLabel — 'home' | 'away'
+     * @returns {HTMLElement} контейнер с блоком тактических указаний
+     */
+    function createTacticalInstructionSlots(sideLabel) {
+        const CONDITIONS = [
+            {v:'0',t:'без условия'},{v:'12',t:'счет устраивает'},{v:'13',t:'счет не устраивает'},
+            {v:'1',t:'проигрываем'},{v:'14',t:'проигрываем один мяч'},{v:'2',t:'проигрываем два мяча'},
+            {v:'16',t:'проигрываем ≥ 2 мячей'},{v:'3',t:'проигрываем ≥ 3 мячей'},
+            {v:'4',t:'ничья'},{v:'5',t:'выигрываем'},{v:'15',t:'выигрываем один мяч'},
+            {v:'6',t:'выигрываем два мяча'},{v:'17',t:'выигрываем ≥ 2 мячей'},{v:'7',t:'выигрываем ≥ 3 мячей'},
+            {v:'8',t:'удаление у нас'},{v:'9',t:'удаление у соперника'},
+            {v:'10',t:'не проигрываем'},{v:'11',t:'не выигрываем'}
+        ];
+        const ACTIONS = [
+            {v:'0',t:'без действия'},{v:'1',t:'суперзащитная тактика'},{v:'2',t:'защитная тактика'},
+            {v:'3',t:'нормальная тактика'},{v:'4',t:'атакующая тактика'},{v:'5',t:'все в атаку'},
+            {v:'6',t:'заменить полевого с карточкой'},{v:'7',t:'играть грубо'},{v:'8',t:'играть аккуратно'}
+        ];
+        const container = document.createElement('div');
+        container.id = `vsol-tactical-${sideLabel}`;
+        container.style.cssText = 'margin-top:4px;';
+
+        const header = document.createElement('div');
+        header.id = `vsol-tact-header-${sideLabel}`;
+        header.style.cssText = 'background:#006600;color:white;font-size:10px;font-weight:bold;text-align:center;padding:2px 4px;display:flex;justify-content:space-between;align-items:center;';
+        const headerText = document.createElement('span');
+        headerText.textContent = 'Тактические указания';
+        const btnGroup = document.createElement('span');
+        const btnAdd = document.createElement('button');
+        btnAdd.id = `vsol-tact-add-${sideLabel}`;
+        btnAdd.textContent = '+';
+        btnAdd.style.cssText = 'background:#fff;color:#006600;border:1px solid #fff;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:4px;line-height:14px;';
+        const btnRemove = document.createElement('button');
+        btnRemove.id = `vsol-tact-remove-${sideLabel}`;
+        btnRemove.textContent = '−';
+        btnRemove.style.cssText = 'background:#fff;color:#c00;border:1px solid #fff;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:2px;line-height:14px;';
+        btnGroup.appendChild(btnAdd);
+        btnGroup.appendChild(btnRemove);
+        header.appendChild(headerText);
+        header.appendChild(btnGroup);
+        container.appendChild(header);
+
+        const table = document.createElement('table');
+        table.id = `vsol-tact-table-${sideLabel}`;
+        table.style.cssText = 'border-collapse:collapse;width:100%;font-size:10px;';
+        const thead = document.createElement('tr');
+        thead.style.cssText = 'background:#e8e8e8;';
+        ['С','До','Условие','Действие'].forEach(text => {
+            const th = document.createElement('td');
+            th.style.cssText = 'font-size:9px;text-align:center;padding:1px 2px;border:1px solid #ccc;';
+            th.textContent = text;
+            thead.appendChild(th);
+        });
+        table.appendChild(thead);
+
+        const slots = [];
+        const cellCss = 'border:1px solid #ccc;padding:1px;';
+        const inputCss = 'width:100%;font-size:10px;border:1px solid #aaa;padding:1px;box-sizing:border-box;height:18px;';
+        const selectCss = 'width:100%;font-size:9px;border:1px solid #aaa;padding:0;box-sizing:border-box;height:18px;';
+
+        function addSlot() {
+            const i = slots.length;
+            const tr = document.createElement('tr');
+            tr.id = `vsol-tact-slot-${sideLabel}-${i}`;
+            const slotData = {};
+
+            const tdStart = document.createElement('td');
+            tdStart.style.cssText = cellCss;
+            const inpStart = document.createElement('input');
+            inpStart.type = 'text'; inpStart.name = `tmin_start[${i}]`;
+            inpStart.style.cssText = inputCss; inpStart.maxLength = 3;
+            tdStart.appendChild(inpStart); slotData.start = inpStart; tr.appendChild(tdStart);
+
+            const tdEnd = document.createElement('td');
+            tdEnd.style.cssText = cellCss;
+            const inpEnd = document.createElement('input');
+            inpEnd.type = 'text'; inpEnd.name = `tmin_end[${i}]`;
+            inpEnd.style.cssText = inputCss; inpEnd.maxLength = 3;
+            tdEnd.appendChild(inpEnd); slotData.end = inpEnd; tr.appendChild(tdEnd);
+
+            const tdCond = document.createElement('td');
+            tdCond.style.cssText = cellCss;
+            const selCond = document.createElement('select');
+            selCond.name = `tcond[${i}]`; selCond.style.cssText = selectCss;
+            const optEmpty = document.createElement('option'); optEmpty.value = ''; optEmpty.textContent = '-'; selCond.appendChild(optEmpty);
+            CONDITIONS.forEach(c => { const o = document.createElement('option'); o.value = c.v; o.textContent = c.t; selCond.appendChild(o); });
+            tdCond.appendChild(selCond); slotData.cond = selCond; tr.appendChild(tdCond);
+
+            const tdTact = document.createElement('td');
+            tdTact.style.cssText = cellCss;
+            const selTact = document.createElement('select');
+            selTact.name = `tact[${i}]`; selTact.style.cssText = selectCss;
+            const optTEmpty = document.createElement('option'); optTEmpty.value = ''; optTEmpty.textContent = '-'; selTact.appendChild(optTEmpty);
+            ACTIONS.forEach(a => { const o = document.createElement('option'); o.value = a.v; o.textContent = a.t; selTact.appendChild(o); });
+            tdTact.appendChild(selTact); slotData.tact = selTact; tr.appendChild(tdTact);
+
+            table.appendChild(tr);
+            slots.push(slotData);
+        }
+
+        for (let i = 0; i < 5; i++) addSlot();
+
+        btnAdd.addEventListener('click', () => { if (slots.length < 10) addSlot(); });
+        btnRemove.addEventListener('click', () => {
+            if (slots.length > 1) {
+                const last = table.lastElementChild;
+                if (last && last !== thead) { table.removeChild(last); slots.pop(); }
+            }
+        });
+
+        container.appendChild(table);
+        container._slots = slots;
+        return container;
+    }
+
+    /**
+     * Формирует ключ хранилища для кэша состава.
+     * Формат: vs_lineup_{teamId}_{orderDay}
+     * @param {string|number} teamId — ID команды
+     * @param {string|number} orderDay — день заявки
+     * @returns {string}
+     */
+    function getLineupCacheKey(teamId, orderDay) {
+        return `vs_lineup_${teamId}_${orderDay}`;
+    }
+
+    /**
+     * Показывает модальный диалог управления кэшем составов.
+     * Список всех сохранённых составов с кнопками загрузить/удалить + сохранение нового.
+     * @param {boolean} isHome — true если пользователь играет дома
+     * @param {string} targetSide — 'home' | 'away' — в какой блок загружать
+     */
+    function showLineupCacheDialog(isHome, targetSide) {
+        console.group('[LineupCache] 📋 Открытие диалога управления кэшем');
+        const sideLabel = targetSide || (isHome ? 'home' : 'away');
+        const teamId = sideLabel === 'home' ? window.homeTeamId : window.awayTeamId;
+        const lineupBlock = sideLabel === 'home' ? window.homeLineupBlock : window.awayLineupBlock;
+        const team = sideLabel === 'home' ? window.homeTeam : window.awayTeam;
+
+        // Оверлей
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) { overlay.remove(); console.groupEnd(); }
+        });
+
+        // Модальное окно
+        const modal = document.createElement('div');
+        modal.style.cssText = 'background:#fff;border-radius:8px;width:500px;max-width:90vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+
+        // Заголовок
+        const header = document.createElement('div');
+        header.style.cssText = 'padding:12px 16px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;';
+        const title = document.createElement('span');
+        title.textContent = sideLabel === 'home' ? 'Кэш составов (хозяева)' : 'Кэш составов (гости)';
+        title.style.cssText = 'font-weight:bold;font-size:14px;';
+        const closeBtn = document.createElement('span');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = 'cursor:pointer;font-size:18px;color:#888;padding:0 4px;';
+        closeBtn.addEventListener('click', () => { overlay.remove(); console.groupEnd(); });
+        header.appendChild(title);
+        header.appendChild(closeBtn);
+
+        // Контент — список составов
+        const content = document.createElement('div');
+        content.style.cssText = 'flex:1;overflow-y:auto;padding:8px;min-height:150px;';
+
+        // Кнопка сохранения текущего состава
+        const footer = document.createElement('div');
+        footer.style.cssText = 'padding:8px 16px;border-top:1px solid #ddd;display:flex;gap:8px;align-items:center;';
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.placeholder = 'Название (необязательно)';
+        nameInput.style.cssText = 'flex:1;height:24px;font-size:11px;border:1px solid #aaa;padding:2px 6px;box-sizing:border-box;';
+
+        const saveBtn = document.createElement('a');
+        saveBtn.href = '#';
+        saveBtn.className = 'butn-green';
+        saveBtn.textContent = 'Сохранить текущий';
+        saveBtn.style.cssText = 'font-size:10px;padding:4px 10px;cursor:pointer;text-decoration:none;white-space:nowrap;';
+
+        footer.appendChild(nameInput);
+        footer.appendChild(saveBtn);
+
+        function renderList() {
+            content.innerHTML = '';
+            const keys = vsStorage.listKeys('vs_lineup_');
+            console.log(`[LineupCache] Найдено ключей: ${keys.length}`);
+
+            if (!keys.length) {
+                content.innerHTML = '<div style="text-align:center;padding:30px;color:#888;">Нет сохранённых составов</div>';
+                return;
+            }
+
+            // Собираем и сортируем записи
+            const entries = [];
+            keys.forEach(key => {
+                try {
+                    const raw = vsStorage.get(key);
+                    if (!raw) return;
+                    const data = JSON.parse(raw);
+                    const parts = key.replace('vs_lineup_', '').split('_');
+                    entries.push({
+                        key,
+                        teamId: parts[0] || '?',
+                        orderDay: parts[1] || '?',
+                        name: data.name || '',
+                        formation: data.formation || '?',
+                        filledSlots: (data.players || []).filter(p => p).length,
+                        timestamp: data.timestamp || 0,
+                        style: data.style || 'norm'
+                    });
+                } catch (e) { /* skip corrupt */ }
+            });
+
+            entries.sort((a, b) => b.timestamp - a.timestamp);
+
+            entries.forEach(entry => {
+                const row = document.createElement('div');
+                row.style.cssText = 'padding:6px 8px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;';
+                row.addEventListener('mouseenter', () => { row.style.background = '#f0f6ff'; });
+                row.addEventListener('mouseleave', () => { row.style.background = ''; });
+
+                const info = document.createElement('div');
+                info.style.cssText = 'font-size:11px;flex:1;';
+                const age = entry.timestamp ? Math.round((Date.now() - entry.timestamp) / 1000 / 60) : '?';
+                const ageText = age < 60 ? `${age} мин` : age < 1440 ? `${Math.round(age / 60)} ч` : `${Math.round(age / 1440)} дн`;
+                const displayName = entry.name || `Команда ${entry.teamId}, день ${entry.orderDay}`;
+                const isCurrentTeam = String(entry.teamId) === String(teamId);
+                const teamBadge = isCurrentTeam ? '🟢' : '⚪';
+                info.innerHTML = `${teamBadge} <b>${displayName}</b><br><span style="color:#888;font-size:10px;">${entry.formation} · ${entry.filledSlots}/11 · ${entry.style} · ${ageText} назад</span>`;
+
+                const btns = document.createElement('div');
+                btns.style.cssText = 'display:flex;gap:4px;';
+
+                const loadBtn = document.createElement('a');
+                loadBtn.href = '#';
+                loadBtn.className = 'butn';
+                loadBtn.textContent = '📂';
+                loadBtn.title = 'Загрузить';
+                loadBtn.style.cssText = 'font-size:12px;padding:2px 6px;cursor:pointer;text-decoration:none;';
+                loadBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const parts = entry.key.replace('vs_lineup_', '').split('_');
+                    loadLineupFromCache(parts[0], parts[1], lineupBlock, team, sideLabel);
+                    overlay.remove();
+                    console.groupEnd();
+                });
+
+                const delBtn = document.createElement('a');
+                delBtn.href = '#';
+                delBtn.className = 'butn-red';
+                delBtn.textContent = '🗑';
+                delBtn.title = 'Удалить';
+                delBtn.style.cssText = 'font-size:12px;padding:2px 6px;cursor:pointer;text-decoration:none;';
+                delBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (confirm(`Удалить состав "${displayName}"?`)) {
+                        vsStorage.delete(entry.key);
+                        console.log(`[LineupCache] 🗑 Удалён: ${entry.key}`);
+                        renderList();
+                    }
+                });
+
+                btns.appendChild(loadBtn);
+                btns.appendChild(delBtn);
+                row.appendChild(info);
+                row.appendChild(btns);
+                content.appendChild(row);
+            });
+        }
+
+        saveBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const orderDay = (window.__vs_pageData || window.__vs_orderPageData || {}).orderDay || null;
+            if (!teamId || !orderDay) {
+                alert('Не удалось определить команду или день заявки');
+                return;
+            }
+            // Сохраняем с именем
+            const customName = nameInput.value.trim();
+            const key = getLineupCacheKey(teamId, orderDay);
+            const players = lineupBlock.lineup.map(slot => slot.getValue() || '');
+            const positions = lineupBlock.lineup.map(slot => slot.posValue || '');
+            const formation = lineupBlock.getFormationName ? lineupBlock.getFormationName() : '';
+            const tacticSelect = sideLabel === 'home' ? window.homeTacticSelect : window.awayTacticSelect;
+            const data = {
+                players, positions, formation,
+                style: team.style || '', rough: team.rough || 'clean',
+                defenceType: team.defenceType || 'zonal', morale: team.morale || 'normal',
+                tactic: tacticSelect ? tacticSelect.value : '',
+                name: customName,
+                timestamp: Date.now()
+            };
+            vsStorage.set(key, JSON.stringify(data));
+            console.log(`[LineupCache] 💾 Сохранён: ${key}`, customName ? `(${customName})` : '');
+            nameInput.value = '';
+            renderList();
+        });
+
+        modal.appendChild(header);
+        modal.appendChild(content);
+        modal.appendChild(footer);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        renderList();
+    }
+
+    /**
+     * Сохраняет текущий состав команды в vsStorage.
+     * Собирает: игроки (ID), позиции, формация, стиль, грубость, защита, настрой.
+     * Ключ: vs_lineup_{teamId}_{orderDay}
+     * @param {string|number} teamId — ID команды
+     * @param {string|number} orderDay — день заявки
+     * @param {Object} lineupBlock — объект из createTeamLineupBlock
+     * @param {Object} team — объект команды (window.homeTeam / window.awayTeam)
+     * @param {string} sideLabel — 'home' | 'away'
+     */
+    function saveLineupToCache(teamId, orderDay, lineupBlock, team, sideLabel) {
+        try {
+            console.group(`[LineupCache] 💾 Сохранение состава: team=${teamId}, day=${orderDay}, side=${sideLabel}`);
+            const key = getLineupCacheKey(teamId, orderDay);
+            console.log(`[LineupCache] Ключ: ${key}`);
+
+            // Собираем ID игроков из lineup selects
+            const players = lineupBlock.lineup.map(slot => slot.getValue() || '');
+            const filledSlots = players.filter(p => p).length;
+            console.log(`[LineupCache] Игроков в составе: ${filledSlots}/11`, players.filter(p => p));
+
+            // Собираем позиции
+            const positions = lineupBlock.lineup.map(slot => slot.posValue || '');
+            console.log(`[LineupCache] Позиции:`, positions);
+
+            // Формация
+            const formation = lineupBlock.getFormationName ? lineupBlock.getFormationName() : '';
+            console.log(`[LineupCache] Формация: ${formation}`);
+
+            // Настройки команды
+            const style = team.style || '';
+            const rough = team.rough || 'clean';
+            const defenceType = team.defenceType || 'zonal';
+            const morale = team.morale || 'normal';
+            console.log(`[LineupCache] Настройки: стиль=${style}, грубость=${rough}, защита=${defenceType}, настрой=${morale}`);
+
+            // Тактика (из глобального селектора)
+            const tacticSelect = sideLabel === 'home' ? window.homeTacticSelect : window.awayTacticSelect;
+            const tactic = tacticSelect ? tacticSelect.value : '';
+            console.log(`[LineupCache] Тактика: ${tactic}`);
+
+            const data = {
+                players,
+                positions,
+                formation,
+                style,
+                rough,
+                defenceType,
+                morale,
+                tactic,
+                timestamp: Date.now()
+            };
+
+            const json = JSON.stringify(data);
+            console.log(`[LineupCache] Размер данных: ${json.length} байт`);
+            vsStorage.set(key, json);
+            console.log(`[LineupCache] ✅ Состав сохранён успешно`);
+            console.groupEnd();
+            alert('Состав сохранён в кэш');
+        } catch (e) {
+            console.error('[LineupCache] ❌ Ошибка сохранения:', e);
+            console.groupEnd();
+            alert('Ошибка сохранения состава');
+        }
+    }
+
+    /**
+     * Загружает состав команды из vsStorage и заполняет блок состава.
+     * Ключ: vs_lineup_{teamId}_{orderDay}
+     * @param {string|number} teamId — ID команды
+     * @param {string|number} orderDay — день заявки
+     * @param {Object} lineupBlock — объект из createTeamLineupBlock
+     * @param {Object} team — объект команды (window.homeTeam / window.awayTeam)
+     * @param {string} sideLabel — 'home' | 'away'
+     * @returns {boolean} true если загрузка успешна
+     */
+    function loadLineupFromCache(teamId, orderDay, lineupBlock, team, sideLabel) {
+        try {
+            console.group(`[LineupCache] 📂 Загрузка состава: team=${teamId}, day=${orderDay}, side=${sideLabel}`);
+            const key = getLineupCacheKey(teamId, orderDay);
+            console.log(`[LineupCache] Ключ: ${key}`);
+
+            const raw = vsStorage.get(key);
+            if (!raw) {
+                console.warn(`[LineupCache] ⚠️ Кэш не найден: key=${key}`);
+                console.groupEnd();
+                alert('Сохранённый состав не найден');
+                return false;
+            }
+
+            const data = JSON.parse(raw);
+            const age = data.timestamp ? Math.round((Date.now() - data.timestamp) / 1000 / 60) : '?';
+            console.log(`[LineupCache] Данные найдены (возраст: ${age} мин), размер: ${raw.length} байт`);
+            const filledSlots = (data.players || []).filter(p => p).length;
+            console.log(`[LineupCache] Игроков: ${filledSlots}/11, формация: ${data.formation}`);
+            console.log(`[LineupCache] Настройки: стиль=${data.style}, грубость=${data.rough}, защита=${data.defenceType}, настрой=${data.morale}, тактика=${data.tactic}`);
+
+            // Восстанавливаем формацию
+            if (data.formation) {
+                const formationSelect = sideLabel === 'home' ? window.homeFormationSelect : window.awayFormationSelect;
+                if (formationSelect && [...formationSelect.options].some(o => o.value === data.formation)) {
+                    formationSelect.value = data.formation;
+                    team.formation = data.formation;
+                    if (lineupBlock.applyFormation) {
+                        lineupBlock.applyFormation(data.formation);
+                    }
+                    console.log(`[LineupCache] ✓ Формация: ${data.formation}`);
+                } else {
+                    console.warn(`[LineupCache] ⚠️ Формация ${data.formation} не найдена в селекторе`);
+                }
+            }
+
+            // Восстанавливаем игроков
+            if (data.players && Array.isArray(data.players)) {
+                let restored = 0;
+                data.players.forEach((pid, idx) => {
+                    if (lineupBlock.lineup[idx]) {
+                        if (pid) {
+                            lineupBlock.lineup[idx].setValue(String(pid), '');
+                            restored++;
+                        } else {
+                            lineupBlock.lineup[idx].setValue('', '');
+                        }
+                    }
+                });
+                console.log(`[LineupCache] ✓ Игроки: восстановлено ${restored}/${filledSlots}`);
+            }
+
+            // Обновляем селекторы после загрузки игроков
+            if (lineupBlock.updatePlayerSelectOptions) {
+                lineupBlock.updatePlayerSelectOptions();
+            }
+
+            // Восстанавливаем стиль
+            if (data.style) {
+                const styleSelect = sideLabel === 'home' ? window.homeStyle : window.awayStyle;
+                if (styleSelect) {
+                    styleSelect.value = data.style;
+                    team.style = data.style;
+                    console.log(`[LineupCache] ✓ Стиль: ${data.style}`);
+                }
+            }
+
+            // Восстанавливаем грубость
+            if (data.rough) {
+                const roughSelect = sideLabel === 'home' ? window.homeRoughSelect : window.awayRoughSelect;
+                if (roughSelect) {
+                    roughSelect.value = data.rough;
+                    team.rough = data.rough;
+                    console.log(`[LineupCache] ✓ Грубость: ${data.rough}`);
+                }
+            }
+
+            // Восстанавливаем защиту
+            if (data.defenceType) {
+                const defenceSelect = sideLabel === 'home' ? window.homeDefenceTypeSelect : window.awayDefenceTypeSelect;
+                if (defenceSelect) {
+                    defenceSelect.value = data.defenceType;
+                    team.defenceType = data.defenceType;
+                    console.log(`[LineupCache] ✓ Защита: ${data.defenceType}`);
+                }
+            }
+
+            // Восстанавливаем настрой
+            if (data.morale) {
+                const moraleSelect = sideLabel === 'home' ? window.homeMoraleSelect : window.awayMoraleSelect;
+                if (moraleSelect) {
+                    moraleSelect.value = data.morale;
+                    team.morale = data.morale;
+                    console.log(`[LineupCache] ✓ Настрой: ${data.morale}`);
+                }
+            }
+
+            // Восстанавливаем тактику
+            if (data.tactic) {
+                const tacticSelect = sideLabel === 'home' ? window.homeTacticSelect : window.awayTacticSelect;
+                if (tacticSelect) {
+                    tacticSelect.value = data.tactic;
+                    console.log(`[LineupCache] ✓ Тактика: ${data.tactic}`);
+                }
+            }
+
+            // Пересчитываем силу
+            if (typeof window.__vs_recalculateStrength === 'function') {
+                window.__vs_recalculateStrength();
+            }
+
+            console.log(`[LineupCache] ✅ Состав загружен успешно`);
+            console.groupEnd();
+            alert('Состав загружен из кэша');
+            return true;
+        } catch (e) {
+            console.warn('[LineupCache] ❌ Ошибка загрузки:', e);
+            console.groupEnd();
+            alert('Ошибка загрузки состава из кэша');
+            return false;
+        }
+    }
+
+    /**
+     * Добавляет кнопки управления, блок замен и блок тактических указаний
+     * в блок состава команды пользователя.
+     * @param {HTMLElement} lineupWrapper — обёртка блока состава пользователя
+     * @param {boolean} isHome — true если пользователь играет дома
+     * @param {Object} matchData — данные матча
+     */
+    function createUserTeamButtons(lineupWrapper, isHome, matchData) {
+        const sideLabel = isHome ? 'home' : 'away';
+
+        // Кнопки управления (компактные, req 9.6)
+        const btnRow = document.createElement('div');
+        btnRow.id = `vsol-user-buttons-${sideLabel}`;
+        btnRow.style.cssText = 'text-align:center;padding:4px 0;border-top:1px solid #ccc;margin-top:4px;';
+
+        const btnStyle = 'font-size:10px;padding:2px 6px;margin:1px 2px;cursor:pointer;display:inline-block;text-decoration:none;';
+
+        // "Отправить состав"
         const btnSubmit = document.createElement('a');
         btnSubmit.href = '#';
         btnSubmit.className = 'butn-green';
         btnSubmit.textContent = 'Отправить состав';
-        btnSubmit.style.cssText = 'margin-right: 10px;';
+        btnSubmit.style.cssText = btnStyle;
         btnSubmit.addEventListener('click', (e) => {
             e.preventDefault();
             submitOrderFromCalc(isHome, matchData);
         });
 
-        const btnBack = document.createElement('a');
-        btnBack.href = '#';
-        btnBack.className = 'butn';
-        btnBack.textContent = 'Вернуться к составу';
-        btnBack.style.cssText = 'padding-left: 10px; padding-right: 10px;';
-        btnBack.addEventListener('click', (e) => {
-            e.preventDefault();
-            const tabOrder = document.querySelector('#vsol-tabs-header a:first-child');
-            if (tabOrder) tabOrder.click();
-        });
-
+        // "Импорт из формы"
         const btnImport = document.createElement('a');
         btnImport.href = '#';
         btnImport.className = 'butn';
         btnImport.textContent = 'Импорт из формы';
-        btnImport.style.cssText = 'margin-right: 10px; padding-left: 10px; padding-right: 10px;';
+        btnImport.style.cssText = btnStyle;
         btnImport.addEventListener('click', (e) => {
             e.preventDefault();
             importFromOriginalForm(isHome);
         });
 
+        // "Загрузить состав"
+        // "Загрузить состав" (диалог управления кэшем)
         const btnLoad = document.createElement('a');
         btnLoad.href = '#';
         btnLoad.className = 'butn';
-        btnLoad.textContent = 'Загрузить состав';
-        btnLoad.style.cssText = 'margin-right: 10px; padding-left: 10px; padding-right: 10px;';
+        btnLoad.textContent = 'Кэш составов';
+        btnLoad.style.cssText = btnStyle;
         btnLoad.addEventListener('click', (e) => {
             e.preventDefault();
-            showLoadLineupDialog(isHome);
+            showLineupCacheDialog(isHome, isHome ? 'home' : 'away');
         });
 
+        // "Сохранить состав"
+        const btnSave = document.createElement('a');
+        btnSave.href = '#';
+        btnSave.className = 'butn';
+        btnSave.textContent = 'Сохранить состав';
+        btnSave.style.cssText = btnStyle;
+        btnSave.addEventListener('click', (e) => {
+            e.preventDefault();
+            const sideLabel = isHome ? 'home' : 'away';
+            const teamId = isHome ? window.homeTeamId : window.awayTeamId;
+            const lineupBlock = isHome ? window.homeLineupBlock : window.awayLineupBlock;
+            const team = isHome ? window.homeTeam : window.awayTeam;
+            const orderDay = (window.__vs_pageData || window.__vs_orderPageData || {}).orderDay || null;
+            if (!teamId || !orderDay) {
+                alert('Не удалось определить команду или день заявки');
+                return;
+            }
+            saveLineupToCache(teamId, orderDay, lineupBlock, team, sideLabel);
+        });
+
+        btnRow.appendChild(btnSubmit);
         btnRow.appendChild(btnImport);
         btnRow.appendChild(btnLoad);
-        btnRow.appendChild(btnSubmit);
-        btnRow.appendChild(btnBack);
-        container.appendChild(btnRow);
+        btnRow.appendChild(btnSave);
+        lineupWrapper.appendChild(btnRow);
+
+        // Блок замен (5 слотов)
+        const subsBlock = createSubstitutionSlots(sideLabel);
+        lineupWrapper.appendChild(subsBlock);
+
+        // Блок тактических указаний (5 слотов)
+        const tactBlock = createTacticalInstructionSlots(sideLabel);
+        lineupWrapper.appendChild(tactBlock);
+
+        // Сохраняем ссылки для доступа из buildOrderPostData
+        window[`__vs_substitutionSlots_${sideLabel}`] = subsBlock._slots;
+        window[`__vs_tacticalSlots_${sideLabel}`] = tactBlock._slots;
     }
+
+    /**
+     * Добавляет кнопки управления в блок состава соперника.
+     * Кнопки: "Загрузить состав соперника", "Сохранить состав соперника"
+     * Компактный стиль (font-size 10px, минимальные отступы) — req 9.6
+     * @param {HTMLElement} lineupWrapper — обёртка блока состава соперника
+     * @param {string} sideLabel — 'home' | 'away'
+     */
+    function createOpponentTeamButtons(lineupWrapper, sideLabel) {
+        const btnRow = document.createElement('div');
+        btnRow.id = `vsol-opponent-buttons-${sideLabel}`;
+        btnRow.style.cssText = 'text-align:center;padding:4px 0;border-top:1px solid #ccc;margin-top:4px;';
+
+        const btnStyle = 'font-size:10px;padding:2px 6px;margin:1px 2px;cursor:pointer;display:inline-block;text-decoration:none;';
+
+        // "Кэш составов соперника" (диалог)
+        const btnCache = document.createElement('a');
+        btnCache.href = '#';
+        btnCache.className = 'butn';
+        btnCache.textContent = 'Кэш составов';
+        btnCache.style.cssText = btnStyle;
+        btnCache.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isHome = sideLabel !== 'home'; // opponent side is opposite
+            showLineupCacheDialog(isHome, sideLabel);
+        });
+
+        btnRow.appendChild(btnCache);
+        lineupWrapper.appendChild(btnRow);
+    }
+
+    // [DEADCODE] addSubmitButtonToCalc — moved to deadcode.js
 
     function importFromOriginalForm(isHome) {
         console.group('[ORDER] Импорт из оригинальной формы');
@@ -15661,16 +15500,24 @@ setTimeout(() => {
      * @param {string} sideLabel — 'home' | 'away'
      * @param {string} teamName — название команды
      * @param {Function} onChange — callback при изменении
+     * @param {string} [countryId] — ID страны для флага (federation ID)
      * @returns {HTMLElement} — td элемент шириной 110px
      */
-    function createTacticsColumn(team, sideLabel, teamName, onChange) {
+    function createTacticsColumn(team, sideLabel, teamName, onChange, countryId) {
         const td = document.createElement('td');
+        td.id = 'vsol-tactics-' + sideLabel;
         td.style.cssText = 'width:110px; vertical-align:top; padding:4px; font-size:10px;';
 
-        // Заголовок — название команды
+        // Заголовок — название команды с флагом
         const header = document.createElement('div');
         header.style.cssText = 'background:rgb(0,102,0); color:white; text-align:center; padding:3px; font-weight:bold; font-size:10px; margin-bottom:4px;';
-        header.textContent = teamName || (sideLabel === 'home' ? 'Хозяева' : 'Гости');
+        const displayName = teamName || (sideLabel === 'home' ? 'Хозяева' : 'Гости');
+        if (countryId) {
+            const flag = makeFlagImg(countryId, displayName);
+            flag.style.marginRight = '3px';
+            header.appendChild(flag);
+        }
+        header.appendChild(document.createTextNode(displayName));
         td.appendChild(header);
 
         function addRow(label, selectEl) {
@@ -15678,44 +15525,54 @@ setTimeout(() => {
             lbl.style.cssText = 'font-size:9px; color:#666; margin-top:3px; margin-bottom:1px;';
             lbl.textContent = label;
             td.appendChild(lbl);
-            selectEl.style.cssText = 'width:100%; height:18px; font-size:10px; border:1px solid #aaa; padding:0 2px; box-sizing:border-box;';
+            if (selectEl.tagName === 'SELECT') {
+                selectEl.style.cssText = 'width:100%; height:20px; font-size:11px; font-family:Courier New, monospace; border:1px solid #aaa; padding:1px 2px; box-sizing:border-box; background:#fff; cursor:pointer;';
+            } else {
+                selectEl.style.width = '100%';
+            }
             td.appendChild(selectEl);
         }
 
-        // Формация
+        // 1. Формация
         const formationManager = new FormationManager(FORMATIONS);
         const formationSelect = createFormationSelector(formationManager);
-        if (team.formation) formationSelect.value = team.formation;
+        if (team.formation && [...formationSelect.options].some(o => o.value === team.formation)) {
+            formationSelect.value = team.formation;
+        }
         formationSelect.addEventListener('change', () => {
             team.formation = formationSelect.value;
-            if (onChange) onChange();
+            if (typeof onChange === 'function') onChange();
         });
         addRow('Формация', formationSelect);
 
-        // Стиль
+        // 2. Стиль
         const styleSelect = createStyleSelector();
         if (team.style) styleSelect.value = team.style;
         styleSelect.addEventListener('change', () => {
             team.style = styleSelect.value;
-            if (onChange) onChange();
+            if (typeof onChange === 'function') onChange();
         });
         addRow('Стиль', styleSelect);
 
-        // Тактика
-        const tacticSelect = createTacticsSelector(team, onChange);
-        addRow('Тактика', tacticSelect);
-
-        // Грубость
+        // 3. Грубость
         const roughSelect = createRoughSelector(team, onChange);
         addRow('Грубость', roughSelect);
 
-        // Защита
+        // 4. Защита
         const defenceSelect = createDefenceTypeSelector(team, onChange);
         addRow('Защита', defenceSelect);
 
-        // Настрой
+        // 5. Настрой
         const moraleSelect = createMoraleSelector(team, onChange);
         addRow('Настрой', moraleSelect);
+
+        // 6. Тактика
+        const tacticSelect = createTacticsSelector(team, onChange);
+        addRow('Тактика', tacticSelect);
+
+        // Сохраняем ссылки на селекторы в объекте команды (как createTeamSettingsBlock)
+        team._styleSelector = styleSelect;
+        team._formationSelector = formationSelect;
 
         // Сохраняем ссылки глобально
         if (sideLabel === 'home') {
@@ -15734,27 +15591,641 @@ setTimeout(() => {
             window.awayMoraleSelect = moraleSelect;
         }
 
+        // Метод для отложенного добавления капитана и ролей (lineupBlock создаётся позже)
+        td.attachCaptainAndRoles = function(lineupBlock) {
+            const captainRow = makeCaptainRow(lineupBlock);
+            td.appendChild(captainRow);
+            const rolesRow = makeRolesRow(lineupBlock, sideLabel);
+            td.appendChild(rolesRow);
+        };
+
         return td;
     }
 
+    // ===== PROPERTY-BASED ТЕСТЫ =====
+
     /**
-     * Определяет какая из команд принадлежит пользователю.
-     * @param {Object} pageData — из parseOrderPageData (curr, orderDay, days)
-     * @param {Object} matchData — из extractAllMatchesFromDays (teamId, homeAway)
-     * @returns {{ isHome: boolean, userTeamId: string, opponentTeamId: string }}
+     * Feature: calculator-layout-redesign, Property 1: Определение команды пользователя
+     * Validates: Requirements 8.1
+     *
+     * Для любого валидного matchData, где teamId совпадает с одной из двух команд,
+     * функция detectUserTeam должна вернуть isHome = true тогда и только тогда,
+     * когда homeAway === 'Д'. userTeamId всегда равен String(pageData.curr),
+     * а opponentTeamId — String(matchData.opponentId).
      */
-    function detectUserTeam(pageData, matchData) {
-        const userTeamId = String(pageData.curr);
-        const isHome = matchData.homeAway === 'Д';
-        const homeTeamId = isHome ? userTeamId : String(matchData.opponentId);
-        const awayTeamId = isHome ? String(matchData.opponentId) : userTeamId;
-        return {
-            isHome,
-            userTeamId,
-            opponentTeamId: String(matchData.opponentId),
-            homeTeamId,
-            awayTeamId
-        };
+    function pbtDetectUserTeam(iterations) {
+        const numIterations = iterations || 100;
+        let passed = 0;
+        let failed = 0;
+        const failures = [];
+
+        function randomPositiveInt() {
+            return Math.floor(Math.random() * 999999) + 1;
+        }
+
+        for (let i = 0; i < numIterations; i++) {
+            const currTeamId = randomPositiveInt();
+            const opponentId = randomPositiveInt();
+            const homeAway = Math.random() < 0.5 ? 'Д' : 'Г';
+
+            const pageData = { curr: currTeamId };
+            const matchData = { opponentId: opponentId, homeAway: homeAway };
+
+            const result = detectUserTeam(pageData, matchData);
+
+            const errors = [];
+
+            // Свойство 1: isHome === true тогда и только тогда, когда homeAway === 'Д'
+            const expectedIsHome = homeAway === 'Д';
+            if (result.isHome !== expectedIsHome) {
+                errors.push(`isHome: ожидалось ${expectedIsHome}, получено ${result.isHome}`);
+            }
+
+            // Свойство 2: userTeamId всегда равен String(pageData.curr)
+            if (result.userTeamId !== String(currTeamId)) {
+                errors.push(`userTeamId: ожидалось "${String(currTeamId)}", получено "${result.userTeamId}"`);
+            }
+
+            // Свойство 3: opponentTeamId равен String(matchData.opponentId)
+            if (result.opponentTeamId !== String(opponentId)) {
+                errors.push(`opponentTeamId: ожидалось "${String(opponentId)}", получено "${result.opponentTeamId}"`);
+            }
+
+            if (errors.length > 0) {
+                failed++;
+                if (failures.length < 5) {
+                    failures.push({
+                        iteration: i,
+                        input: { currTeamId, opponentId, homeAway },
+                        result: result,
+                        errors: errors
+                    });
+                }
+            } else {
+                passed++;
+            }
+        }
+
+        console.log(`[PBT] detectUserTeam: ${passed}/${numIterations} passed, ${failed} failed`);
+        if (failures.length > 0) {
+            console.log('[PBT] Первые неудачные примеры:', JSON.stringify(failures, null, 2));
+        }
+
+        return { passed, failed, total: numIterations, failures };
+    }
+
+    /**
+     * Feature: calculator-layout-redesign, Property 2: Сохранение тактических настроек в объекте команды
+     * Validates: Requirements 3.3
+     *
+     * Для любой комбинации значений тактических селекторов (формация, стиль, грубость,
+     * защита, настрой, тактика), при изменении селектора в тактической колонке
+     * соответствующее свойство объекта команды должно обновиться до нового значения.
+     */
+    function pbtTacticsSelectors(iterations) {
+        const numIterations = iterations || 100;
+        let passed = 0;
+        let failed = 0;
+        const failures = [];
+
+        function randomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        for (let i = 0; i < numIterations; i++) {
+            const team = {
+                formation: '4-4-2',
+                style: 'norm',
+                rough: 'clean',
+                defenceType: 'zonal',
+                morale: 'normal',
+                tactics: 'нормальная'
+            };
+
+            const onChangeCalled = { count: 0 };
+            const onChange = () => { onChangeCalled.count++; };
+
+            const td = createTacticsColumn(team, 'home', 'TestTeam', onChange);
+
+            // Собираем все select-элементы из созданной колонки
+            const selects = td.querySelectorAll('select');
+
+            // Маппинг: индекс select → { teamProp, label }
+            // Порядок в createTacticsColumn: формация(0), стиль(1), грубость(2), защита(3), настрой(4), тактика(5)
+            const selectorMap = [
+                { prop: 'formation', label: 'формация' },
+                { prop: 'style', label: 'стиль' },
+                { prop: 'rough', label: 'грубость' },
+                { prop: 'defenceType', label: 'защита' },
+                { prop: 'morale', label: 'настрой' },
+                { prop: 'tactics', label: 'тактика' }
+            ];
+
+            const errors = [];
+
+            for (let s = 0; s < selectorMap.length; s++) {
+                const select = selects[s];
+                const mapping = selectorMap[s];
+
+                if (!select) {
+                    errors.push(`Селектор "${mapping.label}" (индекс ${s}) не найден`);
+                    continue;
+                }
+
+                // Получаем доступные опции
+                const options = [...select.options].map(o => o.value);
+                if (options.length === 0) {
+                    errors.push(`Селектор "${mapping.label}" не имеет опций`);
+                    continue;
+                }
+
+                // Случайно выбираем значение
+                const newValue = randomItem(options);
+
+                // Устанавливаем значение и диспатчим change
+                select.value = newValue;
+                select.dispatchEvent(new Event('change'));
+
+                // Проверяем что свойство команды обновилось
+                if (String(team[mapping.prop]) !== String(newValue)) {
+                    errors.push(
+                        `${mapping.label}: установлено "${newValue}", ` +
+                        `но team.${mapping.prop} = "${team[mapping.prop]}"`
+                    );
+                }
+            }
+
+            if (errors.length > 0) {
+                failed++;
+                if (failures.length < 5) {
+                    failures.push({
+                        iteration: i,
+                        errors: errors
+                    });
+                }
+            } else {
+                passed++;
+            }
+        }
+
+        console.log(`[PBT] tacticsSelectors: ${passed}/${numIterations} passed, ${failed} failed`);
+        if (failures.length > 0) {
+            console.log('[PBT] Первые неудачные примеры:', JSON.stringify(failures, null, 2));
+        }
+
+        return { passed, failed, total: numIterations, failures };
+    }
+
+    /**
+     * Feature: calculator-layout-redesign, Property 3: Кэширование состава — round-trip
+     * Validates: Requirements 9.3, 9.4, 9.5
+     *
+     * Для любого валидного состава команды (набор игроков с позициями, формация, настройки),
+     * сохранение в vsStorage и последующая загрузка по тому же ключу должны вернуть
+     * эквивалентные данные (те же ID игроков, позиции, формация, настройки).
+     *
+     * Тестируем round-trip через JSON.stringify → JSON.parse, что соответствует
+     * реальному механизму vsStorage.set / vsStorage.get в saveLineupToCache / loadLineupFromCache.
+     */
+    function pbtLineupCacheRoundTrip(iterations) {
+        const numIterations = iterations || 100;
+        let passed = 0;
+        let failed = 0;
+        const failures = [];
+
+        const validFormations = Object.keys(FORMATIONS);
+        const validPositions = Object.keys(POSITION_PLACEHOLDERS);
+        const validStyles = ['norm', 'def', 'att', 'cnt', 'wing', 'long', 'short'];
+        const validRough = ['clean', 'rough'];
+        const validDefenceType = ['zonal', 'man'];
+        const validMorale = ['normal', 'super', 'rest'];
+
+        function randomPositiveInt() {
+            return Math.floor(Math.random() * 999999) + 1;
+        }
+
+        function randomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        for (let i = 0; i < numIterations; i++) {
+            // Генерируем случайный состав
+            const players = [];
+            const positions = [];
+            for (let p = 0; p < 11; p++) {
+                players.push(String(randomPositiveInt()));
+                positions.push(randomItem(validPositions));
+            }
+
+            const formation = randomItem(validFormations);
+            const style = randomItem(validStyles);
+            const rough = randomItem(validRough);
+            const defenceType = randomItem(validDefenceType);
+            const morale = randomItem(validMorale);
+
+            const teamId = randomPositiveInt();
+            const orderDay = randomPositiveInt();
+
+            // Формируем объект данных (как в saveLineupToCache)
+            const data = {
+                players,
+                positions,
+                formation,
+                style,
+                rough,
+                defenceType,
+                morale,
+                tactic: '',
+                timestamp: Date.now()
+            };
+
+            // Round-trip: JSON.stringify → JSON.parse (как vsStorage.set / vsStorage.get)
+            const serialized = JSON.stringify(data);
+            const restored = JSON.parse(serialized);
+
+            const errors = [];
+
+            // Проверяем ключ хранилища
+            const key = getLineupCacheKey(teamId, orderDay);
+            if (!key.includes(String(teamId)) || !key.includes(String(orderDay))) {
+                errors.push(`Ключ "${key}" не содержит teamId=${teamId} или orderDay=${orderDay}`);
+            }
+
+            // Проверяем players
+            if (!Array.isArray(restored.players) || restored.players.length !== 11) {
+                errors.push(`players: ожидалось 11 элементов, получено ${restored.players ? restored.players.length : 'null'}`);
+            } else {
+                for (let p = 0; p < 11; p++) {
+                    if (restored.players[p] !== players[p]) {
+                        errors.push(`players[${p}]: ожидалось "${players[p]}", получено "${restored.players[p]}"`);
+                        break;
+                    }
+                }
+            }
+
+            // Проверяем positions
+            if (!Array.isArray(restored.positions) || restored.positions.length !== 11) {
+                errors.push(`positions: ожидалось 11 элементов, получено ${restored.positions ? restored.positions.length : 'null'}`);
+            } else {
+                for (let p = 0; p < 11; p++) {
+                    if (restored.positions[p] !== positions[p]) {
+                        errors.push(`positions[${p}]: ожидалось "${positions[p]}", получено "${restored.positions[p]}"`);
+                        break;
+                    }
+                }
+            }
+
+            // Проверяем formation
+            if (restored.formation !== formation) {
+                errors.push(`formation: ожидалось "${formation}", получено "${restored.formation}"`);
+            }
+
+            // Проверяем style
+            if (restored.style !== style) {
+                errors.push(`style: ожидалось "${style}", получено "${restored.style}"`);
+            }
+
+            // Проверяем rough
+            if (restored.rough !== rough) {
+                errors.push(`rough: ожидалось "${rough}", получено "${restored.rough}"`);
+            }
+
+            // Проверяем defenceType
+            if (restored.defenceType !== defenceType) {
+                errors.push(`defenceType: ожидалось "${defenceType}", получено "${restored.defenceType}"`);
+            }
+
+            // Проверяем morale
+            if (restored.morale !== morale) {
+                errors.push(`morale: ожидалось "${morale}", получено "${restored.morale}"`);
+            }
+
+            if (errors.length > 0) {
+                failed++;
+                if (failures.length < 5) {
+                    failures.push({
+                        iteration: i,
+                        input: { teamId, orderDay, formation, style, rough, defenceType, morale, players: players.slice(0, 3) },
+                        errors: errors
+                    });
+                }
+            } else {
+                passed++;
+            }
+        }
+
+        console.log(`[PBT] lineupCacheRoundTrip: ${passed}/${numIterations} passed, ${failed} failed`);
+        if (failures.length > 0) {
+            console.log('[PBT] Первые неудачные примеры:', JSON.stringify(failures, null, 2));
+        }
+
+        return { passed, failed, total: numIterations, failures };
+    }
+
+    /**
+     * Feature: calculator-layout-redesign, Property 4: Формат ключа хранилища
+     * Validates: Requirements 9.3, 9.5
+     *
+     * Для любых валидных teamId (положительное число) и orderDay (положительное число),
+     * ключ хранилища должен содержать оба значения и быть уникальным для каждой пары
+     * (teamId, orderDay).
+     */
+    function pbtStorageKeyFormat(iterations) {
+        const numIterations = iterations || 100;
+        let passed = 0;
+        let failed = 0;
+        const failures = [];
+
+        function randomPositiveInt() {
+            return Math.floor(Math.random() * 999999) + 1;
+        }
+
+        for (let i = 0; i < numIterations; i++) {
+            const teamId = randomPositiveInt();
+            const orderDay = randomPositiveInt();
+
+            const key = getLineupCacheKey(teamId, orderDay);
+
+            const errors = [];
+
+            // Проверка 1: ключ начинается с 'vs_lineup_'
+            if (!key.startsWith('vs_lineup_')) {
+                errors.push(`Ключ "${key}" не начинается с "vs_lineup_"`);
+            }
+
+            // Проверка 2: ключ содержит teamId
+            if (!key.includes(String(teamId))) {
+                errors.push(`Ключ "${key}" не содержит teamId=${teamId}`);
+            }
+
+            // Проверка 3: ключ содержит orderDay
+            if (!key.includes(String(orderDay))) {
+                errors.push(`Ключ "${key}" не содержит orderDay=${orderDay}`);
+            }
+
+            // Проверка 4: уникальность — для другой пары (teamId, orderDay) ключ должен отличаться
+            const otherTeamId = teamId + 1;
+            const otherOrderDay = orderDay + 1;
+
+            const keyDiffTeam = getLineupCacheKey(otherTeamId, orderDay);
+            const keyDiffDay = getLineupCacheKey(teamId, otherOrderDay);
+            const keyDiffBoth = getLineupCacheKey(otherTeamId, otherOrderDay);
+
+            if (key === keyDiffTeam) {
+                errors.push(`Ключи совпадают при разных teamId: "${key}" === "${keyDiffTeam}" (teamId=${teamId} vs ${otherTeamId})`);
+            }
+            if (key === keyDiffDay) {
+                errors.push(`Ключи совпадают при разных orderDay: "${key}" === "${keyDiffDay}" (orderDay=${orderDay} vs ${otherOrderDay})`);
+            }
+            if (key === keyDiffBoth) {
+                errors.push(`Ключи совпадают при разных teamId и orderDay: "${key}" === "${keyDiffBoth}"`);
+            }
+
+            if (errors.length > 0) {
+                failed++;
+                if (failures.length < 5) {
+                    failures.push({
+                        iteration: i,
+                        input: { teamId, orderDay },
+                        key: key,
+                        errors: errors
+                    });
+                }
+            } else {
+                passed++;
+            }
+        }
+
+        console.log(`[PBT] storageKeyFormat: ${passed}/${numIterations} passed, ${failed} failed`);
+        if (failures.length > 0) {
+            console.log('[PBT] Первые неудачные примеры:', JSON.stringify(failures, null, 2));
+        }
+
+        return { passed, failed, total: numIterations, failures };
+    }
+
+    /**
+     * Feature: calculator-ui-polish, Property 1: Извлечение countryIds из DOM
+     * Validates: Requirements 3.1
+     *
+     * Для любого DOM-состояния страницы mng_order, содержащего заголовок матча
+     * с флагами стран (/cntr/{id}.gif), функция extractCountryIds должна корректно
+     * извлечь homeCountryId и awayCountryId из img-элементов.
+     */
+    function pbtExtractCountryIds(iterations) {
+        const numIterations = iterations || 100;
+        let passed = 0;
+        let failed = 0;
+        const failures = [];
+
+        function randomFedId() {
+            return Math.floor(Math.random() * 220) + 1;
+        }
+
+        // Логика извлечения, идентичная extractCountryIds внутри createLayout
+        function extractFromHeader(headerEl) {
+            if (!headerEl) {
+                return { homeCountryId: null, awayCountryId: null };
+            }
+            var imgs = headerEl.querySelectorAll('img');
+            var ids = [];
+            for (var i = 0; i < imgs.length; i++) {
+                var src = imgs[i].src || '';
+                var m = src.match(/\/cntr\/(\d+)\.gif/);
+                if (m) {
+                    ids.push(m[1]);
+                }
+            }
+            return {
+                homeCountryId: ids.length > 0 ? ids[0] : null,
+                awayCountryId: ids.length > 1 ? ids[1] : null
+            };
+        }
+
+        for (let i = 0; i < numIterations; i++) {
+            const errors = [];
+
+            // Случайный сценарий: 0 флагов, 1 флаг, 2 флага
+            const scenario = i < 10 ? 0 : (i < 20 ? 1 : 2);
+            const homeId = randomFedId();
+            const awayId = randomFedId();
+
+            // Создаём мок DOM
+            const mockTr = document.createElement('tr');
+            mockTr.setAttribute('bgcolor', '#006600');
+            const mockTd = document.createElement('td');
+            mockTd.className = 'txtw';
+
+            if (scenario >= 1) {
+                const img1 = document.createElement('img');
+                img1.src = window.location.origin + '/cntr/' + homeId + '.gif';
+                mockTd.appendChild(img1);
+            }
+            if (scenario >= 2) {
+                const img2 = document.createElement('img');
+                img2.src = window.location.origin + '/cntr/' + awayId + '.gif';
+                mockTd.appendChild(img2);
+            }
+
+            // Добавляем нерелевантные img (не /cntr/) для проверки фильтрации
+            const noiseImg = document.createElement('img');
+            noiseImg.src = window.location.origin + '/pics/other_' + randomFedId() + '.png';
+            mockTd.appendChild(noiseImg);
+
+            mockTr.appendChild(mockTd);
+
+            // Вставляем в DOM для querySelector
+            document.body.appendChild(mockTr);
+
+            try {
+                const result = extractFromHeader(mockTd);
+
+                if (scenario === 0) {
+                    if (result.homeCountryId !== null) {
+                        errors.push(`0 флагов: homeCountryId ожидалось null, получено "${result.homeCountryId}"`);
+                    }
+                    if (result.awayCountryId !== null) {
+                        errors.push(`0 флагов: awayCountryId ожидалось null, получено "${result.awayCountryId}"`);
+                    }
+                } else if (scenario === 1) {
+                    if (result.homeCountryId !== String(homeId)) {
+                        errors.push(`1 флаг: homeCountryId ожидалось "${homeId}", получено "${result.homeCountryId}"`);
+                    }
+                    if (result.awayCountryId !== null) {
+                        errors.push(`1 флаг: awayCountryId ожидалось null, получено "${result.awayCountryId}"`);
+                    }
+                } else {
+                    if (result.homeCountryId !== String(homeId)) {
+                        errors.push(`2 флага: homeCountryId ожидалось "${homeId}", получено "${result.homeCountryId}"`);
+                    }
+                    if (result.awayCountryId !== String(awayId)) {
+                        errors.push(`2 флага: awayCountryId ожидалось "${awayId}", получено "${result.awayCountryId}"`);
+                    }
+                }
+            } finally {
+                document.body.removeChild(mockTr);
+            }
+
+            if (errors.length > 0) {
+                failed++;
+                if (failures.length < 5) {
+                    failures.push({
+                        iteration: i,
+                        input: { scenario, homeId, awayId },
+                        errors: errors
+                    });
+                }
+            } else {
+                passed++;
+            }
+        }
+
+        console.log(`[PBT] extractCountryIds: ${passed}/${numIterations} passed, ${failed} failed`);
+        if (failures.length > 0) {
+            console.log('[PBT] Первые неудачные примеры:', JSON.stringify(failures, null, 2));
+        }
+
+        return { passed, failed, total: numIterations, failures };
+    }
+
+    /**
+     * Feature: calculator-ui-polish, Property 6: Опции тактик соответствуют mng_order
+     * Validates: Requirements 7.1, 7.2
+     *
+     * Для любого вызова createTacticsSelector, результирующий select должен содержать
+     * ровно 5 опций в порядке: "суперзащитная", "защитная", "нормальная", "атакующая",
+     * "все в атаку", с default value "нормальная".
+     */
+    function pbtTacticsOptions(iterations) {
+        const numIterations = iterations || 100;
+        let passed = 0;
+        let failed = 0;
+        const failures = [];
+
+        const EXPECTED_OPTIONS = [
+            'суперзащитная',
+            'защитная',
+            'нормальная',
+            'атакующая',
+            'все в атаку'
+        ];
+
+        const validStyles = ['norm', 'sp', 'tiki', 'brazil', 'brit', 'bb', 'kat'];
+        const validRough = ['clean', 'rough'];
+        const validDefence = ['zonal', 'man'];
+        const validMorale = ['normal', 'super', 'rest'];
+        const validTactics = ['нормальная', 'суперзащитная', 'защитная', 'атакующая', 'все в атаку'];
+
+        function randomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        for (let i = 0; i < numIterations; i++) {
+            // Случайно решаем: задать tactics или оставить undefined (для проверки default)
+            const hasTactics = Math.random() > 0.3;
+            const team = {
+                formation: '4-4-2',
+                style: randomItem(validStyles),
+                rough: randomItem(validRough),
+                defenceType: randomItem(validDefence),
+                morale: randomItem(validMorale)
+            };
+            if (hasTactics) {
+                team.tactics = randomItem(validTactics);
+            }
+
+            const errors = [];
+
+            try {
+                const select = createTacticsSelector(team, () => {});
+
+                // Проверяем количество опций
+                const options = [...select.options];
+                if (options.length !== 5) {
+                    errors.push(`Ожидалось 5 опций, получено ${options.length}`);
+                }
+
+                // Проверяем порядок и значения опций
+                for (let j = 0; j < EXPECTED_OPTIONS.length; j++) {
+                    const opt = options[j];
+                    if (!opt) {
+                        errors.push(`Опция ${j} отсутствует (ожидалось "${EXPECTED_OPTIONS[j]}")`);
+                        continue;
+                    }
+                    if (opt.value !== EXPECTED_OPTIONS[j]) {
+                        errors.push(`Опция ${j}: value ожидалось "${EXPECTED_OPTIONS[j]}", получено "${opt.value}"`);
+                    }
+                }
+
+                // Проверяем default value: если tactics не задан, должно быть "нормальная"
+                const expectedValue = team.tactics || 'нормальная';
+                if (select.value !== expectedValue) {
+                    errors.push(`select.value ожидалось "${expectedValue}", получено "${select.value}"`);
+                }
+            } catch (e) {
+                errors.push(`Исключение: ${e.message}`);
+            }
+
+            if (errors.length > 0) {
+                failed++;
+                if (failures.length < 5) {
+                    failures.push({
+                        iteration: i,
+                        input: { style: team.style, tactics: team.tactics },
+                        errors: errors
+                    });
+                }
+            } else {
+                passed++;
+            }
+        }
+
+        console.log(`[PBT] tacticsOptions: ${passed}/${numIterations} passed, ${failed} failed`);
+        if (failures.length > 0) {
+            console.log('[PBT] Первые неудачные примеры:', JSON.stringify(failures, null, 2));
+        }
+
+        return { passed, failed, total: numIterations, failures };
     }
 
     // ===== РОУТЕР СТРАНИЦ =====
