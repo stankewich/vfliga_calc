@@ -6236,7 +6236,7 @@ function createDummySelect() {
     overflow: hidden;
     }
     #vsol-calculator-ui .select2-selection__rendered {
-    color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #333; overflow: hidden; text-overflow: ellipsis; white-space: pre;
     text-align: left; display: block; width: 100%;
     font-family: 'Courier New', monospace; font-size: 11px;
     line-height: 18px;
