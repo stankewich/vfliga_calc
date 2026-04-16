@@ -8750,9 +8750,10 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
         if (shtSelect || uglovSelect || penaltySelect) {
             // Получаем игроков из текущего состава (только полевые, без вратарей)
             const availablePlayers = [];
-            lineup.forEach(slot => {
+            lineup.forEach((slot, idx) => {
                 const playerId = slot.getValue();
                 const position = slot.posValue;
+                console.log(`[RoleSelectors] Слот ${idx}: playerId="${playerId}", pos="${position}"`);
 
                 // Исключаем вратарей из списка исполнителей стандартов
                 if (playerId && playerId !== '-1' && position !== 'GK') {
