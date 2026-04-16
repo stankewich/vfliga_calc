@@ -11152,12 +11152,11 @@ function getTournamentType() {
 
             // Показываем поле цены билета если играем дома
             if (userTeamInfo.isHome) {
-                const ticketRow = document.getElementById('vsol-ticket-row');
+                const ticketRow = weatherUI.container.querySelector('#vsol-ticket-row');
                 console.log('[createLayout] Ticket row:', ticketRow, 'isHome:', userTeamInfo.isHome);
                 if (ticketRow) ticketRow.style.display = '';
-                // Подтягиваем текущую цену из оригинальной формы
                 const origPrice = document.getElementById('price');
-                const ticketInput = document.getElementById('vsol-ticket-price');
+                const ticketInput = weatherUI.container.querySelector('#vsol-ticket-price');
                 if (origPrice && ticketInput) {
                     ticketInput.value = origPrice.value || '20';
                 }
@@ -11166,10 +11165,10 @@ function getTournamentType() {
 
         // Fallback: показать ticket row если matchData.homeAway === 'Д' (без pageData)
         if (!pageData && matchData && matchData.homeAway === 'Д') {
-            const ticketRow = document.getElementById('vsol-ticket-row');
+            const ticketRow = weatherUI.container.querySelector('#vsol-ticket-row');
             if (ticketRow) ticketRow.style.display = '';
             const origPrice = document.getElementById('price');
-            const ticketInput = document.getElementById('vsol-ticket-price');
+            const ticketInput = weatherUI.container.querySelector('#vsol-ticket-price');
             if (origPrice && ticketInput) ticketInput.value = origPrice.value || '20';
         }
 
