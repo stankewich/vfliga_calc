@@ -8122,10 +8122,10 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
     function toOptionLabel(p, matchPosition, physicalFormId) {
         const pos = [p.mainPos, p.secondPos].filter(Boolean).join('/');
 
-        // Все спецвозможности
+        // Все спецвозможности (непустые поля)
         const abilities = (p.abilities || '').trim();
-        const specMatch = abilities.match(/[ЛДГИСМВПР]\d/g);
-        const specStr = specMatch ? specMatch.join('') : '';
+        const specParts = abilities.split(/\s+/).filter(s => s && s !== '0');
+        const specStr = specParts.join('');
 
         // Сила на позиции
         let displayStr;
@@ -8146,7 +8146,7 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
 
         // Формат: Фамилия(pad) Спец Поз Сила
         const namePad = surname.padEnd(11, ' ');
-        const specPad = specStr ? specStr.padEnd(8, ' ') : '        ';
+        const specPad = specStr ? specStr.padEnd(12, ' ') : '            ';
         const posPad = pos.padEnd(6, ' ');
         const strPad = String(displayStr).padStart(4, ' ');
 
