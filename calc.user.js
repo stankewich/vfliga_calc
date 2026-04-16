@@ -11168,6 +11168,61 @@ function getTournamentType() {
                     ticketInput.value = origPrice.value || '20';
                 }
             }
+
+            // Автоимпорт замен и тактических указаний из оригинальной формы
+            const userSide = userTeamInfo.isHome ? 'home' : 'away';
+            setTimeout(() => {
+                const subSlots = window[`__vs_substitutionSlots_${userSide}`];
+                if (subSlots) {
+                    for (let i = 0; i < subSlots.length; i++) {
+                        const s = subSlots[i];
+                        const fStart = document.getElementById(`zmin_start_${i}`);
+                        const fEnd = document.getElementById(`zmin_end_${i}`);
+                        const fCond = document.getElementById(`zcond_${i}`);
+                        const fOut = document.getElementById(`zout_${i}`);
+                        const fIn = document.getElementById(`zin_${i}`);
+                        if (fStart && s.start) s.start.value = fStart.value || '';
+                        if (fEnd && s.end) s.end.value = fEnd.value || '';
+                        if (fCond && s.cond) s.cond.value = fCond.value || '';
+                        if (fOut && s.out && fOut.options && fOut.options.length > 1) {
+                            s.out.innerHTML = '';
+                            for (let j = 0; j < fOut.options.length; j++) {
+                                const o = document.createElement('option');
+                                o.value = fOut.options[j].value;
+                                o.textContent = fOut.options[j].textContent;
+                                s.out.appendChild(o);
+                            }
+                            s.out.value = fOut.value || '';
+                        }
+                        if (fIn && s.in && fIn.options && fIn.options.length > 1) {
+                            s.in.innerHTML = '';
+                            for (let j = 0; j < fIn.options.length; j++) {
+                                const o = document.createElement('option');
+                                o.value = fIn.options[j].value;
+                                o.textContent = fIn.options[j].textContent;
+                                s.in.appendChild(o);
+                            }
+                            s.in.value = fIn.value || '';
+                        }
+                    }
+                    console.log('[createLayout] Замены автоимпортированы');
+                }
+                const tactSlots = window[`__vs_tacticalSlots_${userSide}`];
+                if (tactSlots) {
+                    for (let i = 0; i < tactSlots.length; i++) {
+                        const t = tactSlots[i];
+                        const fStart = document.getElementById(`tmin_start_${i}`);
+                        const fEnd = document.getElementById(`tmin_end_${i}`);
+                        const fCond = document.getElementById(`tcond_${i}`);
+                        const fTact = document.getElementById(`tact_${i}`);
+                        if (fStart && t.start) t.start.value = fStart.value || '';
+                        if (fEnd && t.end) t.end.value = fEnd.value || '';
+                        if (fCond && t.cond) t.cond.value = fCond.value || '';
+                        if (fTact && t.tact) t.tact.value = fTact.value || '';
+                    }
+                    console.log('[createLayout] Тактические указания автоимпортированы');
+                }
+            }, 500);
         }
 
         // Fallback: показать ticket row если matchData.homeAway === 'Д' (без pageData)
