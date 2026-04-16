@@ -8666,6 +8666,10 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             getValue: () => subOrders.getValue ? subOrders.getValue() : '',
             setValue: (v, label) => { if (subOrders.setValue) subOrders.setValue(v, label); },
             setOptions: (opts) => { if (subOrders.setOptions) subOrders.setOptions(opts); },
+            getOptionLabel: (val) => {
+                const opt = subOrders.el.querySelector(`.orders-option[data-value="${val}"]`);
+                return opt ? opt.textContent : '';
+            },
             isGkSub: isGkSub,
             slotIndex: 11 + si
         };
@@ -14963,6 +14967,8 @@ setTimeout(() => {
 
         // --- Запасные: plr[11]..plr[19] (S1-S9) ---
         if (myLineupBlock.substitutes) {
+            // Обновляем опции запасных чтобы были доступны для setValue
+            if (myLineupBlock.updatePlayerSelectOptions) myLineupBlock.updatePlayerSelectOptions();
             for (let si = 0; si < myLineupBlock.substitutes.length; si++) {
                 const subSlot = myLineupBlock.substitutes[si];
                 if (!subSlot) continue;
@@ -14979,48 +14985,36 @@ setTimeout(() => {
             }
         }
 
-        // --- Обновляем UI после установки всех игроков ---
-        if (typeof window.__vs_onLineupChanged === 'function') {
-            window.__vs_onLineupChanged();
-        }
+        // --- Обновляем опции после установки всех игроков (синхронно) ---
+        if (myLineupBlock.updatePlayerSelectOptions) myLineupBlock.updatePlayerSelectOptions();
 
-        // --- Капитан (после обновления опций) ---
+        // --- Капитан ---
+        if (typeof refreshCaptainOptions === 'function') {
+            refreshCaptainOptions(myLineupBlock, isHome ? window.homePlayers : window.awayPlayers);
+        }
         if (formCaptain && formCaptain.value && myLineupBlock.captainSelect) {
-            if (typeof refreshCaptainOptions === 'function') {
-                refreshCaptainOptions(myLineupBlock, isHome ? window.homePlayers : window.awayPlayers);
-            }
-            // Ждём обновления опций
-            setTimeout(() => {
-                myLineupBlock.captainSelect.value = formCaptain.value;
-                myLineupBlock.captainSelect.dispatchEvent(new Event('change'));
-                console.log('[ORDER] Капитан:', formCaptain.value);
-            }, 100);
+            myLineupBlock.captainSelect.value = formCaptain.value;
+            myLineupBlock.captainSelect.dispatchEvent(new Event('change'));
+            console.log('[ORDER] Капитан:', formCaptain.value);
         }
 
-        // --- Роли: sht, uglov, penalty (после обновления опций) ---
-        setTimeout(() => {
-            if (myLineupBlock.updateRoleSelectors) {
-                myLineupBlock.updateRoleSelectors();
-            }
-            const formSht = forma.querySelector('[name="sht"]');
-            const formUglov = forma.querySelector('[name="uglov"]');
-            const formPenalty = forma.querySelector('[name="penalty"]');
-            if (formSht && formSht.value && myLineupBlock.shtSelect) {
-                myLineupBlock.shtSelect.value = formSht.value;
-                myLineupBlock.shtSelect.dispatchEvent(new Event('change'));
-                console.log('[ORDER] Штрафные:', formSht.value);
-            }
-            if (formUglov && formUglov.value && myLineupBlock.uglovSelect) {
-                myLineupBlock.uglovSelect.value = formUglov.value;
-                myLineupBlock.uglovSelect.dispatchEvent(new Event('change'));
-                console.log('[ORDER] Угловые:', formUglov.value);
-            }
-            if (formPenalty && formPenalty.value && myLineupBlock.penaltySelect) {
-                myLineupBlock.penaltySelect.value = formPenalty.value;
-                myLineupBlock.penaltySelect.dispatchEvent(new Event('change'));
-                console.log('[ORDER] Пенальти:', formPenalty.value);
-            }
-        }, 200);
+        // --- Роли: sht, uglov, penalty ---
+        if (myLineupBlock.updateRoleSelectors) myLineupBlock.updateRoleSelectors();
+        const formSht = forma.querySelector('[name="sht"]');
+        const formUglov = forma.querySelector('[name="uglov"]');
+        const formPenalty = forma.querySelector('[name="penalty"]');
+        if (formSht && formSht.value && myLineupBlock.shtSelect) {
+            myLineupBlock.shtSelect.value = formSht.value;
+            console.log('[ORDER] Штрафные:', formSht.value);
+        }
+        if (formUglov && formUglov.value && myLineupBlock.uglovSelect) {
+            myLineupBlock.uglovSelect.value = formUglov.value;
+            console.log('[ORDER] Угловые:', formUglov.value);
+        }
+        if (formPenalty && formPenalty.value && myLineupBlock.penaltySelect) {
+            myLineupBlock.penaltySelect.value = formPenalty.value;
+            console.log('[ORDER] Пенальти:', formPenalty.value);
+        }
 
         // --- Замены из оригинальной формы → калькулятор ---
         const sideLabel = isHome ? 'home' : 'away';
@@ -15037,7 +15031,6 @@ setTimeout(() => {
                 if (fEnd && s.end) s.end.value = fEnd.value || '';
                 if (fCond && s.cond) s.cond.value = fCond.value || '';
                 if (fOut && s.out) {
-                    // Копируем опции из оригинальной формы в калькулятор
                     if (fOut.options && fOut.options.length > 1) {
                         s.out.innerHTML = '';
                         for (let j = 0; j < fOut.options.length; j++) {
@@ -15061,9 +15054,8 @@ setTimeout(() => {
                     }
                     s.in.value = fIn.value || '';
                 }
-                console.log(`[ORDER] Замена ${i}: start=${fStart?.value}, end=${fEnd?.value}, cond=${fCond?.value}, out=${fOut?.value}, in=${fIn?.value}`);
             }
-            console.log('[ORDER] Замены импортированы:', subSlots.length, 'слотов');
+            console.log('[ORDER] Замены импортированы');
         }
 
         // --- Тактические указания из оригинальной формы → калькулятор ---
@@ -15079,21 +15071,14 @@ setTimeout(() => {
                 if (fEnd && t.end) t.end.value = fEnd.value || '';
                 if (fCond && t.cond) t.cond.value = fCond.value || '';
                 if (fTact && t.tact) t.tact.value = fTact.value || '';
-                console.log(`[ORDER] Такт.указ ${i}: start=${fStart?.value}, end=${fEnd?.value}, cond=${fCond?.value}, tact=${fTact?.value}`);
             }
-            console.log('[ORDER] Тактические указания импортированы:', tactSlots.length, 'слотов');
+            console.log('[ORDER] Тактические указания импортированы');
         }
 
-        // --- Пересчёт силы (после установки ролей) ---
-        setTimeout(() => {
-            if (typeof window.__vs_recalculateStrength === 'function') {
-                window.__vs_recalculateStrength();
-            }
-            if (typeof window.__vs_onLineupChanged === 'function') {
-                window.__vs_onLineupChanged();
-            }
-            console.log('[ORDER] Пересчёт силы запущен');
-        }, 600);
+        // --- Пересчёт силы и обновление UI (синхронно) ---
+        if (typeof window.__vs_onLineupChanged === 'function') {
+            window.__vs_onLineupChanged();
+        }
 
         console.log('[ORDER] Импорт завершён');
         console.groupEnd();
