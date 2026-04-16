@@ -13661,10 +13661,9 @@ setTimeout(() => {
         }
 
         // Маппинг настроек калькулятора → POST параметры
-        const calcSettings = document.getElementById('vs-home-settings-table');
-        if (calcSettings) {
+        {
             // Формация: "4-4-2" → "1-4-4-2"
-            const formationSelect = window.homeFormationSelect || (isHome ? window.homeFormationSelect : window.awayFormationSelect);
+            const formationSelect = isHome ? window.homeFormationSelect : window.awayFormationSelect;
             if (formationSelect && formationSelect.value) {
                 params.delete('formation');
                 params.set('formation', '1-' + formationSelect.value);
@@ -13675,7 +13674,7 @@ setTimeout(() => {
                 'norm': 'нормальный', 'sp': 'спартаковский', 'tiki': 'тики-така',
                 'brazil': 'бразильский', 'brit': 'британский', 'bb': 'бей-беги', 'kat': 'катеначчо'
             };
-            const styleSelect = window.homeStyle || (isHome ? window.homeStyle : window.awayStyle);
+            const styleSelect = isHome ? window.homeStyle : window.awayStyle;
             if (styleSelect && styleSelect.value && styleMap[styleSelect.value]) {
                 params.delete('playstyle');
                 params.set('playstyle', styleMap[styleSelect.value]);
@@ -13683,15 +13682,17 @@ setTimeout(() => {
 
             // Грубость: "clean"→0, "rough"→1
             const roughMap = { 'clean': '0', 'rough': '1' };
-            if (window.homeRoughSelect && roughMap[window.homeRoughSelect.value] !== undefined) {
+            const roughSelect = isHome ? window.homeRoughSelect : window.awayRoughSelect;
+            if (roughSelect && roughMap[roughSelect.value] !== undefined) {
                 params.delete('gamestyle');
-                params.set('gamestyle', roughMap[window.homeRoughSelect.value]);
+                params.set('gamestyle', roughMap[roughSelect.value]);
             }
 
             // Защита: "zonal"→1, "man"→2
             const defenceMap = { 'zonal': '1', 'man': '2' };
-            if (window.homeDefenceTypeSelect) {
-                const defVal = window.homeDefenceTypeSelect.value || window.homeDefenceTypeSelect.getValue?.();
+            const defenceSelect = isHome ? window.homeDefenceTypeSelect : window.awayDefenceTypeSelect;
+            if (defenceSelect) {
+                const defVal = defenceSelect.value || defenceSelect.getValue?.();
                 if (defVal && defenceMap[defVal]) {
                     params.delete('defence');
                     params.set('defence', defenceMap[defVal]);
@@ -13700,9 +13701,10 @@ setTimeout(() => {
 
             // Настрой: "normal"→0, "super"→1, "rest"→2
             const moraleMap = { 'normal': '0', 'super': '1', 'rest': '2' };
-            if (window.homeMoraleSelect && moraleMap[window.homeMoraleSelect.value] !== undefined) {
+            const moraleSelect = isHome ? window.homeMoraleSelect : window.awayMoraleSelect;
+            if (moraleSelect && moraleMap[moraleSelect.value] !== undefined) {
                 params.delete('morale');
-                params.set('morale', moraleMap[window.homeMoraleSelect.value]);
+                params.set('morale', moraleMap[moraleSelect.value]);
             }
         }
 
