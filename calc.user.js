@@ -14968,16 +14968,40 @@ setTimeout(() => {
         if (subSlots) {
             for (let i = 0; i < subSlots.length; i++) {
                 const s = subSlots[i];
-                const fStart = forma.querySelector(`[name="zmin_start[${i}]"]`);
-                const fEnd = forma.querySelector(`[name="zmin_end[${i}]"]`);
-                const fCond = forma.querySelector(`[name="zcond[${i}]"]`);
-                const fOut = forma.querySelector(`[name="zout[${i}]"]`);
-                const fIn = forma.querySelector(`[name="zin[${i}]"]`);
+                const fStart = document.getElementById(`zmin_start_${i}`);
+                const fEnd = document.getElementById(`zmin_end_${i}`);
+                const fCond = document.getElementById(`zcond_${i}`);
+                const fOut = document.getElementById(`zout_${i}`);
+                const fIn = document.getElementById(`zin_${i}`);
                 if (fStart && s.start) s.start.value = fStart.value || '';
                 if (fEnd && s.end) s.end.value = fEnd.value || '';
                 if (fCond && s.cond) s.cond.value = fCond.value || '';
-                if (fOut && s.out) s.out.value = fOut.value || '';
-                if (fIn && s.in) s.in.value = fIn.value || '';
+                if (fOut && s.out) {
+                    // Копируем опции из оригинальной формы в калькулятор
+                    if (fOut.options && fOut.options.length > 1) {
+                        s.out.innerHTML = '';
+                        for (let j = 0; j < fOut.options.length; j++) {
+                            const o = document.createElement('option');
+                            o.value = fOut.options[j].value;
+                            o.textContent = fOut.options[j].textContent;
+                            s.out.appendChild(o);
+                        }
+                    }
+                    s.out.value = fOut.value || '';
+                }
+                if (fIn && s.in) {
+                    if (fIn.options && fIn.options.length > 1) {
+                        s.in.innerHTML = '';
+                        for (let j = 0; j < fIn.options.length; j++) {
+                            const o = document.createElement('option');
+                            o.value = fIn.options[j].value;
+                            o.textContent = fIn.options[j].textContent;
+                            s.in.appendChild(o);
+                        }
+                    }
+                    s.in.value = fIn.value || '';
+                }
+                console.log(`[ORDER] Замена ${i}: start=${fStart?.value}, end=${fEnd?.value}, cond=${fCond?.value}, out=${fOut?.value}, in=${fIn?.value}`);
             }
             console.log('[ORDER] Замены импортированы:', subSlots.length, 'слотов');
         }
@@ -14987,14 +15011,15 @@ setTimeout(() => {
         if (tactSlots) {
             for (let i = 0; i < tactSlots.length; i++) {
                 const t = tactSlots[i];
-                const fStart = forma.querySelector(`[name="tmin_start[${i}]"]`);
-                const fEnd = forma.querySelector(`[name="tmin_end[${i}]"]`);
-                const fCond = forma.querySelector(`[name="tcond[${i}]"]`);
-                const fTact = forma.querySelector(`[name="tact[${i}]"]`);
+                const fStart = document.getElementById(`tmin_start_${i}`);
+                const fEnd = document.getElementById(`tmin_end_${i}`);
+                const fCond = document.getElementById(`tcond_${i}`);
+                const fTact = document.getElementById(`tact_${i}`);
                 if (fStart && t.start) t.start.value = fStart.value || '';
                 if (fEnd && t.end) t.end.value = fEnd.value || '';
                 if (fCond && t.cond) t.cond.value = fCond.value || '';
                 if (fTact && t.tact) t.tact.value = fTact.value || '';
+                console.log(`[ORDER] Такт.указ ${i}: start=${fStart?.value}, end=${fEnd?.value}, cond=${fCond?.value}, tact=${fTact?.value}`);
             }
             console.log('[ORDER] Тактические указания импортированы:', tactSlots.length, 'слотов');
         }
