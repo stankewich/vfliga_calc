@@ -6254,9 +6254,9 @@ function createDummySelect() {
     position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #aaa;
     z-index: 10000; max-height: 300px; overflow-y: auto;
     }
-    #vsol-calculator-ui .orders-option { padding: 2px 4px; height: 20px; line-height: 16px; font-size: 11px; text-align: left; cursor: pointer; font-family: 'Courier New', monospace; white-space: pre; }
-    #vsol-calculator-ui .orders-option:hover { background: rgb(240, 240, 240); }
-    #vsol-calculator-ui .orders-option.selected { background: rgb(220, 235, 255); font-weight: bold; }
+    #vsol-calculator-ui .orders-option { padding: 2px 4px; height: 20px; line-height: 16px; font-size: 11px; text-align: left; cursor: pointer; font-family: 'Courier New', monospace; white-space: pre; background: #FFFFBB; color: #333; }
+    #vsol-calculator-ui .orders-option:hover { background: #fff0a0; }
+    #vsol-calculator-ui .orders-option.selected { background: #ffe680; font-weight: bold; }
     #vsol-calculator-ui .orders-option.disabled { color: rgb(187, 187, 187); cursor: default; }
     #vsol-calculator-ui .orders-placeholder { color: rgb(163,163,163); }
 
@@ -6267,7 +6267,7 @@ function createDummySelect() {
     #vsol-calculator-ui .orders-option.gr3 { color: #009; }
     #vsol-calculator-ui .orders-option.gr11 { color: #333; }
     #vsol-calculator-ui .orders-option.gr12 { color: #c00; }
-    #vsol-calculator-ui .orders-option.grD { color: #a3a3a3; font-style: italic; }
+    #vsol-calculator-ui .orders-option.grD { color: #a3a3a3; font-style: italic; background: #fff; }
 
     #vsol-calculator-ui .mini-pos-cell .select2-selection { height: 20px; min-height: 20px; line-height: 18px; }
 
@@ -8081,7 +8081,12 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             substitutes.forEach(s => { const v = s.getValue(); if (v && v !== currentValue) allSelected.add(v); });
         }
         pool = pool.filter(p => !allSelected.has(String(p.id)));
-        pool.sort((a, b) => (Number(b.realStr || 0) - Number(a.realStr || 0)));
+        // Сортировка по силе на позиции (с учётом positionModifier)
+        pool.sort((a, b) => {
+            const aStr = Math.round((Number(a.realStr || 0)) * getPositionModifier(a.mainPos, a.secondPos, posValue));
+            const bStr = Math.round((Number(b.realStr || 0)) * getPositionModifier(b.mainPos, b.secondPos, posValue));
+            return bStr - aStr;
+        });
         return pool;
     }
 
@@ -8116,18 +8121,16 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
 
     function toOptionLabel(p, matchPosition, physicalFormId) {
         const pos = [p.mainPos, p.secondPos].filter(Boolean).join('/');
-        const percent = (Number(p.form) || 0) + '%';
 
-        // Спецухи: извлекаем сокращённые (Л4, Д4 и т.д.)
+        // Все спецвозможности
         const abilities = (p.abilities || '').trim();
         const specMatch = abilities.match(/[ЛДГИСМВПР]\d/g);
-        const specStr = specMatch ? specMatch.join(' ') : '';
+        const specStr = specMatch ? specMatch.join('') : '';
 
-        // Определяем какую силу показывать
+        // Сила на позиции
         let displayStr;
         const tournamentType = getTournamentType();
         const autoFormId = getPhysicalFormIdFromData(p.form, p.form_mod, tournamentType);
-
         if (autoFormId === 'UNKNOWN' || (physicalFormId && physicalFormId !== autoFormId)) {
             displayStr = calculatePlayerStr(p, matchPosition, physicalFormId || autoFormId);
         } else {
@@ -8136,14 +8139,18 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             displayStr = Math.round(realStr * positionModifier);
         }
 
-        // Формат: Имя(pad) Спец Поз   %Форма Сила
-        const namePart = p.name.padEnd(17, ' ');
-        const specPart = specStr ? specStr.padEnd(3, ' ') : '  ';
-        const posPart = pos.padEnd(6, ' ');
-        const pctPart = percent.padStart(4, ' ');
-        const strPart = String(displayStr).padStart(4, ' ');
+        // Только фамилия (последнее слово), сокращаем если > 10 символов
+        const nameParts = (p.name || '').split(' ');
+        let surname = nameParts.length > 1 ? nameParts.slice(1).join(' ') : nameParts[0] || '';
+        if (surname.length > 10) surname = surname.substring(0, 9) + '.';
 
-        return `${namePart}${specPart}${posPart}${pctPart}${strPart}`;
+        // Формат: Фамилия(pad) Спец Поз Сила
+        const namePad = surname.padEnd(11, ' ');
+        const specPad = specStr ? specStr.padEnd(8, ' ') : '        ';
+        const posPad = pos.padEnd(6, ' ');
+        const strPad = String(displayStr).padStart(4, ' ');
+
+        return `${namePad}${specPad}${posPad}${strPad}`;
     }
 
     /**
