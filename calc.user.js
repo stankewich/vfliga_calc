@@ -14876,44 +14876,70 @@ setTimeout(() => {
             // Если plr_N.value === "-1" — оставляем слот пустым (не трогаем)
         }
 
-        // --- Капитан ---
+        // --- Запасные: plr[11]..plr[19] (S1-S9) ---
+        if (myLineupBlock.substitutes) {
+            for (let si = 0; si < myLineupBlock.substitutes.length; si++) {
+                const subSlot = myLineupBlock.substitutes[si];
+                if (!subSlot) continue;
+                const formIdx = 11 + si;
+                let plrSelect = document.getElementById(`plr_${formIdx}`);
+                if (!plrSelect) plrSelect = forma.querySelector(`[name="plr[${formIdx}]"]`);
+                if (!plrSelect) continue;
+                const playerId = plrSelect.value;
+                if (playerId && playerId !== '-1') {
+                    const label = subSlot.getOptionLabel ? subSlot.getOptionLabel(playerId) : '';
+                    subSlot.setValue(playerId, label);
+                    console.log(`[ORDER] Запасной S${si + 1}: игрок ${playerId}`);
+                }
+            }
+        }
+
+        // --- Обновляем UI после установки всех игроков ---
+        if (typeof window.__vs_onLineupChanged === 'function') {
+            window.__vs_onLineupChanged();
+        }
+
+        // --- Капитан (после обновления опций) ---
         if (formCaptain && formCaptain.value && myLineupBlock.captainSelect) {
-            // Обновляем опции капитана чтобы включить игроков из состава
             if (typeof refreshCaptainOptions === 'function') {
                 refreshCaptainOptions(myLineupBlock, isHome ? window.homePlayers : window.awayPlayers);
             }
-            myLineupBlock.captainSelect.value = formCaptain.value;
-            myLineupBlock.captainSelect.dispatchEvent(new Event('change'));
-            console.log('[ORDER] Капитан:', formCaptain.value);
+            // Ждём обновления опций
+            setTimeout(() => {
+                myLineupBlock.captainSelect.value = formCaptain.value;
+                myLineupBlock.captainSelect.dispatchEvent(new Event('change'));
+                console.log('[ORDER] Капитан:', formCaptain.value);
+            }, 100);
         }
 
-        // --- Роли: sht, uglov, penalty ---
-        // Обновляем опции ролей чтобы включить игроков из состава
-        if (myLineupBlock.updateRoleSelectors) {
-            myLineupBlock.updateRoleSelectors();
-        }
-        const formSht = forma.querySelector('[name="sht"]');
-        const formUglov = forma.querySelector('[name="uglov"]');
-        const formPenalty = forma.querySelector('[name="penalty"]');
-        if (formSht && formSht.value && myLineupBlock.shtSelect) {
-            myLineupBlock.shtSelect.value = formSht.value;
-            myLineupBlock.shtSelect.dispatchEvent(new Event('change'));
-            console.log('[ORDER] Штрафные:', formSht.value);
-        }
-        if (formUglov && formUglov.value && myLineupBlock.uglovSelect) {
-            myLineupBlock.uglovSelect.value = formUglov.value;
-            myLineupBlock.uglovSelect.dispatchEvent(new Event('change'));
-            console.log('[ORDER] Угловые:', formUglov.value);
-        }
-        if (formPenalty && formPenalty.value && myLineupBlock.penaltySelect) {
-            myLineupBlock.penaltySelect.value = formPenalty.value;
-            myLineupBlock.penaltySelect.dispatchEvent(new Event('change'));
-            console.log('[ORDER] Пенальти:', formPenalty.value);
-        }
+        // --- Роли: sht, uglov, penalty (после обновления опций) ---
+        setTimeout(() => {
+            if (myLineupBlock.updateRoleSelectors) {
+                myLineupBlock.updateRoleSelectors();
+            }
+            const formSht = forma.querySelector('[name="sht"]');
+            const formUglov = forma.querySelector('[name="uglov"]');
+            const formPenalty = forma.querySelector('[name="penalty"]');
+            if (formSht && formSht.value && myLineupBlock.shtSelect) {
+                myLineupBlock.shtSelect.value = formSht.value;
+                myLineupBlock.shtSelect.dispatchEvent(new Event('change'));
+                console.log('[ORDER] Штрафные:', formSht.value);
+            }
+            if (formUglov && formUglov.value && myLineupBlock.uglovSelect) {
+                myLineupBlock.uglovSelect.value = formUglov.value;
+                myLineupBlock.uglovSelect.dispatchEvent(new Event('change'));
+                console.log('[ORDER] Угловые:', formUglov.value);
+            }
+            if (formPenalty && formPenalty.value && myLineupBlock.penaltySelect) {
+                myLineupBlock.penaltySelect.value = formPenalty.value;
+                myLineupBlock.penaltySelect.dispatchEvent(new Event('change'));
+                console.log('[ORDER] Пенальти:', formPenalty.value);
+            }
+        }, 200);
 
-        // --- Пересчёт силы ---
+        // --- Пересчёт силы (после установки ролей) ---
         if (typeof window.__vs_recalculateStrength === 'function') {
-            setTimeout(() => window.__vs_recalculateStrength(), 300);
+            setTimeout(() => window.__vs_recalculateStrength(), 500);
         }
 
         console.log('[ORDER] Импорт завершён');
