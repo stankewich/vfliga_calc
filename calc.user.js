@@ -11179,6 +11179,110 @@ function getTournamentType() {
         updatePhysicalFormSelectors(detectedType);
 
         container.appendChild(row1Table);
+
+        // Интерактивная полоска силы — внутри спойлера
+        const strengthContent = document.createElement('div');
+        strengthContent.id = 'vsol-strength-content';
+        strengthContent.innerHTML = `
+            <table width="100%" style="border-collapse:collapse;">
+                <tbody><tr>
+                    <td id="vsol-str-home" class="rdl" style="font-size:11px; border:1px solid #ddd; background:#fff;">
+                        <span id="vsol-str-home-val">—</span>
+                        <div style="float:right; padding-right:5px"><b id="vsol-str-home-pct">—</b></div>
+                    </td>
+                    <td id="vsol-str-away" class="gdl" style="font-size:11px; border:1px solid #ddd; background:#fff;">
+                        <span id="vsol-str-away-val">—</span>
+                        <div style="float:left; padding-left:5px"><b id="vsol-str-away-pct">—</b></div>
+                    </td>
+                </tr></tbody>
+            </table>
+        `;
+        const strengthSpoiler = createSpoiler('vsol-strength-bar', 'Сила в начале матча', strengthContent, true);
+        strengthSpoiler.el.style.cssText = 'max-width:780px; margin:0 auto 4px auto;';
+        container.appendChild(strengthSpoiler.el);
+
+        // Функция обновления полоски силы
+        let strengthUpdateTimer = null;
+        async function updateStrengthBar() {
+            try {
+                if (!window.__vs_computeTeamStrength) return;
+                const homeHasPlayers = homeLineupBlock.lineup.some(s => s.getValue && s.getValue());
+                const awayHasPlayers = awayLineupBlock.lineup.some(s => s.getValue && s.getValue());
+                if (!homeHasPlayers && !awayHasPlayers) return;
+
+                const wt = getCurrentWeatherFromUI() || { weather: 'солнечно', temperature: 20 };
+                const homeTeamStyleId = mapCustomStyleToStyleId(homeStyle.value);
+                const awayTeamStyleId = mapCustomStyleToStyleId(awayStyle.value);
+                const homeAttendanceEl = document.getElementById('vs_home_attendance');
+                const stadCapEl = document.getElementById('vs_home_attendance');
+                const homeAttendance = homeAttendanceEl ? Number(homeAttendanceEl.value) || 0 : 0;
+                const stadCapacity = stadCapEl ? Number(stadCapEl.max) || 0 : 0;
+                const homeAttendancePercent = stadCapacity > 0 ? Math.round((homeAttendance / stadCapacity) * 100) : -1;
+                const userSynergyHome = getSynergyPercentHome();
+                const userSynergyAway = getSynergyPercentAway();
+
+                const [homeStr, awayStr] = await Promise.all([
+                    window.__vs_computeTeamStrength(homeLineupBlock.lineup, homePlayers, homeTeamStyleId,
+                        'home', awayTeamStyleId, homeAttendancePercent, userSynergyHome, homeAtmosphere, wt.weather, wt.temperature),
+                    window.__vs_computeTeamStrength(awayLineupBlock.lineup, awayPlayers, awayTeamStyleId,
+                        'away', homeTeamStyleId, -1, userSynergyAway, awayAtmosphere, wt.weather, wt.temperature)
+                ]);
+
+                const total = homeStr + awayStr;
+                const homePct = total > 0 ? Math.round((homeStr / total) * 100) : 50;
+                const awayPct = 100 - homePct;
+                const diff = homeStr - awayStr;
+
+                const homeValEl = document.getElementById('vsol-str-home-val');
+                const awayValEl = document.getElementById('vsol-str-away-val');
+                const homePctEl = document.getElementById('vsol-str-home-pct');
+                const awayPctEl = document.getElementById('vsol-str-away-pct');
+                const homeTd = document.getElementById('vsol-str-home');
+                const awayTd = document.getElementById('vsol-str-away');
+
+                if (homeValEl) homeValEl.textContent = Math.round(homeStr);
+                if (awayValEl) {
+                    awayValEl.innerHTML = Math.round(awayStr) + (diff < 0 ? `<span class="lh12 up" style="padding-left:2px">+${Math.round(Math.abs(diff))}</span>` : '');
+                }
+                if (homePctEl) homePctEl.textContent = homePct + '%';
+                if (awayPctEl) awayPctEl.textContent = awayPct + '%';
+
+                // Заливка: home — #ff967e справа налево, away — #7eff96 слева направо
+                // Ширины пропорциональны проценту
+                if (homeTd) {
+                    homeTd.style.width = homePct + '%';
+                    homeTd.style.background = '#ff967e';
+                }
+                if (awayTd) {
+                    awayTd.style.width = awayPct + '%';
+                    awayTd.style.background = '#7eff96';
+                }
+
+                // Diff для home
+                if (homeValEl && diff > 0) {
+                    homeValEl.innerHTML = Math.round(homeStr) + `<span class="lh12 up" style="padding-left:2px">+${Math.round(diff)}</span>`;
+                }
+            } catch (e) {
+                console.error('[StrengthBar] Ошибка:', e);
+            }
+        }
+
+        // Debounced обновление
+        function scheduleStrengthUpdate() {
+            if (strengthUpdateTimer) clearTimeout(strengthUpdateTimer);
+            strengthUpdateTimer = setTimeout(updateStrengthBar, 500);
+        }
+
+        // Подключаем к событиям изменения
+        const origOnLineupChanged = window.__vs_onLineupChanged;
+        window.__vs_onLineupChanged = () => {
+            if (origOnLineupChanged) origOnLineupChanged();
+            scheduleStrengthUpdate();
+        };
+
+        // Слушаем изменения погоды, тактик, стилей
+        container.addEventListener('change', scheduleStrengthUpdate);
+
         container.appendChild(row2Container);
 
         // Блок бонусов (идентичен createUI)
@@ -11711,6 +11815,7 @@ function getTournamentType() {
 
                 return total;
             }
+            window.__vs_computeTeamStrength = computeTeamStrength;
 
             try {
                 const oldResult = container.querySelector('.vsol-result');
@@ -11914,6 +12019,7 @@ function getTournamentType() {
             if (typeof window.__vs_recalculateStrength === 'function') {
                 window.__vs_recalculateStrength();
             }
+            scheduleStrengthUpdate();
         }, 1000);
 
         return container;
