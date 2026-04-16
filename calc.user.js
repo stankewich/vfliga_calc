@@ -11047,6 +11047,8 @@ function getTournamentType() {
         window.awayFormationSelect = awayFormationSelect;
         window.homeLineupBlock = homeLineupBlock;
         window.awayLineupBlock = awayLineupBlock;
+        window.homePlayers = homePlayers;
+        window.awayPlayers = awayPlayers;
 
         // Восстановление состояния
         const homeSaved = loadTeamState(CONFIG.STORAGE_KEYS.HOME);
