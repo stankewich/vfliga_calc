@@ -9396,6 +9396,17 @@ function getTournamentType() {
                                     <span style="font-size: 11px; color: rgb(102, 102, 102); margin-left: 4px;">/ ${stadiumCapacity}</span>
                                 </td>
                             </tr>
+                            <tr id="vsol-ticket-row" style="display:none;">
+                                <td class="qt" style="height: 20px; background-color: rgb(255, 255, 187); text-align: center; font-family: Courier New, monospace; font-size: 11px;" title="Цена билета">
+                                    <img src="/pics/vs16.png" height="16" style="vertical-align: top;" onerror="this.textContent='💰';">
+                                </td>
+                                <td class="txtl" style="background-color: rgb(255, 255, 255); padding: 2px 4px;">
+                                    <input type="number" id="vsol-ticket-price" min="10" max="50" value="20"
+                                        style="width: 50px; height: 16px; font-size: 11px; font-family: Courier New, monospace; border: 1px solid rgb(170, 170, 170); padding: 2px; box-sizing: border-box; background: white; text-align: center;">
+                                    <span style="font-size: 11px; color: rgb(102, 102, 102); margin-left: 4px;">вс. (10-50)</span>
+                                    <a href="#" id="vsol-ticket-forecast" style="font-size:10px; margin-left:6px;" onclick="if(typeof openAtt==='function'){openAtt()}else{$('#dialog-att').dialog('open')}; return false;">прогноз</a>
+                                </td>
+                            </tr>
                         </table>
                     </td>
                     ${awayEmblemHtml}
@@ -11138,6 +11149,18 @@ function getTournamentType() {
             const opponentSideLabel = userTeamInfo.isHome ? 'away' : 'home';
             createOpponentTeamButtons(opponentLineupWrapper, opponentSideLabel);
             console.log('[createLayout] Кнопки соперника добавлены в блок', userTeamInfo.isHome ? 'гостей' : 'хозяев');
+
+            // Показываем поле цены билета если играем дома
+            if (userTeamInfo.isHome) {
+                const ticketRow = document.getElementById('vsol-ticket-row');
+                if (ticketRow) ticketRow.style.display = '';
+                // Подтягиваем текущую цену из оригинальной формы
+                const origPrice = document.getElementById('price');
+                const ticketInput = document.getElementById('vsol-ticket-price');
+                if (origPrice && ticketInput) {
+                    ticketInput.value = origPrice.value || '20';
+                }
+            }
         }
 
         row2Container.appendChild(homeLineupWrapper);
@@ -13765,6 +13788,13 @@ setTimeout(() => {
             params.set('memo', memoEl ? memoEl.value : '');
         }
 
+        // Цена билета (если играем дома)
+        const ticketInput = document.getElementById('vsol-ticket-price');
+        if (ticketInput && ticketInput.closest('#vsol-ticket-row')?.style.display !== 'none') {
+            params.delete('price');
+            params.set('price', ticketInput.value || '20');
+        }
+
         params.set('act', 'save');
         params.set('step', '1');
         params.set('check_order', '0');
@@ -13773,24 +13803,95 @@ setTimeout(() => {
     }
 
     function submitOrderFromCalc(isHome, matchData) {
+        const sideLabel = isHome ? 'home' : 'away';
+        const myLineupBlock = isHome ? window.homeLineupBlock : window.awayLineupBlock;
+        const errors = [];
+
+        // 1. Состав: все 11 слотов заполнены
+        if (myLineupBlock && myLineupBlock.lineup) {
+            for (let i = 0; i < Math.min(11, myLineupBlock.lineup.length); i++) {
+                const val = myLineupBlock.lineup[i]?.getValue ? myLineupBlock.lineup[i].getValue() : '';
+                if (!val || val === '-1') {
+                    errors.push(i === 0 ? 'GK не выбран' : `Слот ${i + 1} не заполнен`);
+                }
+            }
+        } else {
+            errors.push('Состав не найден');
+        }
+
+        // 2. Тактические настройки
+        const formationSel = isHome ? window.homeFormationSelect : window.awayFormationSelect;
+        if (!formationSel || !formationSel.value) errors.push('Формация не выбрана');
+        const styleSel = isHome ? window.homeStyle : window.awayStyle;
+        if (!styleSel || !styleSel.value) errors.push('Стиль не выбран');
+        const tacticSel = isHome ? window.homeTacticSelect : window.awayTacticSelect;
+        if (!tacticSel || !tacticSel.value) errors.push('Тактика не выбрана');
+
+        // 3. Капитан
+        const captainSel = myLineupBlock ? myLineupBlock.captainSelect : null;
+        if (!captainSel || !captainSel.value || captainSel.value === '' || captainSel.value === '-1') {
+            errors.push('Капитан не выбран');
+        }
+
+        // 4. Роли (Шт, Уг, Пен)
+        if (myLineupBlock) {
+            if (!myLineupBlock.shtSelect || !myLineupBlock.shtSelect.value || myLineupBlock.shtSelect.value === '-1') {
+                errors.push('Штрафные: исполнитель не выбран');
+            }
+            if (!myLineupBlock.uglovSelect || !myLineupBlock.uglovSelect.value || myLineupBlock.uglovSelect.value === '-1') {
+                errors.push('Угловые: исполнитель не выбран');
+            }
+            if (!myLineupBlock.penaltySelect || !myLineupBlock.penaltySelect.value || myLineupBlock.penaltySelect.value === '-1') {
+                errors.push('Пенальти: исполнитель не выбран');
+            }
+        }
+
+        // 5. Замены: если заполнена хотя бы одна минута — все поля слота должны быть заполнены
+        const subSlots = window[`__vs_substitutionSlots_${sideLabel}`];
+        if (subSlots) {
+            subSlots.forEach((slot, i) => {
+                const hasStart = slot.start && slot.start.value.trim();
+                const hasCond = slot.cond && slot.cond.value;
+                const hasOut = slot.out && slot.out.value;
+                const hasIn = slot.in && slot.in.value;
+                const hasAny = hasStart || hasCond || hasOut || hasIn;
+                if (hasAny) {
+                    if (!hasCond) errors.push(`Замена ${i + 1}: условие не выбрано`);
+                    if (!hasOut) errors.push(`Замена ${i + 1}: "Уходит" не выбран`);
+                    if (!hasIn) errors.push(`Замена ${i + 1}: "Выходит" не выбран`);
+                }
+            });
+        }
+
+        // 6. Тактические указания: если заполнена хотя бы одна минута — все поля слота должны быть заполнены
+        const tactSlots = window[`__vs_tacticalSlots_${sideLabel}`];
+        if (tactSlots) {
+            tactSlots.forEach((slot, i) => {
+                const hasStart = slot.start && slot.start.value.trim();
+                const hasCond = slot.cond && slot.cond.value;
+                const hasTact = slot.tact && slot.tact.value;
+                const hasAny = hasStart || hasCond || hasTact;
+                if (hasAny) {
+                    if (!hasCond) errors.push(`Такт. указание ${i + 1}: условие не выбрано`);
+                    if (!hasTact) errors.push(`Такт. указание ${i + 1}: действие не выбрано`);
+                }
+            });
+        }
+
+        // Показываем ошибки
+        if (errors.length > 0) {
+            alert('Ошибки при отправке:\n\n• ' + errors.join('\n• '));
+            return;
+        }
+
         const params = buildOrderPostData(isHome, matchData);
         if (!params) {
             alert('Не удалось собрать данные для отправки');
             return;
         }
 
-        // Валидация: проверяем что все 11 основных слотов (plr[0]..plr[10]) заполнены
-        const missingSlots = [];
-        for (let i = 0; i < 11; i++) {
-            const val = params.get(`plr[${i}]`);
-            if (!val || val === '-1') {
-                missingSlots.push(i === 0 ? 'GK' : `Слот ${i}`);
-            }
-        }
-        if (missingSlots.length > 0) {
-            alert('Основной состав не заполнен! Пустые позиции: ' + missingSlots.join(', '));
-            return;
-        }
+        // Подтверждение
+        if (!confirm('Отправить состав?')) return;
 
         // Создаём скрытую форму и отправляем POST
         const hiddenForm = document.createElement('form');
