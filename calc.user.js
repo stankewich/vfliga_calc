@@ -11072,6 +11072,8 @@ function getTournamentType() {
         window.__vs_onLineupChanged = () => {
             refreshCaptainOptions(homeLineupBlock, homePlayers);
             refreshCaptainOptions(awayLineupBlock, awayPlayers);
+            if (homeLineupBlock.updateRoleSelectors) homeLineupBlock.updateRoleSelectors();
+            if (awayLineupBlock.updateRoleSelectors) awayLineupBlock.updateRoleSelectors();
             saveAllStates();
             if (typeof window.__updateShirtsDisplay === 'function') {
                 window.__updateShirtsDisplay();
