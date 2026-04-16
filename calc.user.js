@@ -15085,9 +15085,15 @@ setTimeout(() => {
         }
 
         // --- Пересчёт силы (после установки ролей) ---
-        if (typeof window.__vs_recalculateStrength === 'function') {
-            setTimeout(() => window.__vs_recalculateStrength(), 500);
-        }
+        setTimeout(() => {
+            if (typeof window.__vs_recalculateStrength === 'function') {
+                window.__vs_recalculateStrength();
+            }
+            if (typeof window.__vs_onLineupChanged === 'function') {
+                window.__vs_onLineupChanged();
+            }
+            console.log('[ORDER] Пересчёт силы запущен');
+        }, 600);
 
         console.log('[ORDER] Импорт завершён');
         console.groupEnd();
