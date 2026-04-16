@@ -11308,7 +11308,10 @@ function getTournamentType() {
         let strengthUpdateTimer = null;
         async function updateStrengthBar() {
             try {
-                if (!window.__vs_computeTeamStrength) return;
+                if (!window.__vs_computeTeamStrength) {
+                    console.log('[StrengthBar] computeTeamStrength не доступен, пропуск');
+                    return;
+                }
                 const homeHasPlayers = homeLineupBlock.lineup.some(s => s.getValue && s.getValue());
                 const awayHasPlayers = awayLineupBlock.lineup.some(s => s.getValue && s.getValue());
                 if (!homeHasPlayers && !awayHasPlayers) return;
@@ -11365,6 +11368,7 @@ function getTournamentType() {
                 if (homeValEl && diff > 0) {
                     homeValEl.innerHTML = Math.round(homeStr) + `<span class="lh12 up" style="padding-left:2px">+${Math.round(diff)}</span>`;
                 }
+                console.log(`[StrengthBar] Обновлено: home=${Math.round(homeStr)} (${homePct}%) away=${Math.round(awayStr)} (${awayPct}%)`);
             } catch (e) {
                 console.error('[StrengthBar] Ошибка:', e);
             }
@@ -11372,6 +11376,7 @@ function getTournamentType() {
 
         // Debounced обновление
         function scheduleStrengthUpdate() {
+            console.log('[StrengthBar] Запланировано обновление');
             if (strengthUpdateTimer) clearTimeout(strengthUpdateTimer);
             strengthUpdateTimer = setTimeout(updateStrengthBar, 500);
         }
