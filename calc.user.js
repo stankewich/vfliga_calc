@@ -13775,27 +13775,52 @@ setTimeout(() => {
             params.set('penalty', myLineupBlock.penaltySelect.value);
         }
 
-        // --- Замены (zmin_start, zmin_end, zcond, zout, zin) из оригинальной формы ---
-        // FormData уже содержит эти поля, но гарантируем наличие всех 5 слотов
-        const subFields = ['zmin_start', 'zmin_end', 'zcond', 'zout', 'zin'];
-        for (const field of subFields) {
-            for (let i = 0; i < 5; i++) {
-                const key = `${field}[${i}]`;
-                if (!params.has(key)) {
-                    const formEl = forma.querySelector(`[name="${key}"]`);
-                    params.set(key, formEl ? formEl.value : '');
+        // --- Замены из калькулятора ---
+        const sideLabel = isHome ? 'home' : 'away';
+        const subSlots = window[`__vs_substitutionSlots_${sideLabel}`];
+        if (subSlots) {
+            for (let i = 0; i < subSlots.length; i++) {
+                const s = subSlots[i];
+                params.delete(`zmin_start[${i}]`); params.set(`zmin_start[${i}]`, s.start ? s.start.value : '');
+                params.delete(`zmin_end[${i}]`); params.set(`zmin_end[${i}]`, s.end ? s.end.value : '');
+                params.delete(`zcond[${i}]`); params.set(`zcond[${i}]`, s.cond ? s.cond.value : '');
+                params.delete(`zout[${i}]`); params.set(`zout[${i}]`, s.out ? s.out.value : '');
+                params.delete(`zin[${i}]`); params.set(`zin[${i}]`, s.in ? s.in.value : '');
+            }
+        } else {
+            // Fallback: из оригинальной формы
+            const subFields = ['zmin_start', 'zmin_end', 'zcond', 'zout', 'zin'];
+            for (const field of subFields) {
+                for (let i = 0; i < 5; i++) {
+                    const key = `${field}[${i}]`;
+                    if (!params.has(key)) {
+                        const formEl = forma.querySelector(`[name="${key}"]`);
+                        params.set(key, formEl ? formEl.value : '');
+                    }
                 }
             }
         }
 
-        // --- Тактические указания (tmin_start, tmin_end, tcond, tact) из оригинальной формы ---
-        const tacFields = ['tmin_start', 'tmin_end', 'tcond', 'tact'];
-        for (const field of tacFields) {
-            for (let i = 0; i < 5; i++) {
-                const key = `${field}[${i}]`;
-                if (!params.has(key)) {
-                    const formEl = forma.querySelector(`[name="${key}"]`);
-                    params.set(key, formEl ? formEl.value : '');
+        // --- Тактические указания из калькулятора ---
+        const tactSlots = window[`__vs_tacticalSlots_${sideLabel}`];
+        if (tactSlots) {
+            for (let i = 0; i < tactSlots.length; i++) {
+                const t = tactSlots[i];
+                params.delete(`tmin_start[${i}]`); params.set(`tmin_start[${i}]`, t.start ? t.start.value : '');
+                params.delete(`tmin_end[${i}]`); params.set(`tmin_end[${i}]`, t.end ? t.end.value : '');
+                params.delete(`tcond[${i}]`); params.set(`tcond[${i}]`, t.cond ? t.cond.value : '');
+                params.delete(`tact[${i}]`); params.set(`tact[${i}]`, t.tact ? t.tact.value : '');
+            }
+        } else {
+            // Fallback: из оригинальной формы
+            const tacFields = ['tmin_start', 'tmin_end', 'tcond', 'tact'];
+            for (const field of tacFields) {
+                for (let i = 0; i < 5; i++) {
+                    const key = `${field}[${i}]`;
+                    if (!params.has(key)) {
+                        const formEl = forma.querySelector(`[name="${key}"]`);
+                        params.set(key, formEl ? formEl.value : '');
+                    }
                 }
             }
         }
@@ -14936,6 +14961,43 @@ setTimeout(() => {
                 console.log('[ORDER] Пенальти:', formPenalty.value);
             }
         }, 200);
+
+        // --- Замены из оригинальной формы → калькулятор ---
+        const sideLabel = isHome ? 'home' : 'away';
+        const subSlots = window[`__vs_substitutionSlots_${sideLabel}`];
+        if (subSlots) {
+            for (let i = 0; i < subSlots.length; i++) {
+                const s = subSlots[i];
+                const fStart = forma.querySelector(`[name="zmin_start[${i}]"]`);
+                const fEnd = forma.querySelector(`[name="zmin_end[${i}]"]`);
+                const fCond = forma.querySelector(`[name="zcond[${i}]"]`);
+                const fOut = forma.querySelector(`[name="zout[${i}]"]`);
+                const fIn = forma.querySelector(`[name="zin[${i}]"]`);
+                if (fStart && s.start) s.start.value = fStart.value || '';
+                if (fEnd && s.end) s.end.value = fEnd.value || '';
+                if (fCond && s.cond) s.cond.value = fCond.value || '';
+                if (fOut && s.out) s.out.value = fOut.value || '';
+                if (fIn && s.in) s.in.value = fIn.value || '';
+            }
+            console.log('[ORDER] Замены импортированы:', subSlots.length, 'слотов');
+        }
+
+        // --- Тактические указания из оригинальной формы → калькулятор ---
+        const tactSlots = window[`__vs_tacticalSlots_${sideLabel}`];
+        if (tactSlots) {
+            for (let i = 0; i < tactSlots.length; i++) {
+                const t = tactSlots[i];
+                const fStart = forma.querySelector(`[name="tmin_start[${i}]"]`);
+                const fEnd = forma.querySelector(`[name="tmin_end[${i}]"]`);
+                const fCond = forma.querySelector(`[name="tcond[${i}]"]`);
+                const fTact = forma.querySelector(`[name="tact[${i}]"]`);
+                if (fStart && t.start) t.start.value = fStart.value || '';
+                if (fEnd && t.end) t.end.value = fEnd.value || '';
+                if (fCond && t.cond) t.cond.value = fCond.value || '';
+                if (fTact && t.tact) t.tact.value = fTact.value || '';
+            }
+            console.log('[ORDER] Тактические указания импортированы:', tactSlots.length, 'слотов');
+        }
 
         // --- Пересчёт силы (после установки ролей) ---
         if (typeof window.__vs_recalculateStrength === 'function') {
