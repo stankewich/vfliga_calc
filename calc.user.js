@@ -302,7 +302,7 @@ function getPositionLine(position) {
 }
 
 // Улучшенная функция генерации позиций с сохранением стабильности
-function generateFieldPositionsWithFlankPreservation(formation, side, previousFormation = null) {
+function generateFieldPos(formation, side, previousFormation = null) {
     console.log(`[FlankPositioning] Генерация позиций для ${side}:`, formation);
     if (previousFormation) {
         console.log(`[FlankPositioning] Предыдущие позиции:`, previousFormation);
@@ -314,19 +314,19 @@ function generateFieldPositionsWithFlankPreservation(formation, side, previousFo
 
     const zones = isHome ? {
         // Используем те же расстояния что и в AWAY (backup)
-        gk: 549,      // 566 - 17 (максимально прижат к низу)
-        def: 489,     // 549 - 60 (такое же расстояние как away: 127-67=60)
-        semidef: 459, // 489 - 30 (такое же расстояние как away: 157-127=30)
-        mid: 414,     // 459 - 45 (такое же расстояние как away: 202-157=45)
-        semiatt: 384, // 414 - 30 (такое же расстояние как away: 232-202=30)
-        att: 339      // 384 - 45 (такое же расстояние как away: 277-232=45)
+        gk: 529,      // 566 - 17 (максимально прижат к низу)
+        def: 469,     // 549 - 60 (такое же расстояние как away: 127-67=60)
+        semidef: 439, // 489 - 30 (такое же расстояние как away: 157-127=30)
+        mid: 394,     // 459 - 45 (такое же расстояние как away: 202-157=45)
+        semiatt: 364, // 414 - 30 (такое же расстояние как away: 232-202=30)
+        att: 319      // 384 - 45 (такое же расстояние как away: 277-232=45)
     } : {
-        gk: 67,       // 0 + 17 (максимально прижат к верху)
-        def: 127,     // Скорректировано для новой рабочей области
-        semidef: 157, // Скорректировано
-        mid: 202,     // Скорректировано, расстояние по 75 px до def и att
-        semiatt: 232, // Скорректировано, +50 px от mid
-        att: 277      // Скорректировано
+        gk: 37,       // 0 + 17 (максимально прижат к верху)
+        def: 97,     // Скорректировано для новой рабочей области
+        semidef: 127, // Скорректировано
+        mid: 172,     // Скорректировано, расстояние по 75 px до def и att
+        semiatt: 202, // Скорректировано, +50 px от mid
+        att: 247      // Скорректировано
     };
 
     const positions = [];
@@ -521,145 +521,6 @@ function generateFieldPositionsWithFlankPreservation(formation, side, previousFo
     });
 
     console.log(`[FlankPositioning] Позиции после ограничений для ${side}:`, positions);
-
-    return positions;
-}
-
-function generateFieldPositions(formation, side) {
-    const fieldWidth = FIELD_LAYOUT.WORKING_WIDTH;   // 332px
-    const fieldHeight = FIELD_LAYOUT.WORKING_HEIGHT; // 498px
-    const isHome = side === 'home';
-
-    const zones = isHome ? {
-        gk: 549,      // 566 - 17 (максимально прижат к низу)
-        def: 498,     // Скорректировано для новой рабочей области
-        semidef: 447, // Скорректировано
-        mid: 396,     // Скорректировано
-        semiatt: 345, // Скорректировано
-        att: 294      // Скорректировано
-    } : {
-        gk: 17,       // 0 + 17 (максимально прижат к верху)
-        def: 68,      // Скорректировано для новой рабочей области
-        semidef: 119, // Скорректировано
-        mid: 170,     // Скорректировано
-        semiatt: 221, // Скорректировано
-        att: 272      // Скорректировано
-    };
-
-    const positions = [];
-
-    const lines = {
-        gk: [],
-        def: [],
-        semidef: [],
-        mid: [],
-        semiatt: [],
-        att: []
-    };
-
-    formation.forEach((pos, idx) => {
-        if (pos === 'GK') {
-            lines.gk.push({ pos, idx });
-        } else if (['LD', 'CD', 'RD', 'SW'].includes(pos)) {
-            lines.def.push({ pos, idx });
-        } else if (['DM', 'LB', 'RB'].includes(pos)) {
-            lines.semidef.push({ pos, idx });
-        } else if (['LM', 'CM', 'RM'].includes(pos)) {
-            lines.mid.push({ pos, idx });
-        } else if (['AM', 'FR', 'RW', 'LW'].includes(pos)) {
-            lines.semiatt.push({ pos, idx });
-        } else if (['LF', 'CF', 'RF', 'ST'].includes(pos)) {
-            lines.att.push({ pos, idx });
-        }
-    });
-
-    function distributeHorizontally(count) {
-        const margin = 10;
-        const usableWidth = fieldWidth - 2 * margin;
-
-        if (count === 1) {
-            return [fieldWidth / 2];
-        } else if (count === 2) {
-            return [margin + usableWidth * 0.25, margin + usableWidth * 0.75];
-        } else if (count === 3) {
-            return [margin, fieldWidth / 2, fieldWidth - margin];
-        } else if (count === 4) {
-            return [margin, margin + usableWidth / 3, margin + 2 * usableWidth / 3, fieldWidth - margin];
-        } else if (count === 5) {
-            return [margin, margin + usableWidth / 4, fieldWidth / 2, margin + 3 * usableWidth / 4, fieldWidth - margin];
-        } else if (count === 6) {
-            return [margin, margin + usableWidth / 5, margin + 2 * usableWidth / 5, margin + 3 * usableWidth / 5, margin + 4 * usableWidth / 5, fieldWidth - margin];
-        }
-
-        const positions = [];
-        for (let i = 0; i < count; i++) {
-            positions.push(margin + (usableWidth / (count - 1)) * i);
-        }
-        return positions;
-    }
-
-    if (lines.gk.length > 0) {
-        lines.gk.forEach(({ pos, idx }) => {
-            positions[idx] = { position: pos, top: zones.gk, left: fieldWidth / 2 };
-        });
-    }
-
-    if (lines.def.length > 0) {
-        const xPositions = distributeHorizontally(lines.def.length);
-        lines.def.forEach(({ pos, idx }, i) => {
-            const xIdx = isHome ? i : (lines.def.length - 1 - i);
-            positions[idx] = { position: pos, top: zones.def, left: xPositions[xIdx] };
-        });
-    }
-
-    if (lines.semidef.length > 0) {
-        const xPositions = distributeHorizontally(lines.semidef.length);
-        lines.semidef.forEach(({ pos, idx }, i) => {
-            const xIdx = isHome ? i : (lines.semidef.length - 1 - i);
-            positions[idx] = { position: pos, top: zones.semidef, left: xPositions[xIdx] };
-        });
-    }
-
-    if (lines.mid.length > 0) {
-        const xPositions = distributeHorizontally(lines.mid.length);
-        lines.mid.forEach(({ pos, idx }, i) => {
-            const xIdx = isHome ? i : (lines.mid.length - 1 - i);
-            positions[idx] = { position: pos, top: zones.mid, left: xPositions[xIdx] };
-        });
-    }
-
-    if (lines.semiatt.length > 0) {
-        const xPositions = distributeHorizontally(lines.semiatt.length);
-        lines.semiatt.forEach(({ pos, idx }, i) => {
-            const xIdx = isHome ? i : (lines.semiatt.length - 1 - i);
-            positions[idx] = { position: pos, top: zones.semiatt, left: xPositions[xIdx] };
-        });
-    }
-
-    if (lines.att.length > 0) {
-        const xPositions = distributeHorizontally(lines.att.length);
-        lines.att.forEach(({ pos, idx }, i) => {
-            const xIdx = isHome ? i : (lines.att.length - 1 - i);
-            positions[idx] = { position: pos, top: zones.att, left: xPositions[xIdx] };
-        });
-    }
-
-    // Применяем ограничения координат чтобы футболки не выходили за границы
-    const SHIRT_HALF_WIDTH = FIELD_LAYOUT.SHIRT_HALF_WIDTH;   // 20px
-    const SHIRT_HALF_HEIGHT = FIELD_LAYOUT.SHIRT_HALF_HEIGHT; // 17px
-
-    const MIN_X = SHIRT_HALF_WIDTH;
-    const MAX_X = fieldWidth - SHIRT_HALF_WIDTH;
-    const MIN_Y = SHIRT_HALF_HEIGHT;
-    const MAX_Y = fieldHeight - SHIRT_HALF_HEIGHT;
-
-    positions.forEach(pos => {
-        if (pos) {
-            // Ограничиваем координаты
-            pos.left = Math.max(MIN_X, Math.min(MAX_X, pos.left));
-            pos.top = Math.max(MIN_Y, Math.min(MAX_Y, pos.top));
-        }
-    });
 
     return positions;
 }
@@ -6274,6 +6135,13 @@ function createDummySelect() {
     border-radius: 0; padding: 2px 4px; margin-left: 4px; transition: background 0.2s;
     color: rgb(68, 68, 68); line-height: 16px;
     }
+    /* Единый стиль для всех селектов внутри тактических колонок */
+    #vsol-calculator-ui [id^="vsol-tactics-"] select {
+    width: 100%; height: 20px; font-size: 11px; font-family: Courier New, monospace;
+    border: 1px solid #aaa; padding: 1px 2px; box-sizing: border-box;
+    background: #fff; cursor: pointer; border-radius: 0; color: #444;
+    margin: 0; min-width: 0;
+    }
     #vsol-calculator-ui { max-width: 790px; width: 100%; margin: 20px auto; padding: 0; background: transparent; border: 1px solid rgb(204, 204, 204); border-radius: 6px; box-sizing: border-box; overflow: visible; }
     #vsol-calculator-ui > h3 { padding-top: 15px; padding-bottom: 10px; margin: 0; }
     #vsol-calculator-ui > div:first-child { padding-top: 15px; }
@@ -6461,7 +6329,7 @@ function createDummySelect() {
     #vsol-calculator-ui .physical-form-select .options li:hover { background: #f0f0f0; }
 
     #vsol-calculator-ui .vs-captain-row { margin-top: 4px; }
-    #vsol-calculator-ui .vs-captain-table { width: 350px; border-collapse: separate; table-layout: fixed; margin: 0 auto; }
+    #vsol-calculator-ui .vs-captain-table { width: 100%; border-collapse: separate; table-layout: fixed; margin: 0; }
     #vsol-calculator-ui .vs-captain-cell-icon { width: 35px; text-align: center; vertical-align: middle; padding: 0; }
     #vsol-calculator-ui .vs-captain-cell-select { vertical-align: middle; padding: 0; }
     #vsol-calculator-ui .vs-captain-select {
@@ -6475,7 +6343,6 @@ function createDummySelect() {
     }
 
     .shirts-container {
-    width: 400px;
     pointer-events: none;
     }
 
@@ -6913,10 +6780,10 @@ function createOrdersSelect({
                     currentValue = String(opt.value || '');
                     rendered.textContent = opt.label;
                     rendered.classList.remove('orders-placeholder');
-                    // Зелёный фон при выборе игрока, белый при очистке
                     if (currentValue) {
-                        sel.style.backgroundColor = 'rgb(193, 254, 193)';
-                        rendered.style.color = 'rgb(80, 80, 80)';
+                        // Единый фон для выбранного игрока
+                        sel.style.backgroundColor = '#FFFFBB';
+                        rendered.style.color = '#333';
                     } else {
                         sel.style.backgroundColor = '#fff';
                         rendered.style.color = '';
@@ -6950,8 +6817,9 @@ function createOrdersSelect({
                 rendered.style.color = '';
             } else {
                 rendered.classList.remove('orders-placeholder');
-                sel.style.backgroundColor = 'rgb(193, 254, 193)';
-                rendered.style.color = 'rgb(80, 80, 80)';
+                // Единый фон для выбранного игрока
+                sel.style.backgroundColor = '#FFFFBB';
+                rendered.style.color = '#333';
             }
         }
     };
@@ -8529,6 +8397,10 @@ function createTeamLineupBlock(players, initialFormationName = "4-4-2", teamId =
             posValue: initialPos,
             selectedPlayer: null,  // ← ДОБАВЛЕНО: данные выбранного игрока
             getValue: () => orders.getValue(),
+            getOptionLabel: (val) => {
+                const opt = orders.el.querySelector(`.orders-option[data-value="${val}"]`);
+                return opt ? opt.textContent : '';
+            },
             setValue: (v, label) => {
                 orders.setValue(v, label);
                 // Проверяем форму игрока при установке
@@ -10718,7 +10590,7 @@ function getTournamentType() {
             shirtsContainer = document.createElement('div');
             shirtsContainer.className = 'shirts-container';
             const padding = FIELD_LAYOUT.CONTAINER_PADDING;
-            shirtsContainer.style.cssText = `position: absolute; top: ${padding}px; left: ${padding}px; right: ${padding}px; bottom: ${padding}px;`;
+            shirtsContainer.style.cssText = `position: absolute; top: ${padding}px; left: ${padding}px; width: ${FIELD_LAYOUT.FIELD_WIDTH - padding * 2}px; height: ${FIELD_LAYOUT.FIELD_HEIGHT - padding * 2}px;`;
             fieldCol.appendChild(shirtsContainer);
         } else {
             shirtsContainer.innerHTML = '';
@@ -10744,8 +10616,8 @@ function getTournamentType() {
         }
 
         // Генерируем координаты для каждой команды с учетом фланговой привязки
-        const homeCoords = generateFieldPositionsWithFlankPreservation(homePositions, 'home');
-        const awayCoords = generateFieldPositionsWithFlankPreservation(awayPositions, 'away');
+        const homeCoords = generateFieldPos(homePositions, 'home');
+        const awayCoords = generateFieldPos(awayPositions, 'away');
 
         console.log('[Shirts] Generated positions', {
             homeFormation,
@@ -10975,6 +10847,52 @@ function getTournamentType() {
     const FED = {'Австралия':1,'Австрия':2,'Азербайджан':3,'Албания':4,'Алжир':5,'Американские Виргинские о-ва':218,'Американское Самоа':206,'Ангилья':214,'Англия':6,'Ангола':7,'Андорра':8,'Антигуа и Барбуда':190,'Аргентина':10,'Армения':11,'Аруба':188,'Афганистан':12,'Багамские о-ва':192,'Бангладеш':13,'Барбадос':14,'Бахрейн':15,'Беларусь':16,'Белиз':17,'Бельгия':18,'Бенин':22,'Бермудские о-ва':19,'Болгария':20,'Боливия':21,'Босния и Герцеговина':23,'Ботсвана':24,'Бразилия':25,'Британские Виргинские о-ва':195,'Бруней':26,'Буркина Фасо':27,'Буркина-Фасо':27,'Бурунди':28,'Бутан':198,'Вануату':29,'Венгрия':30,'Венесуэла':31,'Восточный Тимор':215,'Вьетнам':181,'Габон':32,'Гаити':184,'Гайана':37,'Гамбия':33,'Гана':34,'Гваделупа':35,'Гватемала':36,'Гвиана':220,'Гвинея':38,'Гвинея-Бисау':39,'Германия':40,'Гибралтар':41,'Гондурас':43,'Гонконг':44,'Гренада':45,'Греция':47,'Грузия':48,'Гуам':182,'Дания':49,'Джибути':51,'Доминика':52,'Доминиканская Республика':185,'ДР Конго':54,'Египет':53,'Замбия':55,'Зимбабве':56,'Израиль':57,'Индия':179,'Индонезия':58,'Иордания':59,'Ирак':60,'Иран':61,'Ирландия':62,'Исландия':63,'Испания':64,'Италия':65,'Йемен':66,'Кабо-Верде':67,'Казахстан':68,'Каймановы о-ва':186,'Камбоджа':69,'Камерун':70,'Канада':71,'Катар':72,'Кения':73,'Кипр':74,'Китай':75,'КНДР':130,'Колумбия':76,'Коморские о-ва':209,'Конго':77,'Коста-Рика':78,"Кот-д'Ивуар":79,'Кот-Дивуар':79,'Куба':80,'Кувейт':81,'Кыргызстан':82,'Кюрасао':9,'Лаос':83,'Латвия':84,'Лесото':85,'Либерия':86,'Ливан':87,'Ливия':88,'Литва':89,'Лихтенштейн':90,'Люксембург':91,'Маврикий':199,'Мавритания':92,'Мадагаскар':93,'Макао':210,'Малави':95,'Малайзия':96,'Мали':97,'Мальдивы':98,'Мальта':99,'Марокко':100,'Мартиника':204,'Мексика':101,'Мозамбик':103,'Молдова':104,'Монголия':106,'Монтсеррат':216,'Мьянма':183,'Намибия':107,'Непал':108,'Нигер':109,'Нигерия':110,'Нидерланды':42,'Никарагуа':111,'Новая Зеландия':113,'Новая Каледония':205,'Норвегия':114,'О-ва Кука':115,'ОАЭ':178,'Оман':116,'Пакистан':117,'Палестина':211,'Панама':118,'Папуа Новая Гвинея':112,'Парагвай':119,'Перу':120,'Польша':121,'Португалия':122,'Пуэрто-Рико':123,'Реюньон':208,'Россия':124,'Руанда':125,'Румыния':126,'Сальвадор':127,'Самоа':196,'Сан-Марино':128,'Саудовская Аравия':129,'Северная Ирландия':131,'Северная Македония':94,'Сейшельские о-ва':180,'Сенегал':132,'Сент-Винсент':133,'Сент-Винсент и Гренадины':133,'Сент-Китс и Невис':187,'Сент-Люсия':194,'Сербия':174,'Сингапур':134,'Сирия':135,'Словакия':136,'Словения':137,'Соломоновы о-ва':200,'Сомали':138,'Судан':139,'Суринам':140,'США':141,'Сьерра Леоне':142,'Таджикистан':143,'Таиланд':145,'Таити':201,'Тайвань':212,'Танзания':146,'Теркс и Кайкос':213,'Того':147,'Тонга':202,'Тринидад и Тобаго':148,'Тувалу':219,'Тунис':149,'Туркменистан':150,'Турция':151,'Уганда':152,'Узбекистан':153,'Украина':154,'Уругвай':155,'Уэльс':156,'Фареры':157,'Фиджи':191,'Филиппины':158,'Финляндия':159,'Франция':160,'Хорватия':161,'ЦАР':162,'Чад':193,'Черногория':189,'Чехия':163,'Чили':164,'Швейцария':165,'Швеция':166,'Шотландия':167,'Шри Ланка':168,'Шри-Ланка':168,'Эквадор':169,'Экваториальная Гвинея':203,'Эритрея':170,'Эсватини':197,'Эстония':171,'Эфиопия':172,'ЮАР':173,'Южная Корея':175,'Южный Судан':217,'Ямайка':176,'Япония':177,'Бонэйр':195};
 
     /**
+     * Создаёт спойлер-обёртку в стиле сайта (зелёная рамка, icon_plus/minus, клик раскрывает).
+     * @param {string} id — уникальный id спойлера
+     * @param {string} title — текст заголовка
+     * @param {HTMLElement} content — содержимое спойлера
+     * @param {boolean} [startOpen=false] — открыт ли по умолчанию
+     * @returns {HTMLElement}
+     */
+    function createSpoiler(id, title, content, startOpen) {
+        const wrap = document.createElement('div');
+        wrap.id = id;
+        wrap.style.cssText = 'border-top:2px solid #B9DCCB;border-left:2px solid #B9DCCB;border-right:2px solid #B9DCCB;border-bottom:1px solid #B9DCCB;font-size:1em;margin:4px 0;';
+
+        const headerDiv = document.createElement('div');
+        headerDiv.style.cssText = 'border-bottom:1px solid #B9DCCB;background-color:#CAEBDC;padding:3px;font-size:0.9em;font-weight:bold;display:flex;align-items:center;cursor:pointer;';
+
+        const icon = document.createElement('img');
+        icon.src = startOpen ? 'pics/icon_minus_1.gif' : 'pics/icon_plus_1.gif';
+        icon.alt = '';
+        icon.width = 9; icon.height = 9; icon.border = 0;
+        icon.style.marginRight = '5px';
+
+        const titleSpan = document.createElement('span');
+        titleSpan.textContent = title;
+        titleSpan.style.flex = '1';
+
+        headerDiv.appendChild(icon);
+        headerDiv.appendChild(titleSpan);
+
+        const bodyDiv = document.createElement('div');
+        bodyDiv.id = id + '-body';
+        bodyDiv.style.cssText = 'border-bottom:1px solid #B9DCCB;padding:5px;display:' + (startOpen ? 'block' : 'none') + ';';
+        bodyDiv.appendChild(content);
+
+        headerDiv.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON') return; // не сворачивать при клике на +/-
+            var visible = bodyDiv.style.display !== 'none';
+            bodyDiv.style.display = visible ? 'none' : 'block';
+            icon.src = visible ? 'pics/icon_plus_1.gif' : 'pics/icon_minus_1.gif';
+        });
+
+        wrap.appendChild(headerDiv);
+        wrap.appendChild(bodyDiv);
+        return { el: wrap, header: headerDiv };
+    }
+
+    /**
      * Создаёт элемент <img> с флагом страны по fedId.
      * @param {number|string} fedId — ID федерации (из FED или из URL /cntr/{fedId}.gif)
      * @param {string} [country] — название страны (для title)
@@ -11161,8 +11079,9 @@ function getTournamentType() {
 
         // ===== СТРОКА 1: Трёхколоночный макет (тактика | поле | тактика) =====
         const row1Table = document.createElement('table');
+        row1Table.id = 'vsol-row1-table';
+        row1Table.style.width = '780px';
         row1Table.style.maxWidth = '790px';
-        row1Table.style.width = '100%';
         row1Table.style.margin = '0 auto 10px auto';
         row1Table.style.borderCollapse = 'separate';
         row1Table.style.tableLayout = 'fixed';
@@ -11173,7 +11092,10 @@ function getTournamentType() {
 
         // Центральная колонка — поле (400px)
         const fieldCol = document.createElement('td');
+        fieldCol.id = 'vsol-field';
         fieldCol.style.width = '400px';
+        fieldCol.style.minWidth = '400px';
+        fieldCol.style.maxWidth = '400px';
         fieldCol.style.height = '566px';
         fieldCol.style.background =
             "url('https://github.com/stankewich/vfliga_calc/blob/main/img/field_01.webp?raw=true') no-repeat center center";
@@ -13800,29 +13722,9 @@ setTimeout(() => {
             {v:'8',t:'удаление у нас'},{v:'9',t:'удаление у соперника'},
             {v:'10',t:'не проигрываем'},{v:'11',t:'не выигрываем'}
         ];
-        const container = document.createElement('div');
-        container.id = `vsol-substitutions-${sideLabel}`;
-        container.style.cssText = 'margin-top:4px;';
 
-        const header = document.createElement('div');
-        header.id = `vsol-subs-header-${sideLabel}`;
-        header.style.cssText = 'background:#006600;color:white;font-size:10px;font-weight:bold;text-align:center;padding:2px 4px;display:flex;justify-content:space-between;align-items:center;';
-        const headerText = document.createElement('span');
-        headerText.textContent = 'Замены';
-        const btnGroup = document.createElement('span');
-        const btnAdd = document.createElement('button');
-        btnAdd.id = `vsol-subs-add-${sideLabel}`;
-        btnAdd.textContent = '+';
-        btnAdd.style.cssText = 'background:#fff;color:#006600;border:1px solid #fff;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:4px;line-height:14px;';
-        const btnRemove = document.createElement('button');
-        btnRemove.id = `vsol-subs-remove-${sideLabel}`;
-        btnRemove.textContent = '−';
-        btnRemove.style.cssText = 'background:#fff;color:#c00;border:1px solid #fff;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:2px;line-height:14px;';
-        btnGroup.appendChild(btnAdd);
-        btnGroup.appendChild(btnRemove);
-        header.appendChild(headerText);
-        header.appendChild(btnGroup);
-        container.appendChild(header);
+        const innerContent = document.createElement('div');
+        innerContent.id = `vsol-subs-content-${sideLabel}`;
 
         const table = document.createElement('table');
         table.id = `vsol-subs-table-${sideLabel}`;
@@ -13839,8 +13741,17 @@ setTimeout(() => {
 
         const slots = [];
         const cellCss = 'border:1px solid #ccc;padding:1px;';
-        const inputCss = 'width:100%;font-size:10px;border:1px solid #aaa;padding:1px;box-sizing:border-box;height:18px;';
+        const minCss = 'width:30px;font-size:10px;border:1px solid #aaa;padding:1px;box-sizing:border-box;height:18px;text-align:center;';
         const selectCss = 'width:100%;font-size:9px;border:1px solid #aaa;padding:0;box-sizing:border-box;height:18px;';
+
+        function validateMinInput(inp) {
+            inp.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                var n = parseInt(this.value, 10);
+                if (n > 120) this.value = '120';
+                if (n < 1 && this.value !== '') this.value = '';
+            });
+        }
 
         function addSlot() {
             const i = slots.length;
@@ -13848,37 +13759,36 @@ setTimeout(() => {
             tr.id = `vsol-sub-${sideLabel}-${i}`;
             const slotData = {};
 
-            const tdStart = document.createElement('td');
-            tdStart.style.cssText = cellCss;
+            const tdStart = document.createElement('td'); tdStart.style.cssText = cellCss;
             const inpStart = document.createElement('input');
             inpStart.type = 'text'; inpStart.name = `zmin_start[${i}]`;
-            inpStart.style.cssText = inputCss; inpStart.maxLength = 3;
+            inpStart.id = `vsol-sub-start-${sideLabel}-${i}`;
+            inpStart.style.cssText = minCss; inpStart.maxLength = 3;
+            validateMinInput(inpStart);
             tdStart.appendChild(inpStart); slotData.start = inpStart; tr.appendChild(tdStart);
 
-            const tdEnd = document.createElement('td');
-            tdEnd.style.cssText = cellCss;
+            const tdEnd = document.createElement('td'); tdEnd.style.cssText = cellCss;
             const inpEnd = document.createElement('input');
             inpEnd.type = 'text'; inpEnd.name = `zmin_end[${i}]`;
-            inpEnd.style.cssText = inputCss; inpEnd.maxLength = 3;
+            inpEnd.id = `vsol-sub-end-${sideLabel}-${i}`;
+            inpEnd.style.cssText = minCss; inpEnd.maxLength = 3;
+            validateMinInput(inpEnd);
             tdEnd.appendChild(inpEnd); slotData.end = inpEnd; tr.appendChild(tdEnd);
 
-            const tdCond = document.createElement('td');
-            tdCond.style.cssText = cellCss;
+            const tdCond = document.createElement('td'); tdCond.style.cssText = cellCss;
             const selCond = document.createElement('select');
             selCond.name = `zcond[${i}]`; selCond.style.cssText = selectCss;
             const optEmpty = document.createElement('option'); optEmpty.value = ''; optEmpty.textContent = '-'; selCond.appendChild(optEmpty);
             CONDITIONS.forEach(c => { const o = document.createElement('option'); o.value = c.v; o.textContent = c.t; selCond.appendChild(o); });
             tdCond.appendChild(selCond); slotData.cond = selCond; tr.appendChild(tdCond);
 
-            const tdOut = document.createElement('td');
-            tdOut.style.cssText = cellCss;
+            const tdOut = document.createElement('td'); tdOut.style.cssText = cellCss;
             const selOut = document.createElement('select');
             selOut.name = `zout[${i}]`; selOut.style.cssText = selectCss;
             const optOut = document.createElement('option'); optOut.value = ''; optOut.textContent = '-'; selOut.appendChild(optOut);
             tdOut.appendChild(selOut); slotData.out = selOut; tr.appendChild(tdOut);
 
-            const tdIn = document.createElement('td');
-            tdIn.style.cssText = cellCss;
+            const tdIn = document.createElement('td'); tdIn.style.cssText = cellCss;
             const selIn = document.createElement('select');
             selIn.name = `zin[${i}]`; selIn.style.cssText = selectCss;
             const optIn = document.createElement('option'); optIn.value = ''; optIn.textContent = '-'; selIn.appendChild(optIn);
@@ -13889,16 +13799,35 @@ setTimeout(() => {
         }
 
         for (let i = 0; i < 5; i++) addSlot();
+        innerContent.appendChild(table);
 
-        btnAdd.addEventListener('click', () => { if (slots.length < 10) addSlot(); });
-        btnRemove.addEventListener('click', () => {
+        const spoiler = createSpoiler(`vsol-subs-spoiler-${sideLabel}`, 'Замены', innerContent, false);
+
+        // Кнопки +/- в заголовок спойлера
+        const btnGroup = document.createElement('span');
+        btnGroup.style.cssText = 'margin-left:auto;display:flex;';
+        const btnAdd = document.createElement('button');
+        btnAdd.id = `vsol-subs-add-${sideLabel}`;
+        btnAdd.textContent = '+';
+        btnAdd.style.cssText = 'background:#fff;color:#006600;border:1px solid #ccc;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:4px;line-height:14px;';
+        const btnRemove = document.createElement('button');
+        btnRemove.id = `vsol-subs-remove-${sideLabel}`;
+        btnRemove.textContent = '−';
+        btnRemove.style.cssText = 'background:#fff;color:#c00;border:1px solid #ccc;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:2px;line-height:14px;';
+        btnGroup.appendChild(btnAdd);
+        btnGroup.appendChild(btnRemove);
+        spoiler.header.appendChild(btnGroup);
+
+        btnAdd.addEventListener('click', (e) => { e.stopPropagation(); if (slots.length < 10) addSlot(); });
+        btnRemove.addEventListener('click', (e) => {
+            e.stopPropagation();
             if (slots.length > 1) {
                 const last = table.lastElementChild;
                 if (last && last !== thead) { table.removeChild(last); slots.pop(); }
             }
         });
 
-        container.appendChild(table);
+        const container = spoiler.el;
         container._slots = slots;
         return container;
     }
@@ -13924,29 +13853,9 @@ setTimeout(() => {
             {v:'3',t:'нормальная тактика'},{v:'4',t:'атакующая тактика'},{v:'5',t:'все в атаку'},
             {v:'6',t:'заменить полевого с карточкой'},{v:'7',t:'играть грубо'},{v:'8',t:'играть аккуратно'}
         ];
-        const container = document.createElement('div');
-        container.id = `vsol-tactical-${sideLabel}`;
-        container.style.cssText = 'margin-top:4px;';
 
-        const header = document.createElement('div');
-        header.id = `vsol-tact-header-${sideLabel}`;
-        header.style.cssText = 'background:#006600;color:white;font-size:10px;font-weight:bold;text-align:center;padding:2px 4px;display:flex;justify-content:space-between;align-items:center;';
-        const headerText = document.createElement('span');
-        headerText.textContent = 'Тактические указания';
-        const btnGroup = document.createElement('span');
-        const btnAdd = document.createElement('button');
-        btnAdd.id = `vsol-tact-add-${sideLabel}`;
-        btnAdd.textContent = '+';
-        btnAdd.style.cssText = 'background:#fff;color:#006600;border:1px solid #fff;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:4px;line-height:14px;';
-        const btnRemove = document.createElement('button');
-        btnRemove.id = `vsol-tact-remove-${sideLabel}`;
-        btnRemove.textContent = '−';
-        btnRemove.style.cssText = 'background:#fff;color:#c00;border:1px solid #fff;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:2px;line-height:14px;';
-        btnGroup.appendChild(btnAdd);
-        btnGroup.appendChild(btnRemove);
-        header.appendChild(headerText);
-        header.appendChild(btnGroup);
-        container.appendChild(header);
+        const innerContent = document.createElement('div');
+        innerContent.id = `vsol-tact-content-${sideLabel}`;
 
         const table = document.createElement('table');
         table.id = `vsol-tact-table-${sideLabel}`;
@@ -13963,8 +13872,17 @@ setTimeout(() => {
 
         const slots = [];
         const cellCss = 'border:1px solid #ccc;padding:1px;';
-        const inputCss = 'width:100%;font-size:10px;border:1px solid #aaa;padding:1px;box-sizing:border-box;height:18px;';
+        const minCss = 'width:30px;font-size:10px;border:1px solid #aaa;padding:1px;box-sizing:border-box;height:18px;text-align:center;';
         const selectCss = 'width:100%;font-size:9px;border:1px solid #aaa;padding:0;box-sizing:border-box;height:18px;';
+
+        function validateMinInput(inp) {
+            inp.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                var n = parseInt(this.value, 10);
+                if (n > 120) this.value = '120';
+                if (n < 1 && this.value !== '') this.value = '';
+            });
+        }
 
         function addSlot() {
             const i = slots.length;
@@ -13972,30 +13890,30 @@ setTimeout(() => {
             tr.id = `vsol-tact-slot-${sideLabel}-${i}`;
             const slotData = {};
 
-            const tdStart = document.createElement('td');
-            tdStart.style.cssText = cellCss;
+            const tdStart = document.createElement('td'); tdStart.style.cssText = cellCss;
             const inpStart = document.createElement('input');
             inpStart.type = 'text'; inpStart.name = `tmin_start[${i}]`;
-            inpStart.style.cssText = inputCss; inpStart.maxLength = 3;
+            inpStart.id = `vsol-tact-start-${sideLabel}-${i}`;
+            inpStart.style.cssText = minCss; inpStart.maxLength = 3;
+            validateMinInput(inpStart);
             tdStart.appendChild(inpStart); slotData.start = inpStart; tr.appendChild(tdStart);
 
-            const tdEnd = document.createElement('td');
-            tdEnd.style.cssText = cellCss;
+            const tdEnd = document.createElement('td'); tdEnd.style.cssText = cellCss;
             const inpEnd = document.createElement('input');
             inpEnd.type = 'text'; inpEnd.name = `tmin_end[${i}]`;
-            inpEnd.style.cssText = inputCss; inpEnd.maxLength = 3;
+            inpEnd.id = `vsol-tact-end-${sideLabel}-${i}`;
+            inpEnd.style.cssText = minCss; inpEnd.maxLength = 3;
+            validateMinInput(inpEnd);
             tdEnd.appendChild(inpEnd); slotData.end = inpEnd; tr.appendChild(tdEnd);
 
-            const tdCond = document.createElement('td');
-            tdCond.style.cssText = cellCss;
+            const tdCond = document.createElement('td'); tdCond.style.cssText = cellCss;
             const selCond = document.createElement('select');
             selCond.name = `tcond[${i}]`; selCond.style.cssText = selectCss;
             const optEmpty = document.createElement('option'); optEmpty.value = ''; optEmpty.textContent = '-'; selCond.appendChild(optEmpty);
             CONDITIONS.forEach(c => { const o = document.createElement('option'); o.value = c.v; o.textContent = c.t; selCond.appendChild(o); });
             tdCond.appendChild(selCond); slotData.cond = selCond; tr.appendChild(tdCond);
 
-            const tdTact = document.createElement('td');
-            tdTact.style.cssText = cellCss;
+            const tdTact = document.createElement('td'); tdTact.style.cssText = cellCss;
             const selTact = document.createElement('select');
             selTact.name = `tact[${i}]`; selTact.style.cssText = selectCss;
             const optTEmpty = document.createElement('option'); optTEmpty.value = ''; optTEmpty.textContent = '-'; selTact.appendChild(optTEmpty);
@@ -14007,16 +13925,35 @@ setTimeout(() => {
         }
 
         for (let i = 0; i < 5; i++) addSlot();
+        innerContent.appendChild(table);
 
-        btnAdd.addEventListener('click', () => { if (slots.length < 10) addSlot(); });
-        btnRemove.addEventListener('click', () => {
+        const spoiler = createSpoiler(`vsol-tact-spoiler-${sideLabel}`, 'Тактические указания', innerContent, false);
+
+        // Кнопки +/- в заголовок спойлера
+        const btnGroup = document.createElement('span');
+        btnGroup.style.cssText = 'margin-left:auto;display:flex;';
+        const btnAdd = document.createElement('button');
+        btnAdd.id = `vsol-tact-add-${sideLabel}`;
+        btnAdd.textContent = '+';
+        btnAdd.style.cssText = 'background:#fff;color:#006600;border:1px solid #ccc;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:4px;line-height:14px;';
+        const btnRemove = document.createElement('button');
+        btnRemove.id = `vsol-tact-remove-${sideLabel}`;
+        btnRemove.textContent = '−';
+        btnRemove.style.cssText = 'background:#fff;color:#c00;border:1px solid #ccc;cursor:pointer;font-weight:bold;font-size:11px;padding:0 4px;margin-left:2px;line-height:14px;';
+        btnGroup.appendChild(btnAdd);
+        btnGroup.appendChild(btnRemove);
+        spoiler.header.appendChild(btnGroup);
+
+        btnAdd.addEventListener('click', (e) => { e.stopPropagation(); if (slots.length < 10) addSlot(); });
+        btnRemove.addEventListener('click', (e) => {
+            e.stopPropagation();
             if (slots.length > 1) {
                 const last = table.lastElementChild;
                 if (last && last !== thead) { table.removeChild(last); slots.pop(); }
             }
         });
 
-        container.appendChild(table);
+        const container = spoiler.el;
         container._slots = slots;
         return container;
     }
@@ -14124,7 +14061,16 @@ setTimeout(() => {
 
             entries.sort((a, b) => b.timestamp - a.timestamp);
 
-            entries.forEach(entry => {
+            // Фильтруем: показываем только составы текущей команды
+            const filtered = entries.filter(e => String(e.teamId) === String(teamId));
+            const otherCount = entries.length - filtered.length;
+
+            if (!filtered.length) {
+                content.innerHTML = `<div style="text-align:center;padding:30px;color:#888;">Нет сохранённых составов для этой команды${otherCount ? `<br><span style="font-size:10px;">(${otherCount} составов других команд скрыто)</span>` : ''}</div>`;
+                return;
+            }
+
+            filtered.forEach(entry => {
                 const row = document.createElement('div');
                 row.style.cssText = 'padding:6px 8px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;';
                 row.addEventListener('mouseenter', () => { row.style.background = '#f0f6ff'; });
@@ -14532,6 +14478,18 @@ setTimeout(() => {
 
         btnRow.appendChild(btnCache);
         lineupWrapper.appendChild(btnRow);
+
+        // Блок замен соперника
+        const subsBlock = createSubstitutionSlots(sideLabel);
+        lineupWrapper.appendChild(subsBlock);
+
+        // Блок тактических указаний соперника
+        const tactBlock = createTacticalInstructionSlots(sideLabel);
+        lineupWrapper.appendChild(tactBlock);
+
+        // Сохраняем ссылки
+        window[`__vs_substitutionSlots_${sideLabel}`] = subsBlock._slots;
+        window[`__vs_tacticalSlots_${sideLabel}`] = tactBlock._slots;
     }
 
     // [DEADCODE] addSubmitButtonToCalc — moved to deadcode.js
@@ -14686,7 +14644,8 @@ setTimeout(() => {
 
             const playerId = plrSelect.value;
             if (playerId && playerId !== '-1') {
-                slot.setValue(playerId);
+                const label = slot.getOptionLabel ? slot.getOptionLabel(playerId) : '';
+                slot.setValue(playerId, label);
                 console.log(`[ORDER] Слот ${i}: игрок ${playerId}`);
             }
             // Если plr_N.value === "-1" — оставляем слот пустым (не трогаем)
@@ -15506,7 +15465,7 @@ setTimeout(() => {
     function createTacticsColumn(team, sideLabel, teamName, onChange, countryId) {
         const td = document.createElement('td');
         td.id = 'vsol-tactics-' + sideLabel;
-        td.style.cssText = 'width:110px; vertical-align:top; padding:4px; font-size:10px;';
+        td.style.cssText = 'width:190px; vertical-align:top; padding:4px; font-size:10px; overflow:hidden; box-sizing:border-box;';
 
         // Заголовок — название команды с флагом
         const header = document.createElement('div');
