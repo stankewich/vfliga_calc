@@ -4201,7 +4201,20 @@ function getHomeBonus(percent) {
 }
 
 function parseStadiumCapacity() {
-    // Previewmatch: "Стадион «Филипс» (65 000)"
+    // Стратегия 1: inline переменная "var stad = N" (N в тысячах) — работает и дома и в гостях
+    const scripts = document.querySelectorAll('script:not([src])');
+    for (const script of scripts) {
+        const m = script.textContent.match(/\bstad\s*=\s*(\d+(?:\.\d+)?)/);
+        if (m) {
+            const cap = Math.round(parseFloat(m[1]) * 1000);
+            if (cap > 0) {
+                console.log('[WEATHER] Вместимость стадиона из var stad:', cap);
+                return cap;
+            }
+        }
+    }
+
+    // Стратегия 2: Previewmatch: "Стадион «Филипс» (65 000)"
     const divs = Array.from(document.querySelectorAll('div.lh16'));
     for (const div of divs) {
         const m = div.textContent.match(/Стадион\s+["«][^"»]+["»]\s+\(([\d\s]+)\)/i);
@@ -4211,7 +4224,7 @@ function parseStadiumCapacity() {
         }
     }
 
-    // mng_order: диалог dialog-att содержит "Вместимость стадиона:" с <b>80 000</b>
+    // Стратегия 3: mng_order: диалог dialog-att содержит "Вместимость стадиона:" с <b>80 000</b>
     const attDialog = document.getElementById('dialog-att');
     if (attDialog) {
         const allDivs = attDialog.querySelectorAll('div.lh16');
@@ -9406,6 +9419,7 @@ function getTournamentType() {
                                     <input type="number" id="vs_home_attendance" min="0" max="${stadiumCapacity}" value="${stadiumCapacity}"
                                         style="width: 120px; height: 16px; font-size: 11px; border: 1px solid rgb(170, 170, 170); padding: 2px; box-sizing: border-box; background: white;">
                                     <span style="font-size: 11px; color: rgb(102, 102, 102); margin-left: 4px;">/ ${stadiumCapacity}</span>
+                                    <a href="#" id="vsol-attendance-forecast" style="font-size:10px; margin-left:6px;" onclick="if(typeof openAtt==='function'){openAtt()}else{$('#dialog-att').dialog('open')}; return false;">прогноз</a>
                                 </td>
                             </tr>
                             <tr id="vsol-ticket-row" style="display:none;">
@@ -11243,10 +11257,10 @@ function getTournamentType() {
             if (origPrice && ticketInput) ticketInput.value = origPrice.value || '20';
         }
 
-        // Скрываем посещаемость когда играем в гостях (стадион соперника, данных нет)
+        // Скрываем ссылку "прогноз" посещаемости когда играем в гостях
         if (matchData && matchData.homeAway !== 'Д') {
-            const attendanceRow = weatherUI.container.querySelector('#vsol-attendance-row');
-            if (attendanceRow) attendanceRow.style.display = 'none';
+            const forecastLink = weatherUI.container.querySelector('#vsol-attendance-forecast');
+            if (forecastLink) forecastLink.style.display = 'none';
         }
 
         row2Container.appendChild(homeLineupWrapper);
