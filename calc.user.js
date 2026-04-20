@@ -9398,7 +9398,7 @@ function getTournamentType() {
                                     </select>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr id="vsol-attendance-row">
                                 <td class="qt" style="height: 20px; background-color: rgb(255, 255, 187); text-align: center; font-family: Courier New, monospace; font-size: 11px;" title="Посещаемость стадиона">
                                     <img src="https://cdn-icons-png.flaticon.com/128/1259/1259792.png" height="16" style="vertical-align: top;">
                                 </td>
@@ -11241,6 +11241,12 @@ function getTournamentType() {
             const origPrice = document.getElementById('price');
             const ticketInput = weatherUI.container.querySelector('#vsol-ticket-price');
             if (origPrice && ticketInput) ticketInput.value = origPrice.value || '20';
+        }
+
+        // Скрываем посещаемость когда играем в гостях (стадион соперника, данных нет)
+        if (matchData && matchData.homeAway !== 'Д') {
+            const attendanceRow = weatherUI.container.querySelector('#vsol-attendance-row');
+            if (attendanceRow) attendanceRow.style.display = 'none';
         }
 
         row2Container.appendChild(homeLineupWrapper);
