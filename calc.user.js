@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Virtual Soccer Strength Analyzer
+// @name         Virtual Soccer Strength Analyzer V2
 // @namespace    http://tampermonkey.net/
 // @license MIT
-// @version      0.9465.6
+// @version      0.12
 // @description  Калькулятор силы команд для Virtual Soccer с динамической визуализацией и аналитикой
 // @author       Arne
 // @match        *://*.virtualsoccer.ru/previewmatch.php*
@@ -4240,6 +4240,12 @@ function parseStadiumCapacity() {
                 }
             }
         }
+    }
+
+    // Стратегия 4: в гостях — вместимость загружена из roster.php хозяев
+    if (window.__vs_stadiumCapacity > 0) {
+        console.log('[WEATHER] Вместимость стадиона из roster.php (в гостях):', window.__vs_stadiumCapacity);
+        return window.__vs_stadiumCapacity;
     }
 
     return null;
@@ -9704,6 +9710,51 @@ function getTournamentType() {
         });
     }
 
+    function loadStadiumCapacityFromRoster(teamId) {
+        const url = `${SITE_CONFIG.BASE_URL}/roster.php?num=${teamId}`;
+        return new Promise((resolve) => {
+            GM_xmlhttpRequest({
+                method: "GET",
+                url: url,
+                onload: function (response) {
+                    if (response.status !== 200) {
+                        console.warn('[Stadium] Failed to load roster for team', teamId);
+                        resolve(null);
+                        return;
+                    }
+                    try {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(response.responseText, 'text/html');
+                        // Ищем: Стадион: "...", <b>60</b><span class="upg">тыс.</span>
+                        const divs = doc.querySelectorAll('div.lh17');
+                        for (const div of divs) {
+                            if (div.textContent.includes('Стадион:')) {
+                                const bold = div.querySelector('b');
+                                const upg = div.querySelector('span.upg');
+                                if (bold && upg && upg.textContent.includes('тыс')) {
+                                    const cap = Math.round(parseFloat(bold.textContent) * 1000);
+                                    if (cap > 0) {
+                                        console.log('[Stadium] Вместимость из roster.php для команды', teamId, ':', cap);
+                                        resolve(cap);
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                        console.warn('[Stadium] Вместимость не найдена в roster.php для команды', teamId);
+                        resolve(null);
+                    } catch (e) {
+                        console.error('[Stadium] Ошибка парсинга roster.php:', e);
+                        resolve(null);
+                    }
+                },
+                onerror: function () {
+                    resolve(null);
+                }
+            });
+        });
+    }
+
     function getLastMatchForTeam(teamId, preferHome = false) {
         return new Promise((resolve, reject) => {
             const url = `${SITE_CONFIG.BASE_URL}/roster_m.php?num=${teamId}`;
@@ -11257,8 +11308,9 @@ function getTournamentType() {
             if (origPrice && ticketInput) ticketInput.value = origPrice.value || '20';
         }
 
-        // Скрываем ссылку "прогноз" посещаемости когда играем в гостях
-        if (matchData && matchData.homeAway !== 'Д') {
+        // Скрываем ссылку "прогноз" посещаемости если var stad отсутствует (играем в гостях)
+        const hasStad = Array.from(document.querySelectorAll('script:not([src])')).some(s => /\bstad\s*=\s*\d/.test(s.textContent));
+        if (!hasStad) {
             const forecastLink = weatherUI.container.querySelector('#vsol-attendance-forecast');
             if (forecastLink) forecastLink.style.display = 'none';
         }
@@ -13678,6 +13730,14 @@ setTimeout(() => {
             loadTeamAtmosphere(awayTeamId)
         ]);
 
+        // В гостях var stad отсутствует — загружаем вместимость стадиона хозяев из roster.php
+        if (!isHome) {
+            const cap = await loadStadiumCapacityFromRoster(homeTeamId);
+            window.__vs_stadiumCapacity = cap;
+        } else {
+            window.__vs_stadiumCapacity = null;
+        }
+
         console.log('[ORDER] Загружено: хозяева', homePlayers.length, 'гости', awayPlayers.length);
 
         // Рейтинги
@@ -13870,11 +13930,17 @@ setTimeout(() => {
         if (subSlots) {
             for (let i = 0; i < subSlots.length; i++) {
                 const s = subSlots[i];
-                params.delete(`zmin_start[${i}]`); params.set(`zmin_start[${i}]`, s.start ? s.start.value : '');
-                params.delete(`zmin_end[${i}]`); params.set(`zmin_end[${i}]`, s.end ? s.end.value : '');
-                params.delete(`zcond[${i}]`); params.set(`zcond[${i}]`, s.cond ? s.cond.value : '');
-                params.delete(`zout[${i}]`); params.set(`zout[${i}]`, s.out ? s.out.value : '');
-                params.delete(`zin[${i}]`); params.set(`zin[${i}]`, s.in ? s.in.value : '');
+                const hasCond = s.cond && s.cond.value;
+                const hasOut = s.out && s.out.value;
+                const hasIn = s.in && s.in.value;
+                const isComplete = hasCond && hasOut && hasIn;
+
+                // Неполный слот — отправляем пустым (сервер игнорирует)
+                params.delete(`zmin_start[${i}]`); params.set(`zmin_start[${i}]`, isComplete && s.start ? s.start.value : '');
+                params.delete(`zmin_end[${i}]`);   params.set(`zmin_end[${i}]`,   isComplete && s.end  ? s.end.value  : '');
+                params.delete(`zcond[${i}]`);       params.set(`zcond[${i}]`,       isComplete ? s.cond.value : '');
+                params.delete(`zout[${i}]`);        params.set(`zout[${i}]`,        isComplete ? s.out.value  : '');
+                params.delete(`zin[${i}]`);         params.set(`zin[${i}]`,         isComplete ? s.in.value   : '');
             }
         } else {
             // Fallback: из оригинальной формы
@@ -13978,8 +14044,9 @@ setTimeout(() => {
             }
         }
 
-        // 5. Замены: если заполнена хотя бы одна минута — все поля слота должны быть заполнены
+        // 5. Замены: неполные слоты не блокируют отправку — предупреждаем отдельно
         const subSlots = window[`__vs_substitutionSlots_${sideLabel}`];
+        const subWarnings = [];
         if (subSlots) {
             subSlots.forEach((slot, i) => {
                 const hasStart = slot.start && slot.start.value.trim();
@@ -13988,9 +14055,13 @@ setTimeout(() => {
                 const hasIn = slot.in && slot.in.value;
                 const hasAny = hasStart || hasCond || hasOut || hasIn;
                 if (hasAny) {
-                    if (!hasCond) errors.push(`Замена ${i + 1}: условие не выбрано`);
-                    if (!hasOut) errors.push(`Замена ${i + 1}: "Уходит" не выбран`);
-                    if (!hasIn) errors.push(`Замена ${i + 1}: "Выходит" не выбран`);
+                    const missing = [];
+                    if (!hasCond) missing.push('условие');
+                    if (!hasOut) missing.push('"Уходит"');
+                    if (!hasIn) missing.push('"Выходит"');
+                    if (missing.length > 0) {
+                        subWarnings.push(`Замена ${i + 1}: не заполнено ${missing.join(', ')} — слот будет пропущен`);
+                    }
                 }
             });
         }
@@ -14010,10 +14081,19 @@ setTimeout(() => {
             });
         }
 
-        // Показываем ошибки
+        // Показываем ошибки (блокируют отправку)
         if (errors.length > 0) {
             alert('Ошибки при отправке:\n\n• ' + errors.join('\n• '));
             return;
+        }
+
+        // Показываем предупреждения по заменам (не блокируют)
+        if (subWarnings.length > 0) {
+            const proceed = confirm(
+                'Предупреждения по заменам:\n\n• ' + subWarnings.join('\n• ') +
+                '\n\nНеполные замены будут пропущены. Продолжить отправку?'
+            );
+            if (!proceed) return;
         }
 
         const params = buildOrderPostData(isHome, matchData);
@@ -14834,21 +14914,23 @@ setTimeout(() => {
     // [DEADCODE] addSubmitButtonToCalc — moved to deadcode.js
 
     function importFromOriginalForm(isHome) {
-        console.group('[ORDER] Импорт из оригинальной формы');
+        console.group(`[IMPORT] ===== Импорт из оригинальной формы (сторона: ${isHome ? 'дома' : 'в гостях'}) =====`);
 
         const forma = document.getElementById('forma');
         if (!forma) {
-            console.warn('[ORDER] Форма #forma не найдена');
+            console.warn('[IMPORT] Форма #forma не найдена');
             console.groupEnd();
             return;
         }
+        console.log('[IMPORT] Форма #forma найдена');
 
         const myLineupBlock = isHome ? window.homeLineupBlock : window.awayLineupBlock;
         if (!myLineupBlock || !myLineupBlock.lineup) {
-            console.warn('[ORDER] LineupBlock не найден');
+            console.warn('[IMPORT] LineupBlock не найден:', isHome ? 'homeLineupBlock' : 'awayLineupBlock');
             console.groupEnd();
             return;
         }
+        console.log('[IMPORT] LineupBlock найден, слотов:', myLineupBlock.lineup.length);
 
         const formationSelect = isHome ? window.homeFormationSelect : window.awayFormationSelect;
         const styleSelect = isHome ? window.homeStyle : window.awayStyle;
@@ -14892,60 +14974,73 @@ setTimeout(() => {
 
         // --- Формация: "1-X-Y-Z" → "X-Y-Z" ---
         const rawFormation = (formFormation && formFormation.value) ? formFormation.value : readInlineVar('v_formation');
+        console.log('[IMPORT] Формация из формы:', formFormation ? `"${formFormation.value}"` : 'не найдена', '| fallback:', readInlineVar('v_formation'));
         if (rawFormation && formationSelect) {
             const calcFormation = rawFormation.replace(/^1-/, '');
             if (formationSelect.querySelector(`option[value="${calcFormation}"]`)) {
                 formationSelect.value = calcFormation;
                 myLineupBlock.applyFormation(calcFormation);
-                console.log('[ORDER] Формация:', rawFormation, '→', calcFormation);
+                console.log('[IMPORT] Формация применена:', rawFormation, '→', calcFormation);
             } else {
-                console.warn('[ORDER] Формация не найдена в калькуляторе:', calcFormation);
+                console.warn('[IMPORT] Формация не найдена в калькуляторе:', calcFormation);
             }
+        } else {
+            console.warn('[IMPORT] Формация пропущена: rawFormation=', rawFormation, 'formationSelect=', !!formationSelect);
         }
 
         // --- Стиль ---
         const playstyleVal = (formPlaystyle && formPlaystyle.value) ? formPlaystyle.value : readInlineVar('v_playstyle');
+        console.log('[IMPORT] Стиль из формы:', formPlaystyle ? `"${formPlaystyle.value}"` : 'не найден', '| итог:', playstyleVal);
         if (playstyleVal && styleSelect) {
             const calcStyle = playstyleToCalc[playstyleVal];
             if (calcStyle) {
                 styleSelect.value = calcStyle;
                 styleSelect.dispatchEvent(new Event('change'));
-                console.log('[ORDER] Стиль:', playstyleVal, '→', calcStyle);
+                console.log('[IMPORT] Стиль применён:', playstyleVal, '→', calcStyle);
             } else {
-                console.warn('[ORDER] Неизвестный стиль:', playstyleVal);
+                console.warn('[IMPORT] Неизвестный стиль:', playstyleVal);
             }
         }
 
         // --- Грубость ---
         const gamestyleVal = (formGamestyle && formGamestyle.value !== undefined) ? formGamestyle.value : readInlineVar('v_gamestyle');
+        console.log('[IMPORT] Грубость из формы:', formGamestyle ? `"${formGamestyle.value}"` : 'не найдена', '| итог:', gamestyleVal);
         if (gamestyleVal !== null && gamestyleVal !== undefined && roughSelect) {
             const calcRough = gamestyleToCalc[String(gamestyleVal)];
             if (calcRough) {
                 roughSelect.value = calcRough;
                 roughSelect.dispatchEvent(new Event('change'));
-                console.log('[ORDER] Грубость:', gamestyleVal, '→', calcRough);
+                console.log('[IMPORT] Грубость применена:', gamestyleVal, '→', calcRough);
+            } else {
+                console.warn('[IMPORT] Неизвестная грубость:', gamestyleVal);
             }
         }
 
         // --- Защита ---
         const defenceVal = (formDefence && formDefence.value) ? formDefence.value : readInlineVar('v_defence');
+        console.log('[IMPORT] Защита из формы:', formDefence ? `"${formDefence.value}"` : 'не найдена', '| итог:', defenceVal);
         if (defenceVal && defenceSelect) {
             const calcDefence = defenceToCalc[String(defenceVal)];
             if (calcDefence) {
                 defenceSelect.value = calcDefence;
                 defenceSelect.dispatchEvent(new Event('change'));
-                console.log('[ORDER] Защита:', defenceVal, '→', calcDefence);
+                console.log('[IMPORT] Защита применена:', defenceVal, '→', calcDefence);
+            } else {
+                console.warn('[IMPORT] Неизвестная защита:', defenceVal);
             }
         }
 
         // --- Настрой ---
         const moraleVal = (formMorale && formMorale.value !== undefined) ? formMorale.value : readInlineVar('v_morale');
+        console.log('[IMPORT] Настрой из формы:', formMorale ? `"${formMorale.value}"` : 'не найден', '| итог:', moraleVal);
         if (moraleVal !== null && moraleVal !== undefined && moraleSelect) {
             const calcMorale = moraleToCalc[String(moraleVal)];
             if (calcMorale) {
                 moraleSelect.value = calcMorale;
                 moraleSelect.dispatchEvent(new Event('change'));
-                console.log('[ORDER] Настрой:', moraleVal, '→', calcMorale);
+                console.log('[IMPORT] Настрой применён:', moraleVal, '→', calcMorale);
+            } else {
+                console.warn('[IMPORT] Неизвестный настрой:', moraleVal);
             }
         }
 
@@ -14958,37 +15053,106 @@ setTimeout(() => {
                 const pd = window.__vs_orderPageData;
                 tacticsVal = pd && pd.tactics ? pd.tactics : null;
             }
+            console.log('[IMPORT] Тактика:', tacticsVal);
             if (tacticsVal) {
                 calcTacticSelect.value = tacticsVal;
                 calcTacticSelect.dispatchEvent(new Event('change'));
-                console.log('[ORDER] Тактика:', tacticsVal);
             }
         }
 
         // --- Состав: plr_0..plr_10 ---
         const lineup = myLineupBlock.lineup;
+        console.group('[IMPORT] Состав (игроки)');
         for (let i = 0; i < Math.min(11, lineup.length); i++) {
             const slot = lineup[i];
-            if (!slot) continue;
+            if (!slot) { console.warn(`[IMPORT] Слот ${i}: slot=null`); continue; }
 
-            // Пробуем найти элемент по id (plr_0) или по name (plr[0])
             let plrSelect = document.getElementById(`plr_${i}`);
+            if (!plrSelect) plrSelect = forma.querySelector(`[name="plr[${i}]"]`);
+            if (!plrSelect) plrSelect = forma.querySelector(`select[name="plr_${i}"]`);
+
             if (!plrSelect) {
-                plrSelect = forma.querySelector(`[name="plr[${i}]"]`);
+                console.warn(`[IMPORT] Слот ${i}: select не найден (plr_${i} / plr[${i}])`);
+                continue;
             }
-            if (!plrSelect) {
-                plrSelect = forma.querySelector(`select[name="plr_${i}"]`);
-            }
-            if (!plrSelect) continue;
 
             const playerId = plrSelect.value;
             if (playerId && playerId !== '-1') {
                 const label = slot.getOptionLabel ? slot.getOptionLabel(playerId) : '';
                 slot.setValue(playerId, label);
-                console.log(`[ORDER] Слот ${i}: игрок ${playerId}`);
+                console.log(`[IMPORT] Слот ${i}: игрок ${playerId} "${label}"`);
+            } else {
+                console.log(`[IMPORT] Слот ${i}: пусто (value="${playerId}")`);
             }
-            // Если plr_N.value === "-1" — оставляем слот пустым (не трогаем)
         }
+        console.groupEnd();
+
+        // --- Позиции: pos_1..pos_10 (в форме индекс с 1, в lineup с 0) ---
+        // ВАЖНО: pos_N содержит реальную позицию слота (может отличаться от позиции формации).
+        // Нужно обновить slot.posValue и пересчитать опции miniPositionSelect перед setValue.
+        console.group('[IMPORT] Позиции (miniPositionSelect)');
+
+        // Сначала собираем все новые позиции из формы
+        // pos_N нумеруется с 1 для полевых игроков (слоты 1..10), вратарь (слот 0) не имеет pos_N
+        const newPositions = myLineupBlock.positions ? myLineupBlock.positions.slice() : [];
+        for (let i = 1; i < Math.min(11, lineup.length); i++) {
+            const slot = lineup[i];
+            if (!slot || !slot.miniPositionSelect) continue;
+            let posSelect = document.getElementById(`pos_${i}`);
+            if (!posSelect) posSelect = forma.querySelector(`[name="pos[${i}]"]`);
+            if (!posSelect) continue;
+            const posVal = posSelect.value ? posSelect.value.toUpperCase() : '';
+            if (posVal) newPositions[i] = posVal;
+        }
+
+        // Применяем позиции: обновляем posValue, пересчитываем опции, устанавливаем значение
+        for (let i = 1; i < Math.min(11, lineup.length); i++) {
+            const slot = lineup[i];
+            if (!slot) { console.warn(`[IMPORT] Позиция слот ${i}: slot=null`); continue; }
+            if (!slot.miniPositionSelect) {
+                console.warn(`[IMPORT] Позиция слот ${i}: miniPositionSelect отсутствует`);
+                continue;
+            }
+
+            let posSelect = document.getElementById(`pos_${i}`);
+            if (!posSelect) posSelect = forma.querySelector(`[name="pos[${i}]"]`);
+
+            if (!posSelect) {
+                console.warn(`[IMPORT] Позиция слот ${i}: select не найден (pos_${i} / pos[${i}])`);
+                continue;
+            }
+
+            const posVal = posSelect.value ? posSelect.value.toUpperCase() : '';
+            const before = slot.miniPositionSelect.getValue();
+            console.log(`[IMPORT] Позиция слот ${i}: posSelect.id="${posSelect.id}" display="${posSelect.style.display}" value="${posSelect.value}" → posVal="${posVal}" | miniPos сейчас="${before}" | slot.posValue="${slot.posValue}"`);
+
+            if (!posVal) {
+                console.log(`[IMPORT] Позиция слот ${i}: пусто, оставлено "${before}"`);
+                continue;
+            }
+
+            // Обновляем posValue слота и пересчитываем опции с учётом новых позиций
+            slot.posValue = posVal;
+            const formName = myLineupBlock.getFormationName ? myLineupBlock.getFormationName() : null;
+            if (formName) {
+                const opts = getAllowedMiniOptions({
+                    formationName: formName,
+                    positions: newPositions,
+                    rowIndex: i
+                });
+                slot.miniPositionSelect.setOptions(opts);
+            }
+
+            slot.miniPositionSelect.setValue(posVal, { allowTemp: false });
+            const after = slot.miniPositionSelect.getValue();
+
+            if (after === posVal) {
+                console.log(`[IMPORT] Позиция слот ${i}: "${before}" → "${after}" ✓`);
+            } else {
+                console.warn(`[IMPORT] Позиция слот ${i}: хотели "${posVal}", было "${before}", стало "${after}" — позиция недоступна в текущих опциях`);
+            }
+        }
+        console.groupEnd();
 
         // --- Запасные: plr[11]..plr[19] (S1-S9) ---
         if (myLineupBlock.substitutes) {
@@ -15080,7 +15244,9 @@ setTimeout(() => {
                     s.in.value = fIn.value || '';
                 }
             }
-            console.log('[ORDER] Замены импортированы');
+            console.log('[IMPORT] Замены импортированы');
+        } else {
+            console.warn('[IMPORT] Слоты замен не найдены (__vs_substitutionSlots_' + sideLabel + ')');
         }
 
         // --- Тактические указания из оригинальной формы → калькулятор ---
@@ -15097,15 +15263,18 @@ setTimeout(() => {
                 if (fCond && t.cond) t.cond.value = fCond.value || '';
                 if (fTact && t.tact) t.tact.value = fTact.value || '';
             }
-            console.log('[ORDER] Тактические указания импортированы');
+            console.log('[IMPORT] Тактические указания импортированы');
+        } else {
+            console.warn('[IMPORT] Слоты тактических указаний не найдены (__vs_tacticalSlots_' + sideLabel + ')');
         }
 
         // --- Пересчёт силы и обновление UI (синхронно) ---
         if (typeof window.__vs_onLineupChanged === 'function') {
             window.__vs_onLineupChanged();
+            console.log('[IMPORT] __vs_onLineupChanged вызван');
         }
 
-        console.log('[ORDER] Импорт завершён');
+        console.log('[IMPORT] ===== Импорт завершён =====');
         console.groupEnd();
     }
 
